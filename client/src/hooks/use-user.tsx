@@ -3,7 +3,7 @@ import type { User } from "@shared/schema";
 
 export function useUser() {
   const { data: user, isLoading, error } = useQuery<User | null>({
-    queryKey: ["/api/user"],
+    queryKey: ["/api/auth/me"],
     retry: false,
     // Return null if unauthorized instead of throwing
     meta: { unauthorizedBehavior: "returnNull" },

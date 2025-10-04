@@ -37,15 +37,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       req.login(user, (err) => {
         if (err) return res.status(500).json({ error: "Login failed" });
-        res.json({ id: user.id, username: user.username });
+        res.json({ id: user.id, email: user.email });
       });
     } catch (error) {
+      console.error("Registration error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid input", details: error.errors });
+      }
       res.status(400).json({ error: "Invalid input" });
     }
   });
 
   app.post("/api/auth/login", passport.authenticate("local"), (req, res) => {
-    res.json({ id: req.user!.id, username: req.user!.username });
+    res.json({ id: req.user!.id, email: req.user!.email });
   });
 
   app.post("/api/auth/logout", (req, res) => {
@@ -57,7 +61,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/auth/me", (req, res) => {
     if (!req.user) return res.status(401).json({ error: "Not authenticated" });
-    res.json({ id: req.user.id, username: req.user.username });
+    res.json({ id: req.user.id, email: req.user.email });
   });
 
   // Children routes
