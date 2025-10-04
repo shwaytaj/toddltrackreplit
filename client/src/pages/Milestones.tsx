@@ -60,16 +60,19 @@ export default function Milestones() {
               title="Jump in place"
               category=""
               categoryColor="bg-purple-100 dark:bg-purple-900/20"
+              onClick={() => setLocation('/milestone/jump-in-place')}
             />
             <MilestoneCard
               title="Kicks a ball"
               category=""
               categoryColor="bg-purple-100 dark:bg-purple-900/20"
+              onClick={() => setLocation('/milestone/kicks-ball')}
             />
             <MilestoneCard
               title="Throws a ball"
               category=""
               categoryColor="bg-purple-100 dark:bg-purple-900/20"
+              onClick={() => setLocation('/milestone/throws-ball')}
             />
           </div>
         </div>
@@ -81,17 +84,20 @@ export default function Milestones() {
               title="Say their name"
               category=""
               categoryColor="bg-green-100 dark:bg-green-900/20"
+              onClick={() => setLocation('/milestone/say-name')}
             />
             <MilestoneCard
               title="2 to 3 word sentences"
               category=""
               categoryColor="bg-green-100 dark:bg-green-900/20"
               achieved
+              onClick={() => setLocation('/milestone/2-3-word-sentences')}
             />
             <MilestoneCard
               title="Knows 50 or more words"
               category=""
               categoryColor="bg-green-100 dark:bg-green-900/20"
+              onClick={() => setLocation('/milestone/knows-50-words')}
             />
           </div>
         </div>
@@ -103,16 +109,19 @@ export default function Milestones() {
               title="Points to objects to pictures"
               category=""
               categoryColor="bg-amber-100 dark:bg-amber-900/20"
+              onClick={() => setLocation('/milestone/points-to-pictures')}
             />
             <MilestoneCard
               title="Plays with others to please them"
               category=""
               categoryColor="bg-amber-100 dark:bg-amber-900/20"
+              onClick={() => setLocation('/milestone/plays-with-others')}
             />
             <MilestoneCard
               title="Can look OK separately"
               category=""
               categoryColor="bg-amber-100 dark:bg-amber-900/20"
+              onClick={() => setLocation('/milestone/look-separately')}
             />
           </div>
         </div>

@@ -5,7 +5,6 @@ import HighlightCard from '@/components/HighlightCard';
 import MilestoneCard from '@/components/MilestoneCard';
 import GrowthMetricCard from '@/components/GrowthMetricCard';
 import BottomNav from '@/components/BottomNav';
-import MilestoneDetailModal from '@/components/MilestoneDetailModal';
 import GrowthDetailModal from '@/components/GrowthDetailModal';
 import { Button } from '@/components/ui/button';
 import { useLocation } from 'wouter';
@@ -14,7 +13,6 @@ export default function Home() {
   const [, setLocation] = useLocation();
   const [activeNav, setActiveNav] = useState<'home' | 'milestones' | 'profile'>('home');
   const [activeChild, setActiveChild] = useState('1');
-  const [selectedMilestone, setSelectedMilestone] = useState<any>(null);
   const [selectedGrowth, setSelectedGrowth] = useState<any>(null);
 
   //todo: remove mock functionality
@@ -78,33 +76,20 @@ export default function Home() {
               title="Jump in place"
               category="Gross motor"
               categoryColor="bg-purple-100 dark:bg-purple-900/20"
-              onClick={() => setSelectedMilestone({
-                title: "Jump in place",
-                category: "Gross Motor",
-                ageRange: "20-26 month",
-                about: "Jumping in place shows developing leg strength and coordination. Children practice this skill naturally as they explore movement.",
-                typicalRange: "Most children learn to jump between 20-26 months",
-                achieved: false
-              })}
+              onClick={() => setLocation('/milestone/jump-in-place')}
             />
             <MilestoneCard
               title="2 to 3 word sentences"
               category="Communication"
               categoryColor="bg-green-100 dark:bg-green-900/20"
               achieved
-              onClick={() => setSelectedMilestone({
-                title: "Says 2 to 3 word sentences",
-                category: "Communication",
-                ageRange: "20-26 month",
-                about: "This is the jump from single words to combining them: 'more milk,' 'Daddy go work,' 'my shoe on.' It's telegraphic speech, short, content-heavy, missing little glue words, and that's perfect.",
-                typicalRange: "Two-word combinations start between 18-24 months",
-                achieved: true
-              })}
+              onClick={() => setLocation('/milestone/2-3-word-sentences')}
             />
             <MilestoneCard
               title="Match pictures & objects"
               category="Social & Emotional"
               categoryColor="bg-amber-100 dark:bg-amber-900/20"
+              onClick={() => setLocation('/milestone/match-pictures-objects')}
             />
           </div>
         </div>
@@ -191,31 +176,6 @@ export default function Home() {
       </div>
 
       <BottomNav active={activeNav} onNavigate={handleNavigation} />
-
-      {selectedMilestone && (
-        <MilestoneDetailModal
-          open={!!selectedMilestone}
-          onClose={() => setSelectedMilestone(null)}
-          milestone={selectedMilestone}
-          guides={[
-            {
-              title: "Add one word.",
-              description: "Child: 'ball.' You: 'big ball,' then 'big red ball.' Keep it natural, not drill-like. Model verbs all day."
-            },
-            {
-              title: "Narrate simply",
-              description: "'Daddy is cooking,' 'Open door,' 'Birds are flying.' Verbs drive sentences."
-            }
-          ]}
-          products={[
-            {
-              image: "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=200&h=200&fit=crop",
-              title: "Carson Dellosa First Words Flash Cards for Toddlers 2-4 Years",
-              description: "Educational toy"
-            }
-          ]}
-        />
-      )}
 
       {selectedGrowth && (
         <GrowthDetailModal

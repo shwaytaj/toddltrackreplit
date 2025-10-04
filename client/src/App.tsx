@@ -7,6 +7,7 @@ import Login from "@/pages/Login";
 import Onboarding from "@/pages/Onboarding";
 import Home from "@/pages/Home";
 import Milestones from "@/pages/Milestones";
+import MilestoneDetail from "@/pages/MilestoneDetail";
 import Profile from "@/pages/Profile";
 import NotFound from "@/pages/not-found";
 
@@ -17,6 +18,7 @@ function Router() {
       <Route path="/onboarding" component={Onboarding} />
       <Route path="/home" component={Home} />
       <Route path="/milestones" component={Milestones} />
+      <Route path="/milestone/:id" component={MilestoneDetail} />
       <Route path="/profile" component={Profile} />
       <Route component={NotFound} />
     </Switch>
