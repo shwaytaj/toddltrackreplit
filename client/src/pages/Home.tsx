@@ -89,17 +89,17 @@ export default function Home() {
 
   const { data: milestones = [] } = useQuery<Milestone[]>({
     queryKey: ['/api/milestones/age-range', ageRange?.min, ageRange?.max],
-    enabled: !!ageRange,
+    enabled: ageRange !== null && ageRange?.min !== undefined && ageRange?.max !== undefined,
   });
 
   const { data: childMilestones = [] } = useQuery<ChildMilestone[]>({
     queryKey: ['/api/children', activeChild, 'milestones'],
-    enabled: !!activeChild,
+    enabled: !!activeChild && activeChild !== '',
   });
 
   const { data: growthMetrics = [] } = useQuery<GrowthMetric[]>({
     queryKey: ['/api/children', activeChild, 'growth-metrics'],
-    enabled: !!activeChild,
+    enabled: !!activeChild && activeChild !== '',
   });
 
   const achievedMilestoneIds = new Set(childMilestones.map(cm => cm.milestoneId));
