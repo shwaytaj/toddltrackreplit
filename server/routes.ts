@@ -12,6 +12,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import passport, { hashPassword } from "./auth";
 import "./types";
 import { z } from "zod";
+import { calculatePercentile } from "./whoPercentiles";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -246,7 +247,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
       });
       
-      const metric = await storage.createGrowthMetric(validatedData);
+      // Calculate age in months at measurement time
+      const birthDate = new Date(child.birthDate);
+      const measurementDate = new Date(validatedData.date);
+      const ageMonths = Math.floor(
+        (measurementDate.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44)
+      );
+      
+      // Calculate WHO percentile
+      const percentile = child.gender
+        ? calculatePercentile(
+            validatedData.value,
+            ageMonths,
+            child.gender,
+            validatedData.type as 'weight' | 'height' | 'head'
+          )
+        : null;
+      
+      const metric = await storage.createGrowthMetric({
+        ...validatedData,
+        percentile,
+      });
       res.json(metric);
     } catch (error) {
       res.status(400).json({ error: "Invalid input" });
