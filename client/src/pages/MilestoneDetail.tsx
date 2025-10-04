@@ -1,22 +1,26 @@
+import { useState } from 'react';
 import { useLocation, useRoute } from 'wouter';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import ProductCard from '@/components/ProductCard';
-import { ChevronLeft } from 'lucide-react';
+import BottomNav from '@/components/BottomNav';
+import { X, Check } from 'lucide-react';
 
 export default function MilestoneDetail() {
   const [, setLocation] = useLocation();
   const [, params] = useRoute('/milestone/:id');
+  const [activeTab, setActiveTab] = useState<'about' | 'help'>('about');
+  const [activeHelpTab, setActiveHelpTab] = useState<'guide' | 'tools'>('guide');
+  const [activeNav, setActiveNav] = useState<'home' | 'milestones' | 'profile'>('milestones');
 
   //todo: remove mock functionality - fetch actual milestone data based on params.id
   const milestone = {
-    title: "Jump in place",
-    category: "Gross Motor",
+    title: "Says 2 to 3 word sentences",
+    category: "Communication",
     ageRange: "20-26 month",
-    about: "Jumping in place shows developing leg strength and coordination. Children practice this skill naturally as they explore movement.",
-    typicalRange: "Most children learn to jump between 20-26 months",
-    achieved: false
+    about: "This is the jump from single words to combining them: 'more milk,' 'Daddy go work,' 'my shoe on.' It's telegraphic speech, short, content-heavy, missing little glue words, and that's perfect. You'll hear real verbs, early word order, and a wider range of reasons to talk.",
+    typicalRange: "Two-word combinations start between 18-24 months",
+    achieved: true
   };
 
   const guides = [
@@ -47,30 +51,55 @@ export default function MilestoneDetail() {
     }
   ];
 
+  const handleNavigation = (page: 'home' | 'milestones' | 'profile') => {
+    setActiveNav(page);
+    if (page === 'home') setLocation('/home');
+    if (page === 'milestones') setLocation('/milestones');
+    if (page === 'profile') setLocation('/profile');
+  };
+
   return (
-    <div className="min-h-screen bg-background pb-6">
-      <div className="bg-accent/20 px-4 py-6">
+    <div className="flex flex-col min-h-screen bg-background">
+      <div className="bg-green-100 dark:bg-green-900/20 px-4 py-6 relative">
         <button
           onClick={() => setLocation('/home')}
-          className="mb-4 flex items-center gap-2 text-sm hover-elevate active-elevate-2 rounded-lg px-2 py-1"
-          data-testid="button-back"
+          className="absolute top-4 right-4 p-2 hover-elevate active-elevate-2 rounded-lg"
+          data-testid="button-close"
         >
-          <ChevronLeft className="w-4 h-4" />
-          Back
+          <X className="w-5 h-5" />
         </button>
-        <p className="text-xs text-muted-foreground">{milestone.category}</p>
-        <h1 className="text-2xl font-bold mt-1">{milestone.title}</h1>
-        <p className="text-sm text-muted-foreground mt-1">{milestone.ageRange}</p>
+        <p className="text-sm text-muted-foreground">{milestone.category}</p>
+        <h1 className="text-2xl font-bold mt-1 pr-12">{milestone.title}</h1>
       </div>
 
-      <div className="px-4 mt-6">
-        <Tabs defaultValue="about" className="w-full">
-          <TabsList className="w-full">
-            <TabsTrigger value="about" className="flex-1" data-testid="tab-about">About</TabsTrigger>
-            <TabsTrigger value="help" className="flex-1" data-testid="tab-help">Help</TabsTrigger>
-          </TabsList>
+      <div className="flex-1 px-4 py-4 pb-24">
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => setActiveTab('about')}
+            className={`flex-1 px-6 py-2.5 rounded-full font-medium text-sm transition-colors ${
+              activeTab === 'about'
+                ? 'bg-[#2C3E50] text-white'
+                : 'bg-muted text-foreground'
+            }`}
+            data-testid="tab-about"
+          >
+            About
+          </button>
+          <button
+            onClick={() => setActiveTab('help')}
+            className={`flex-1 px-6 py-2.5 rounded-full font-medium text-sm transition-colors ${
+              activeTab === 'help'
+                ? 'bg-[#2C3E50] text-white'
+                : 'bg-muted text-foreground'
+            }`}
+            data-testid="tab-help"
+          >
+            Help
+          </button>
+        </div>
 
-          <TabsContent value="about" className="space-y-4 mt-4">
+        {activeTab === 'about' && (
+          <div className="bg-muted/30 rounded-lg px-4 py-5 space-y-4">
             <div>
               <h3 className="font-semibold mb-2">About the milestone</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">{milestone.about}</p>
@@ -82,34 +111,71 @@ export default function MilestoneDetail() {
             </div>
 
             <Button 
-              className={milestone.achieved ? "bg-accent text-accent-foreground w-full rounded-full" : "w-full rounded-full"}
+              className={`w-full rounded-full ${
+                milestone.achieved 
+                  ? 'bg-green-500 hover:bg-green-600 text-white' 
+                  : 'bg-green-500 hover:bg-green-600 text-white'
+              }`}
               data-testid="button-achievement-status"
             >
-              {milestone.achieved ? '✓ Achieved' : 'Mark as Achieved'}
+              {milestone.achieved ? (
+                <>
+                  <Check className="w-4 h-4 mr-2" />
+                  Achieved
+                </>
+              ) : (
+                'Mark as Achieved'
+              )}
             </Button>
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="help" className="mt-4">
-            <Tabs defaultValue="guide" className="w-full">
-              <TabsList className="w-full mb-4">
-                <TabsTrigger value="guide" className="flex-1" data-testid="tab-guide">Guide</TabsTrigger>
-                <TabsTrigger value="tools" className="flex-1" data-testid="tab-tools">Toys & Tools</TabsTrigger>
-              </TabsList>
+        {activeTab === 'help' && (
+          <div>
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setActiveHelpTab('guide')}
+                className={`flex-1 px-6 py-2.5 rounded-full font-medium text-sm transition-colors ${
+                  activeHelpTab === 'guide'
+                    ? 'bg-[#2C3E50] text-white'
+                    : 'bg-muted text-foreground'
+                }`}
+                data-testid="tab-guide"
+              >
+                Guide
+              </button>
+              <button
+                onClick={() => setActiveHelpTab('tools')}
+                className={`flex-1 px-6 py-2.5 rounded-full font-medium text-sm transition-colors ${
+                  activeHelpTab === 'tools'
+                    ? 'bg-[#2C3E50] text-white'
+                    : 'bg-muted text-foreground'
+                }`}
+                data-testid="tab-tools"
+              >
+                Toys & Tools
+              </button>
+            </div>
 
-              <TabsContent value="guide" className="space-y-4">
+            {activeHelpTab === 'guide' && (
+              <div className="bg-muted/30 rounded-lg px-4 py-5 space-y-4">
                 <div>
-                  <h3 className="font-semibold mb-3">How parents can help</h3>
+                  <h3 className="font-semibold mb-2">How parents can help</h3>
                   <p className="text-sm text-muted-foreground mb-4">Your best tools are models, routines, and pauses.</p>
                   
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {guides.map((guide, idx) => (
                       <div key={idx} className="flex items-start gap-3">
-                        <Checkbox id={`guide-${idx}`} data-testid={`checkbox-guide-${idx}`} />
+                        <Checkbox 
+                          id={`guide-${idx}`} 
+                          className="mt-0.5" 
+                          data-testid={`checkbox-guide-${idx}`} 
+                        />
                         <div className="flex-1">
-                          <label htmlFor={`guide-${idx}`} className="text-sm font-medium cursor-pointer">
+                          <label htmlFor={`guide-${idx}`} className="text-sm font-semibold cursor-pointer block">
                             {guide.title}
                           </label>
-                          <p className="text-xs text-muted-foreground mt-1">{guide.description}</p>
+                          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{guide.description}</p>
                         </div>
                       </div>
                     ))}
@@ -119,17 +185,21 @@ export default function MilestoneDetail() {
                     More guides will be suggested after you have tried all the above
                   </p>
                 </div>
-              </TabsContent>
+              </div>
+            )}
 
-              <TabsContent value="tools" className="space-y-3">
+            {activeHelpTab === 'tools' && (
+              <div className="space-y-3">
                 {products.map((product, idx) => (
                   <ProductCard key={idx} {...product} />
                 ))}
-              </TabsContent>
-            </Tabs>
-          </TabsContent>
-        </Tabs>
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+      <BottomNav active={activeNav} onNavigate={handleNavigation} />
     </div>
   );
 }
