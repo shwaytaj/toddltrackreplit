@@ -1,10 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useRoute } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import ProductCard from '@/components/ProductCard';
 import BottomNav from '@/components/BottomNav';
 import { X, Check } from 'lucide-react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import type { Milestone, Child } from '@shared/schema';
+
+interface AIRecommendation {
+  title: string;
+  description: string;
+}
 
 export default function MilestoneDetail() {
   const [, setLocation] = useLocation();
@@ -13,43 +21,34 @@ export default function MilestoneDetail() {
   const [activeHelpTab, setActiveHelpTab] = useState<'guide' | 'tools'>('guide');
   const [activeNav, setActiveNav] = useState<'home' | 'milestones' | 'profile'>('milestones');
 
-  //todo: remove mock functionality - fetch actual milestone data based on params.id
-  const milestone = {
-    title: "Says 2 to 3 word sentences",
-    category: "Communication",
-    ageRange: "20-26 month",
-    about: "This is the jump from single words to combining them: 'more milk,' 'Daddy go work,' 'my shoe on.' It's telegraphic speech, short, content-heavy, missing little glue words, and that's perfect. You'll hear real verbs, early word order, and a wider range of reasons to talk.",
-    typicalRange: "Two-word combinations start between 18-24 months",
-    achieved: true
-  };
+  const { data: children = [] } = useQuery<Child[]>({
+    queryKey: ['/api/children'],
+  });
 
-  const guides = [
-    {
-      title: "Add one word.",
-      description: "Child: 'ball.' You: 'big ball,' then 'big red ball.' Keep it natural, not drill-like. Model verbs all day."
-    },
-    {
-      title: "Narrate simply",
-      description: "'Daddy is cooking,' 'Open door,' 'Birds are flying.' Verbs drive sentences."
-    },
-    {
-      title: "Use choices that require combinations.",
-      description: "'Do you want more crackers or more banana?' Wait 5-7 seconds. If they say 'banana,' expand: 'More banana.'"
-    }
-  ];
+  const { data: allMilestones = [] } = useQuery<Milestone[]>({
+    queryKey: ['/api/milestones'],
+  });
 
-  const products = [
-    {
-      image: "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=200&h=200&fit=crop",
-      title: "Carson Dellosa First Words Flash Cards for Toddlers 2-4 Years",
-      description: "Educational toy"
+  const milestone = allMilestones.find(m => m.id === params?.id);
+  const selectedChild = children[0];
+
+  const { data: recommendations, mutate: fetchRecommendations, isPending: loadingRecommendations } = useMutation<AIRecommendation[]>({
+    mutationFn: async () => {
+      if (!selectedChild || !milestone) return [];
+      const response = await apiRequest(
+        `/api/children/${selectedChild.id}/milestones/${milestone.id}/recommendations`,
+        'POST'
+      );
+      const data = await response.json();
+      return data;
     },
-    {
-      image: "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=200&h=200&fit=crop",
-      title: "Talking Flash Cards for Toddlers 1 2 3 4 5 6 Years Old Educational Toys",
-      description: "Interactive learning"
+  });
+
+  useEffect(() => {
+    if (selectedChild && milestone && activeTab === 'help' && activeHelpTab === 'guide') {
+      fetchRecommendations();
     }
-  ];
+  }, [selectedChild, milestone, activeTab, activeHelpTab, fetchRecommendations]);
 
   const handleNavigation = (page: 'home' | 'milestones' | 'profile') => {
     setActiveNav(page);
@@ -57,6 +56,14 @@ export default function MilestoneDetail() {
     if (page === 'milestones') setLocation('/milestones');
     if (page === 'profile') setLocation('/profile');
   };
+
+  if (!milestone) {
+    return (
+      <div className="min-h-screen bg-background pb-20 flex items-center justify-center">
+        <p className="text-muted-foreground">Loading milestone...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -100,34 +107,25 @@ export default function MilestoneDetail() {
           </button>
         </div>
 
-        {activeTab === 'about' && (
+        {activeTab === 'about' && milestone && (
           <div className="bg-muted/30 rounded-lg px-4 py-5 space-y-4">
             <div>
               <h3 className="font-semibold mb-2">About the milestone</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{milestone.about}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">{milestone.description}</p>
             </div>
 
             <div>
-              <h3 className="font-semibold mb-2">Typical range</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{milestone.typicalRange}</p>
+              <h3 className="font-semibold mb-2">Age Range</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {milestone.minAgeMonths} - {milestone.maxAgeMonths} months
+              </p>
             </div>
 
             <Button 
-              className={`w-full rounded-full ${
-                milestone.achieved 
-                  ? 'bg-green-500 hover:bg-green-600 text-white' 
-                  : 'bg-green-500 hover:bg-green-600 text-white'
-              }`}
+              className="w-full rounded-full bg-green-500 hover:bg-green-600 text-white"
               data-testid="button-achievement-status"
             >
-              {milestone.achieved ? (
-                <>
-                  <Check className="w-4 h-4 mr-2" />
-                  Achieved
-                </>
-              ) : (
-                'Mark as Achieved'
-              )}
+              Mark as Achieved
             </Button>
           </div>
         )}
@@ -163,29 +161,43 @@ export default function MilestoneDetail() {
               <div className="bg-muted/30 rounded-lg px-4 py-5 space-y-4">
                 <div>
                   <h3 className="font-semibold mb-2">How parents can help</h3>
-                  <p className="text-sm text-muted-foreground mb-4">Your best tools are models, routines, and pauses.</p>
-                  
-                  <div className="space-y-4">
-                    {guides.map((guide, idx) => (
-                      <div key={idx} className="flex items-start gap-3">
-                        <Checkbox 
-                          id={`guide-${idx}`} 
-                          className="mt-0.5" 
-                          data-testid={`checkbox-guide-${idx}`} 
-                        />
-                        <div className="flex-1">
-                          <label htmlFor={`guide-${idx}`} className="text-sm font-semibold cursor-pointer block">
-                            {guide.title}
-                          </label>
-                          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{guide.description}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <p className="text-xs text-muted-foreground mt-4">
-                    More guides will be suggested after you have tried all the above
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {loadingRecommendations ? 'Loading personalized recommendations...' : 'AI-powered guidance personalized for your child'}
                   </p>
+                  
+                  {loadingRecommendations ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Generating recommendations...
+                    </div>
+                  ) : recommendations && recommendations.length > 0 ? (
+                    <div className="space-y-4">
+                      {recommendations.map((guide, idx) => (
+                        <div key={idx} className="flex items-start gap-3">
+                          <Checkbox 
+                            id={`guide-${idx}`} 
+                            className="mt-0.5" 
+                            data-testid={`checkbox-guide-${idx}`} 
+                          />
+                          <div className="flex-1">
+                            <label htmlFor={`guide-${idx}`} className="text-sm font-semibold cursor-pointer block">
+                              {guide.title}
+                            </label>
+                            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{guide.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No recommendations available
+                    </div>
+                  )}
+                  
+                  {recommendations && recommendations.length > 0 && (
+                    <p className="text-xs text-muted-foreground mt-4">
+                      More guides will be suggested after you have tried all the above
+                    </p>
+                  )}
                 </div>
               </div>
             )}

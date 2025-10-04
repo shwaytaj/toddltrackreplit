@@ -13,22 +13,53 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/Logo';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { queryClient } from '@/lib/queryClient';
 
 export default function Onboarding() {
   const [, setLocation] = useLocation();
   const [step, setStep] = useState(0);
   const [parentName, setParentName] = useState('');
   const [childName, setChildName] = useState('');
+  const [gender, setGender] = useState('');
   const [relationship, setRelationship] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [isPremature, setIsPremature] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleContinue = () => {
-    if (step < 4) {
+  const handleContinue = async () => {
+    if (step < 5) {
       setStep(step + 1);
     } else {
-      console.log('Onboarding complete', { parentName, childName, relationship, birthDate, isPremature });
-      setLocation('/home');
+      setIsLoading(true);
+      try {
+        // Update parent's display name
+        await apiRequest('/api/user/profile', 'PATCH', { displayName: parentName });
+        
+        // Create child profile
+        await apiRequest('/api/children', 'POST', {
+          name: childName,
+          birthDate,
+          gender: gender || undefined,
+          notes: isPremature ? 'Born prematurely' : undefined,
+        });
+        
+        // Invalidate user and children queries
+        queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/children'] });
+        
+        setLocation('/home');
+      } catch (error) {
+        toast({
+          title: "Setup failed",
+          description: error instanceof Error ? error.message : "Failed to complete onboarding",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -36,8 +67,9 @@ export default function Onboarding() {
     switch (step) {
       case 0: return parentName.trim().length > 0;
       case 1: return childName.trim().length > 0;
-      case 2: return relationship.length > 0;
-      case 3: return birthDate.length > 0;
+      case 2: return gender.length > 0;
+      case 3: return relationship.length > 0;
+      case 4: return birthDate.length > 0;
       default: return true;
     }
   };
@@ -66,7 +98,7 @@ export default function Onboarding() {
       {step === 1 && (
         <OnboardingStep
           currentStep={step}
-          totalSteps={5}
+          totalSteps={6}
           onContinue={handleContinue}
           continueDisabled={!isStepValid()}
         >
@@ -85,7 +117,29 @@ export default function Onboarding() {
       {step === 2 && (
         <OnboardingStep
           currentStep={step}
-          totalSteps={5}
+          totalSteps={6}
+          onContinue={handleContinue}
+          continueDisabled={!isStepValid()}
+        >
+          <div className="space-y-2">
+            <Label>Child's gender</Label>
+            <Select value={gender} onValueChange={setGender}>
+              <SelectTrigger data-testid="select-gender">
+                <SelectValue placeholder="- select -" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="male">Male</SelectItem>
+                <SelectItem value="female">Female</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </OnboardingStep>
+      )}
+
+      {step === 3 && (
+        <OnboardingStep
+          currentStep={step}
+          totalSteps={6}
           onContinue={handleContinue}
           continueDisabled={!isStepValid()}
         >
@@ -106,10 +160,10 @@ export default function Onboarding() {
         </OnboardingStep>
       )}
 
-      {step === 3 && (
+      {step === 4 && (
         <OnboardingStep
           currentStep={step}
-          totalSteps={5}
+          totalSteps={6}
           onContinue={handleContinue}
           continueDisabled={!isStepValid()}
         >
@@ -141,7 +195,7 @@ export default function Onboarding() {
         </OnboardingStep>
       )}
 
-      {step === 4 && (
+      {step === 5 && (
         <div className="flex flex-col min-h-screen bg-background p-6 justify-center items-center">
           <div className="max-w-md w-full text-center space-y-6">
             <Logo className="mb-8" />
@@ -158,9 +212,10 @@ export default function Onboarding() {
               className="w-full rounded-full mt-8"
               size="lg"
               onClick={handleContinue}
+              disabled={isLoading}
               data-testid="button-get-started"
             >
-              Get Started
+              {isLoading ? "Setting up..." : "Get Started"}
             </Button>
           </div>
         </div>

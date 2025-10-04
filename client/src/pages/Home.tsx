@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ChildSelector from '@/components/ChildSelector';
 import HighlightCard from '@/components/HighlightCard';
@@ -7,17 +7,33 @@ import GrowthMetricCard from '@/components/GrowthMetricCard';
 import BottomNav from '@/components/BottomNav';
 import { Button } from '@/components/ui/button';
 import { useLocation } from 'wouter';
+import { useQuery } from '@tanstack/react-query';
+import { useUser } from '@/hooks/use-user';
+import type { Child } from '@shared/schema';
 
 export default function Home() {
   const [, setLocation] = useLocation();
   const [activeNav, setActiveNav] = useState<'home' | 'milestones' | 'profile'>('home');
-  const [activeChild, setActiveChild] = useState('1');
+  const { user, isLoading: userLoading } = useUser();
 
-  //todo: remove mock functionality
-  const children = [
-    { id: '1', name: 'Arya', photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop' },
-    { id: '2', name: 'Arjun' },
-  ];
+  const { data: children = [], isLoading: childrenLoading } = useQuery<Child[]>({
+    queryKey: ['/api/children'],
+    enabled: !!user,
+  });
+
+  const [activeChild, setActiveChild] = useState('');
+
+  useEffect(() => {
+    if (children.length > 0 && !activeChild) {
+      setActiveChild(children[0].id);
+    }
+  }, [children, activeChild]);
+
+  useEffect(() => {
+    if (!userLoading && !user) {
+      setLocation('/');
+    }
+  }, [user, userLoading, setLocation]);
 
   const handleNavigation = (page: 'home' | 'milestones' | 'profile') => {
     setActiveNav(page);

@@ -5,6 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import BottomNav from '@/components/BottomNav';
 import { X, TrendingUp } from 'lucide-react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import type { GrowthMetric, Child } from '@shared/schema';
 
 export default function GrowthDetail() {
   const [, setLocation] = useLocation();
@@ -12,37 +16,41 @@ export default function GrowthDetail() {
   const [activeTab, setActiveTab] = useState<'tracking' | 'help'>('tracking');
   const [activeNav, setActiveNav] = useState<'home' | 'milestones' | 'profile'>('home');
   const [showAddForm, setShowAddForm] = useState(false);
+  const { toast } = useToast();
 
-  //todo: remove mock functionality - fetch actual growth data based on params.type
-  const growthData: Record<string, any> = {
-    weight: {
-      type: 'weight',
-      value: '8.8',
-      unit: 'kgs',
-      percentile: 3,
-      lastUpdate: '23rd Aug 2025',
-      trend: 'up 1 centile from last month.',
-      label: 'Weight'
+  const { data: children = [] } = useQuery<Child[]>({
+    queryKey: ['/api/children'],
+  });
+
+  const selectedChild = children[0];
+  const type = params?.type as 'weight' | 'height' | 'head';
+
+  const { data: metrics = [] } = useQuery<GrowthMetric[]>({
+    queryKey: ['/api/children', selectedChild?.id, 'growth-metrics', type],
+    queryFn: async () => {
+      if (!selectedChild) return [];
+      const res = await fetch(`/api/children/${selectedChild.id}/growth-metrics?type=${type}`, {
+        credentials: 'include',
+      });
+      if (!res.ok) return [];
+      return res.json();
     },
-    height: {
-      type: 'height',
-      value: '76',
-      unit: 'cm',
-      percentile: 1,
-      lastUpdate: '23rd Aug 2025',
-      label: 'Height'
-    },
-    head: {
-      type: 'head',
-      value: '46',
-      unit: 'cm',
-      percentile: 10,
-      lastUpdate: '23rd Aug 2025',
-      label: 'Head Circumference'
-    }
+    enabled: !!selectedChild,
+  });
+
+  const latestMetric = metrics.length > 0 ? metrics[metrics.length - 1] : null;
+
+  const labels: Record<string, string> = {
+    weight: 'Weight',
+    height: 'Height',
+    head: 'Head Circumference',
   };
 
-  const metric = growthData[params?.type || 'weight'];
+  const units: Record<string, string> = {
+    weight: 'kg',
+    height: 'cm',
+    head: 'cm',
+  };
 
   const handleNavigation = (page: 'home' | 'milestones' | 'profile') => {
     setActiveNav(page);
@@ -70,8 +78,8 @@ export default function GrowthDetail() {
         </button>
         <div className="max-w-2xl mx-auto">
           <p className="text-sm text-muted-foreground">Growth</p>
-          <h1 className="text-2xl font-bold mt-1 pr-12">{metric.label}</h1>
-          <p className="text-sm text-muted-foreground mt-1">20-26 month</p>
+          <h1 className="text-2xl font-bold mt-1 pr-12">{labels[type]}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{selectedChild?.name || 'Child'}</p>
         </div>
       </div>
 
@@ -103,20 +111,23 @@ export default function GrowthDetail() {
 
         {activeTab === 'tracking' && (
           <div className="space-y-4">
-            <div>
-              <p className="text-xs text-muted-foreground mb-2">Current (last updated on {metric.lastUpdate})</p>
-              <p className="text-3xl font-semibold">
-                {metric.value} <span className="text-lg text-muted-foreground">{metric.unit}</span>
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Baby is trending in the {metric.percentile}{getOrdinal(metric.percentile)} percentile
-              </p>
-              {metric.trend && (
-                <p className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1 mt-1">
-                  <TrendingUp className="w-4 h-4" /> {metric.trend}
+            {latestMetric ? (
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Current (last updated on {new Date(latestMetric.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })})
                 </p>
-              )}
-            </div>
+                <p className="text-3xl font-semibold">
+                  {latestMetric.value} <span className="text-lg text-muted-foreground">{units[type]}</span>
+                </p>
+                {latestMetric.percentile && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Baby is trending in the {Math.round(latestMetric.percentile)}{getOrdinal(Math.round(latestMetric.percentile))} percentile
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="text-center py-4 text-muted-foreground">No measurements recorded yet</p>
+            )}
 
             <div className="bg-muted/30 rounded-lg p-4 h-32 flex items-center justify-center">
               <p className="text-xs text-muted-foreground">Growth trend chart visualization</p>
@@ -128,14 +139,14 @@ export default function GrowthDetail() {
                 onClick={() => setShowAddForm(true)}
                 data-testid="button-add-measurement"
               >
-                + Add {metric.type}
+                + Add {type}
               </Button>
             ) : (
               <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
-                <h3 className="font-semibold">Add {metric.label}</h3>
+                <h3 className="font-semibold">Add {labels[type]}</h3>
                 <div className="space-y-2">
-                  <Label>{metric.label}</Label>
-                  <Input placeholder={`e.g 13 ${metric.unit}`} data-testid="input-measurement" />
+                  <Label>{labels[type]}</Label>
+                  <Input placeholder={`e.g 13 ${units[type]}`} data-testid="input-measurement" />
                 </div>
                 <div className="space-y-2">
                   <Label>Date of measure</Label>

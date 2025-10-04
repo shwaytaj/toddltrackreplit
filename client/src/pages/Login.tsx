@@ -6,21 +6,53 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SiGoogle, SiFacebook, SiApple } from 'react-icons/si';
 import { Mail } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Login() {
   const [, setLocation] = useLocation();
   const [showEmailForm, setShowEmailForm] = useState(false);
+  const [isSignup, setIsSignup] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleEmailSignup = () => {
-    console.log('Email signup:', { email, password });
-    setLocation('/onboarding');
+  const handleEmailAuth = async () => {
+    if (!email || !password) {
+      toast({
+        title: "Missing fields",
+        description: "Please enter both email and password",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      if (isSignup) {
+        await apiRequest('/api/auth/register', 'POST', { email, password });
+        setLocation('/onboarding');
+      } else {
+        await apiRequest('/api/auth/login', 'POST', { email, password });
+        setLocation('/home');
+      }
+    } catch (error) {
+      toast({
+        title: isSignup ? "Signup failed" : "Login failed",
+        description: error instanceof Error ? error.message : isSignup ? "Failed to create account" : "Invalid credentials",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSocialSignup = (provider: string) => {
-    console.log(`${provider} signup clicked`);
-    setLocation('/onboarding');
+    toast({
+      title: "Coming soon",
+      description: `${provider} signup will be available soon`,
+    });
   };
 
   if (showEmailForm) {
@@ -31,7 +63,7 @@ export default function Login() {
             <Logo />
           </div>
 
-          <h1 className="text-2xl font-semibold mb-8">Create your account</h1>
+          <h1 className="text-2xl font-semibold mb-8">{isSignup ? 'Create your account' : 'Welcome back'}</h1>
 
           <div className="space-y-6">
             <div className="space-y-2">
@@ -59,10 +91,20 @@ export default function Login() {
             <Button
               className="w-full rounded-full bg-[#2C3E50] hover:bg-[#2C3E50]/90"
               size="lg"
-              onClick={handleEmailSignup}
+              onClick={handleEmailAuth}
+              disabled={isLoading}
               data-testid="button-create-account"
             >
-              Create your account
+              {isLoading ? (isSignup ? "Creating account..." : "Signing in...") : (isSignup ? "Create your account" : "Sign in")}
+            </Button>
+
+            <Button
+              variant="ghost"
+              className="w-full"
+              onClick={() => setIsSignup(!isSignup)}
+              data-testid="button-toggle-mode"
+            >
+              {isSignup ? "Already have an account? Sign in" : "Need an account? Sign up"}
             </Button>
 
             <Button
@@ -71,7 +113,7 @@ export default function Login() {
               onClick={() => setShowEmailForm(false)}
               data-testid="button-back"
             >
-              Back to sign up options
+              Back to options
             </Button>
           </div>
         </div>
