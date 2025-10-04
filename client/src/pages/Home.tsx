@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ChildSelector from '@/components/ChildSelector';
 import HighlightCard from '@/components/HighlightCard';
@@ -9,7 +9,44 @@ import { Button } from '@/components/ui/button';
 import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { useUser } from '@/hooks/use-user';
-import type { Child } from '@shared/schema';
+import type { Child, Milestone, ChildMilestone, GrowthMetric } from '@shared/schema';
+
+function calculateAge(birthDate: Date) {
+  const today = new Date();
+  const birth = new Date(birthDate);
+  
+  let months = (today.getFullYear() - birth.getFullYear()) * 12;
+  months += today.getMonth() - birth.getMonth();
+  
+  const dayDiff = today.getDate() - birth.getDate();
+  let days = dayDiff;
+  
+  if (dayDiff < 0) {
+    months--;
+    const daysInPrevMonth = new Date(today.getFullYear(), today.getMonth(), 0).getDate();
+    days = daysInPrevMonth + dayDiff;
+  }
+  
+  return { months, days: Math.max(0, days) };
+}
+
+function getAgeRange(months: number): { min: number; max: number; label: string } {
+  if (months < 6) return { min: 0, max: 6, label: '0 - 6 month' };
+  if (months < 12) return { min: 6, max: 12, label: '6 - 12 month' };
+  if (months < 18) return { min: 12, max: 18, label: '12 - 18 month' };
+  if (months < 24) return { min: 18, max: 24, label: '18 - 24 month' };
+  if (months < 30) return { min: 24, max: 30, label: '24 - 30 month' };
+  if (months < 36) return { min: 30, max: 36, label: '30 - 36 month' };
+  return { min: 36, max: 48, label: '36 - 48 month' };
+}
+
+const categoryColors: Record<string, string> = {
+  'Gross motor': 'bg-purple-100 dark:bg-purple-900/20',
+  'Fine motor': 'bg-indigo-100 dark:bg-indigo-900/20',
+  'Communication': 'bg-green-100 dark:bg-green-900/20',
+  'Social & Emotional': 'bg-amber-100 dark:bg-amber-900/20',
+  'Cognitive': 'bg-blue-100 dark:bg-blue-900/20',
+};
 
 export default function Home() {
   const [, setLocation] = useLocation();
@@ -35,11 +72,78 @@ export default function Home() {
     }
   }, [user, userLoading, setLocation]);
 
+  const selectedChild = useMemo(() => 
+    children.find(c => c.id === activeChild),
+    [children, activeChild]
+  );
+
+  const childAge = useMemo(() => 
+    selectedChild ? calculateAge(new Date(selectedChild.birthDate)) : null,
+    [selectedChild]
+  );
+
+  const ageRange = useMemo(() => 
+    childAge ? getAgeRange(childAge.months) : null,
+    [childAge]
+  );
+
+  const { data: milestones = [] } = useQuery<Milestone[]>({
+    queryKey: ['/api/milestones/age-range', ageRange?.min, ageRange?.max],
+    enabled: !!ageRange,
+  });
+
+  const { data: childMilestones = [] } = useQuery<ChildMilestone[]>({
+    queryKey: ['/api/children', activeChild, 'milestones'],
+    enabled: !!activeChild,
+  });
+
+  const { data: growthMetrics = [] } = useQuery<GrowthMetric[]>({
+    queryKey: ['/api/children', activeChild, 'growth-metrics'],
+    enabled: !!activeChild,
+  });
+
+  const achievedMilestoneIds = new Set(childMilestones.map(cm => cm.milestoneId));
+
+  const latestMetrics = useMemo(() => {
+    const weight = growthMetrics
+      .filter(m => m.type === 'weight')
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+    
+    const height = growthMetrics
+      .filter(m => m.type === 'height')
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+    
+    const head = growthMetrics
+      .filter(m => m.type === 'head_circumference')
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+    
+    return { weight, height, head };
+  }, [growthMetrics]);
+
   const handleNavigation = (page: 'home' | 'milestones' | 'profile') => {
     setActiveNav(page);
     if (page === 'milestones') setLocation('/milestones');
     if (page === 'profile') setLocation('/profile');
   };
+
+  if (childrenLoading || !selectedChild || !childAge) {
+    return (
+      <div className="min-h-screen bg-background pb-20">
+        <div className="p-4 space-y-6 max-w-2xl mx-auto">
+          <div className="h-10 bg-muted animate-pulse rounded-full w-32" />
+          <div className="h-20 bg-muted animate-pulse rounded" />
+        </div>
+        <BottomNav active={activeNav} onNavigate={handleNavigation} />
+      </div>
+    );
+  }
+
+  const firstName = selectedChild.name.split(' ')[0];
+  const pronoun = selectedChild.gender === 'female' ? 'She' : selectedChild.gender === 'male' ? 'He' : 'They';
+
+  const achievedCount = childMilestones.length;
+  const totalInRange = milestones.length;
+  const notAchievedMilestones = milestones.filter(m => !achievedMilestoneIds.has(m.id));
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -52,122 +156,122 @@ export default function Home() {
           />
           <Avatar className="w-10 h-10">
             <AvatarImage src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop" />
-            <AvatarFallback>R</AvatarFallback>
+            <AvatarFallback>{user?.firstName?.[0] || user?.email?.[0] || 'U'}</AvatarFallback>
           </Avatar>
         </div>
 
         <div>
-          <h1 className="text-3xl font-bold mb-2">Overview</h1>
-          <p className="text-muted-foreground">Arya is 21 months & 15 days!</p>
+          <h1 className="text-3xl font-bold mb-2" data-testid="heading-overview">Overview</h1>
+          <p className="text-muted-foreground" data-testid="text-child-age">
+            {firstName} is {childAge.months} {childAge.months === 1 ? 'month' : 'months'}
+            {childAge.days > 0 && ` & ${childAge.days} ${childAge.days === 1 ? 'day' : 'days'}`}!
+          </p>
         </div>
 
-        <div>
-          <h2 className="font-semibold mb-3">Highlights</h2>
-          <div className="space-y-3">
-            <HighlightCard
-              type="achievement"
-              title="Woohoo! Arya is a trooper."
-              description="She started walking last week. Her walk may seem wobbly now but she will be walking more stably and even running!"
-            />
-            <HighlightCard
-              type="alert"
-              title="Arya is not talking yet."
-              description="Try some of our guides and if you're still worried contact a GP or Public Health Nurse. Ask for a development review."
-            />
+        {achievedCount > 0 || notAchievedMilestones.length > 0 ? (
+          <div>
+            <h2 className="font-semibold mb-3">Highlights</h2>
+            <div className="space-y-3">
+              {achievedCount > 0 && (
+                <HighlightCard
+                  type="achievement"
+                  title={`Great progress! ${firstName} has achieved ${achievedCount} ${achievedCount === 1 ? 'milestone' : 'milestones'}.`}
+                  description={`${pronoun} ${achievedCount === 1 ? 'is' : 'are'} developing well. Keep up the great work!`}
+                />
+              )}
+              
+              {notAchievedMilestones.length > 0 && notAchievedMilestones.slice(0, 1).map(milestone => (
+                <HighlightCard
+                  key={milestone.id}
+                  type="alert"
+                  title={`${firstName} hasn't achieved "${milestone.title}" yet.`}
+                  description={`This milestone is typically achieved between ${milestone.ageRangeMonthsMin}-${milestone.ageRangeMonthsMax} months. Check our guides for activities to help.`}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        ) : null}
 
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold">20 - 26 month Milestones</h2>
-            <Button variant="ghost" size="sm" data-testid="button-view-all-milestones">
-              View all →
-            </Button>
+        {milestones.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold">{ageRange?.label} Milestones</h2>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                data-testid="button-view-all-milestones"
+                onClick={() => setLocation('/milestones')}
+              >
+                View all →
+              </Button>
+            </div>
+            <h3 className="text-sm font-medium mb-2">Developmental</h3>
+            <div className="grid grid-cols-3 gap-3">
+              {milestones.slice(0, 3).map(milestone => (
+                <MilestoneCard
+                  key={milestone.id}
+                  title={milestone.title}
+                  category={milestone.category}
+                  categoryColor={categoryColors[milestone.category] || 'bg-gray-100 dark:bg-gray-900/20'}
+                  achieved={achievedMilestoneIds.has(milestone.id)}
+                  onClick={() => setLocation(`/milestone/${milestone.id}`)}
+                  data-testid={`card-milestone-${milestone.id}`}
+                />
+              ))}
+            </div>
           </div>
-          <h3 className="text-sm font-medium mb-2">Developmental</h3>
-          <div className="grid grid-cols-3 gap-3">
-            <MilestoneCard
-              title="Jump in place"
-              category="Gross motor"
-              categoryColor="bg-purple-100 dark:bg-purple-900/20"
-              onClick={() => setLocation('/milestone/jump-in-place')}
-            />
-            <MilestoneCard
-              title="2 to 3 word sentences"
-              category="Communication"
-              categoryColor="bg-green-100 dark:bg-green-900/20"
-              achieved
-              onClick={() => setLocation('/milestone/2-3-word-sentences')}
-            />
-            <MilestoneCard
-              title="Match pictures & objects"
-              category="Social & Emotional"
-              categoryColor="bg-amber-100 dark:bg-amber-900/20"
-              onClick={() => setLocation('/milestone/match-pictures-objects')}
-            />
-          </div>
-        </div>
+        )}
 
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold">Growth</h2>
-            <Button variant="ghost" size="sm" data-testid="button-view-growth-details">
-              View details →
-            </Button>
+        {(latestMetrics.weight || latestMetrics.height || latestMetrics.head) && (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold">Growth</h2>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                data-testid="button-view-growth-details"
+                onClick={() => setLocation('/growth/weight')}
+              >
+                View details →
+              </Button>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {latestMetrics.weight && (
+                <GrowthMetricCard
+                  type="weight"
+                  value={latestMetrics.weight.value.toString()}
+                  unit="kg"
+                  percentile={latestMetrics.weight.percentile || 0}
+                  color="bg-blue-50 dark:bg-blue-950/20"
+                  onClick={() => setLocation('/growth/weight')}
+                  data-testid="card-growth-weight"
+                />
+              )}
+              {latestMetrics.height && (
+                <GrowthMetricCard
+                  type="height"
+                  value={latestMetrics.height.value.toString()}
+                  unit="cm"
+                  percentile={latestMetrics.height.percentile || 0}
+                  color="bg-amber-50 dark:bg-amber-950/20"
+                  onClick={() => setLocation('/growth/height')}
+                  data-testid="card-growth-height"
+                />
+              )}
+              {latestMetrics.head && (
+                <GrowthMetricCard
+                  type="head"
+                  value={latestMetrics.head.value.toString()}
+                  unit="cm"
+                  percentile={latestMetrics.head.percentile || 0}
+                  color="bg-teal-50 dark:bg-teal-950/20"
+                  onClick={() => setLocation('/growth/head')}
+                  data-testid="card-growth-head"
+                />
+              )}
+            </div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            <GrowthMetricCard
-              type="weight"
-              value="8.8"
-              unit="kgs"
-              percentile={3}
-              color="bg-blue-50 dark:bg-blue-950/20"
-              onClick={() => setLocation('/growth/weight')}
-            />
-            <GrowthMetricCard
-              type="height"
-              value="76"
-              unit="cm"
-              percentile={1}
-              color="bg-amber-50 dark:bg-amber-950/20"
-              onClick={() => setLocation('/growth/height')}
-            />
-            <GrowthMetricCard
-              type="head"
-              value="45"
-              unit="cm"
-              percentile={4}
-              color="bg-teal-50 dark:bg-teal-950/20"
-              onClick={() => setLocation('/growth/head')}
-            />
-          </div>
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold">Teeth</h2>
-            <Button variant="ghost" size="sm" data-testid="button-view-teeth">
-              View all →
-            </Button>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            <MilestoneCard
-              title="Lateral Incisors"
-              category=""
-              categoryColor="bg-pink-50 dark:bg-pink-900/20"
-            />
-            <MilestoneCard
-              title="First Molars"
-              category=""
-              categoryColor="bg-pink-50 dark:bg-pink-900/20"
-            />
-            <MilestoneCard
-              title="Canines"
-              category=""
-              categoryColor="bg-pink-50 dark:bg-pink-900/20"
-            />
-          </div>
-        </div>
+        )}
       </div>
 
       <BottomNav active={activeNav} onNavigate={handleNavigation} />
