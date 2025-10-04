@@ -45,6 +45,7 @@ export interface IStorage {
   createMilestone(milestone: InsertMilestone): Promise<Milestone>;
 
   // Child milestone operations
+  getChildMilestoneById(id: string): Promise<ChildMilestone | undefined>;
   getChildMilestone(childId: string, milestoneId: string): Promise<ChildMilestone | undefined>;
   getChildMilestones(childId: string): Promise<ChildMilestone[]>;
   createChildMilestone(childMilestone: InsertChildMilestone): Promise<ChildMilestone>;
@@ -55,6 +56,7 @@ export interface IStorage {
   createGrowthMetric(metric: InsertGrowthMetric): Promise<GrowthMetric>;
 
   // Teeth operations
+  getTooth(id: string): Promise<Tooth | undefined>;
   getTeeth(childId: string): Promise<Tooth[]>;
   createTooth(tooth: InsertTooth): Promise<Tooth>;
   updateTooth(id: string, data: Partial<Tooth>): Promise<Tooth | undefined>;
@@ -151,6 +153,11 @@ export class DbStorage implements IStorage {
   }
 
   // Child milestone operations
+  async getChildMilestoneById(id: string): Promise<ChildMilestone | undefined> {
+    const result = await this.db.select().from(childMilestones).where(eq(childMilestones.id, id));
+    return result[0];
+  }
+
   async getChildMilestone(childId: string, milestoneId: string): Promise<ChildMilestone | undefined> {
     const result = await this.db
       .select()
@@ -195,6 +202,11 @@ export class DbStorage implements IStorage {
   }
 
   // Teeth operations
+  async getTooth(id: string): Promise<Tooth | undefined> {
+    const result = await this.db.select().from(teeth).where(eq(teeth.id, id));
+    return result[0];
+  }
+
   async getTeeth(childId: string): Promise<Tooth[]> {
     return await this.db.select().from(teeth).where(eq(teeth.childId, childId));
   }
