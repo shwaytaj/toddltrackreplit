@@ -36,8 +36,8 @@ export default function MilestoneDetail() {
     mutationFn: async () => {
       if (!selectedChild || !milestone) return [];
       const response = await apiRequest(
-        `/api/children/${selectedChild.id}/milestones/${milestone.id}/recommendations`,
-        'POST'
+        'POST',
+        `/api/children/${selectedChild.id}/milestones/${milestone.id}/recommendations`
       );
       const data = await response.json();
       return data;

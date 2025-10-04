@@ -36,10 +36,10 @@ export default function Onboarding() {
       setIsLoading(true);
       try {
         // Update parent's display name
-        await apiRequest('/api/user/profile', 'PATCH', { displayName: parentName });
+        await apiRequest('PATCH', '/api/user/profile', { displayName: parentName });
         
         // Create child profile
-        await apiRequest('/api/children', 'POST', {
+        await apiRequest('POST', '/api/children', {
           name: childName,
           birthDate,
           gender: gender || undefined,

@@ -24,14 +24,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertUserSchema.parse(req.body);
       
-      const existingUser = await storage.getUserByUsername(validatedData.username);
+      const existingUser = await storage.getUserByEmail(validatedData.email);
       if (existingUser) {
-        return res.status(400).json({ error: "Username already exists" });
+        return res.status(400).json({ error: "Email already exists" });
       }
       
       const hashedPassword = await hashPassword(validatedData.password);
       const user = await storage.createUser({ 
-        username: validatedData.username, 
+        email: validatedData.email, 
         password: hashedPassword 
       });
       

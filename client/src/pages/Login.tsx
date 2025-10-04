@@ -31,10 +31,10 @@ export default function Login() {
     setIsLoading(true);
     try {
       if (isSignup) {
-        await apiRequest('/api/auth/register', 'POST', { email, password });
+        await apiRequest('POST', '/api/auth/register', { email, password });
         setLocation('/onboarding');
       } else {
-        await apiRequest('/api/auth/login', 'POST', { email, password });
+        await apiRequest('POST', '/api/auth/login', { email, password });
         setLocation('/home');
       }
     } catch (error) {

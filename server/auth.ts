@@ -5,9 +5,9 @@ import { storage } from "./storage";
 import type { User } from "@shared/schema";
 
 passport.use(
-  new LocalStrategy(async (username, password, done) => {
+  new LocalStrategy({ usernameField: 'email' }, async (email, password, done) => {
     try {
-      const user = await storage.getUserByUsername(username);
+      const user = await storage.getUserByEmail(email);
       if (!user) {
         return done(null, false);
       }
