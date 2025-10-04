@@ -59,7 +59,7 @@ export default function MilestoneDetail() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20">
       <div className="bg-green-100 dark:bg-green-900/20 px-4 py-6 relative">
         <button
           onClick={() => setLocation('/home')}
@@ -68,12 +68,14 @@ export default function MilestoneDetail() {
         >
           <X className="w-5 h-5" />
         </button>
-        <p className="text-sm text-muted-foreground">{milestone.category}</p>
-        <h1 className="text-2xl font-bold mt-1 pr-12">{milestone.title}</h1>
+        <div className="max-w-2xl mx-auto">
+          <p className="text-sm text-muted-foreground">{milestone.category}</p>
+          <h1 className="text-2xl font-bold mt-1 pr-12">{milestone.title}</h1>
+        </div>
       </div>
 
-      <div className="flex-1 px-4 py-4 pb-24">
-        <div className="flex gap-2 mb-4">
+      <div className="p-4 space-y-6 max-w-2xl mx-auto">
+        <div className="flex gap-2">
           <button
             onClick={() => setActiveTab('about')}
             className={`flex-1 px-6 py-2.5 rounded-full font-medium text-sm transition-colors ${
@@ -131,8 +133,8 @@ export default function MilestoneDetail() {
         )}
 
         {activeTab === 'help' && (
-          <div>
-            <div className="flex gap-2 mb-4">
+          <div className="space-y-4">
+            <div className="flex gap-2">
               <button
                 onClick={() => setActiveHelpTab('guide')}
                 className={`flex-1 px-6 py-2.5 rounded-full font-medium text-sm transition-colors ${
