@@ -82,7 +82,9 @@ Preferred communication style: Simple, everyday language.
 ### Authentication & Authorization
 
 **Authentication Flow:**
+- Email-based authentication (migrated from username-based)
 - Passport Local Strategy with bcrypt password hashing (10 rounds)
+- LocalStrategy configured with usernameField: 'email'
 - Session serialization/deserialization by user ID
 - Session stored server-side with configurable secret
 - Secure cookies in production environment
@@ -91,6 +93,11 @@ Preferred communication style: Simple, everyday language.
 - Parent-child relationship verification via parentIds array
 - Session-based user context available on all authenticated routes
 - Query-level access control in storage layer
+
+**Recent Auth Migration (Oct 2025):**
+- Database column renamed: users.username → users.email
+- insertUserSchema updated to use email field
+- All auth routes (register/login) now use email instead of username
 
 ### External Dependencies
 
