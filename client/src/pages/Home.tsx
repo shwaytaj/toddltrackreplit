@@ -5,7 +5,6 @@ import HighlightCard from '@/components/HighlightCard';
 import MilestoneCard from '@/components/MilestoneCard';
 import GrowthMetricCard from '@/components/GrowthMetricCard';
 import BottomNav from '@/components/BottomNav';
-import GrowthDetailModal from '@/components/GrowthDetailModal';
 import { Button } from '@/components/ui/button';
 import { useLocation } from 'wouter';
 
@@ -13,7 +12,6 @@ export default function Home() {
   const [, setLocation] = useLocation();
   const [activeNav, setActiveNav] = useState<'home' | 'milestones' | 'profile'>('home');
   const [activeChild, setActiveChild] = useState('1');
-  const [selectedGrowth, setSelectedGrowth] = useState<any>(null);
 
   //todo: remove mock functionality
   const children = [
@@ -108,14 +106,7 @@ export default function Home() {
               unit="kgs"
               percentile={3}
               color="bg-blue-50 dark:bg-blue-950/20"
-              onClick={() => setSelectedGrowth({
-                type: 'weight',
-                value: '8.8',
-                unit: 'kgs',
-                percentile: 3,
-                lastUpdate: '23rd Aug 2025',
-                trend: 'up 1 centile from last month.'
-              })}
+              onClick={() => setLocation('/growth/weight')}
             />
             <GrowthMetricCard
               type="height"
@@ -123,13 +114,7 @@ export default function Home() {
               unit="cm"
               percentile={1}
               color="bg-amber-50 dark:bg-amber-950/20"
-              onClick={() => setSelectedGrowth({
-                type: 'height',
-                value: '76',
-                unit: 'cm',
-                percentile: 1,
-                lastUpdate: '23rd Aug 2025'
-              })}
+              onClick={() => setLocation('/growth/height')}
             />
             <GrowthMetricCard
               type="head"
@@ -137,13 +122,7 @@ export default function Home() {
               unit="cm"
               percentile={4}
               color="bg-teal-50 dark:bg-teal-950/20"
-              onClick={() => setSelectedGrowth({
-                type: 'head',
-                value: '45',
-                unit: 'cm',
-                percentile: 4,
-                lastUpdate: '23rd Aug 2025'
-              })}
+              onClick={() => setLocation('/growth/head')}
             />
           </div>
         </div>
@@ -176,14 +155,6 @@ export default function Home() {
       </div>
 
       <BottomNav active={activeNav} onNavigate={handleNavigation} />
-
-      {selectedGrowth && (
-        <GrowthDetailModal
-          open={!!selectedGrowth}
-          onClose={() => setSelectedGrowth(null)}
-          metric={selectedGrowth}
-        />
-      )}
     </div>
   );
 }
