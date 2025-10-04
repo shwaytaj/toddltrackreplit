@@ -99,6 +99,13 @@ Preferred communication style: Simple, everyday language.
 - insertUserSchema updated to use email field
 - All auth routes (register/login) now use email instead of username
 
+**Recent Home Page Fixes (Oct 2025):**
+- Fixed Home page to display real child data instead of hardcoded mock data
+- Implemented accurate age calculation handling all edge cases (month-end birthdays, 0-month children)
+- Added proper React Query guards to prevent erroneous API calls before prerequisites ready
+- Age calculation verified working correctly: birthdate → months & days display
+- All data now fetched from backend: child name, age, milestones, growth metrics, achievements
+
 ### External Dependencies
 
 **AI Integration:**
