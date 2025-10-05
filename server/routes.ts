@@ -491,6 +491,59 @@ Provide your response as a JSON array with objects containing "title" and "descr
     }
   });
 
+  // Completed recommendations routes
+  app.get("/api/children/:childId/completed-recommendations", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+    try {
+      const { childId } = req.params;
+      const { milestoneId } = req.query;
+      
+      const completed = await storage.getCompletedRecommendations(
+        childId, 
+        milestoneId as string | undefined
+      );
+      res.json(completed);
+    } catch (error) {
+      console.error("Get completed recommendations error:", error);
+      res.status(500).json({ error: "Failed to get completed recommendations" });
+    }
+  });
+
+  app.post("/api/children/:childId/completed-recommendations", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+    try {
+      const { childId } = req.params;
+      const { milestoneId, recommendationTitle } = req.body;
+
+      const completed = await storage.createCompletedRecommendation({
+        childId,
+        milestoneId,
+        recommendationTitle,
+      });
+      res.json(completed);
+    } catch (error) {
+      console.error("Create completed recommendation error:", error);
+      res.status(500).json({ error: "Failed to create completed recommendation" });
+    }
+  });
+
+  app.delete("/api/children/:childId/completed-recommendations", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+    try {
+      const { childId } = req.params;
+      const { milestoneId, recommendationTitle } = req.body;
+
+      await storage.deleteCompletedRecommendation(childId, milestoneId, recommendationTitle);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Delete completed recommendation error:", error);
+      res.status(500).json({ error: "Failed to delete completed recommendation" });
+    }
+  });
+
   // User medical history route
   app.patch("/api/user/medical-history", async (req, res) => {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
