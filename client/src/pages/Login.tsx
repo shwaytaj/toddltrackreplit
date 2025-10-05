@@ -4,8 +4,6 @@ import Logo from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { SiGoogle, SiFacebook, SiApple } from 'react-icons/si';
-import { Mail } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
@@ -58,12 +56,6 @@ export default function Login() {
     }
   };
 
-  const handleSocialSignup = (provider: string) => {
-    toast({
-      title: "Coming soon",
-      description: `${provider} signup will be available soon`,
-    });
-  };
 
   if (showEmailForm) {
     return (
@@ -117,14 +109,6 @@ export default function Login() {
               {isSignup ? "Already have an account? Sign in" : "Need an account? Sign up"}
             </Button>
 
-            <Button
-              variant="ghost"
-              className="w-full"
-              onClick={() => setShowEmailForm(false)}
-              data-testid="button-back"
-            >
-              Back to options
-            </Button>
           </div>
         </div>
       </div>
@@ -134,61 +118,34 @@ export default function Login() {
   return (
     <div className="flex flex-col min-h-screen bg-background p-6">
       <div className="flex-1 flex flex-col max-w-md mx-auto w-full justify-center">
+        <div className="mb-12">
+          <Logo />
+        </div>
+
         <h1 className="text-2xl font-semibold mb-8">Setup your account</h1>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           <Button
-            variant="outline"
-            className="w-full justify-start gap-3 rounded-full py-6"
-            onClick={() => handleSocialSignup('Google')}
-            data-testid="button-signup-google"
-          >
-            <SiGoogle className="w-5 h-5" />
-            Sign up with Google
-          </Button>
-
-          <Button
-            variant="outline"
-            className="w-full justify-start gap-3 rounded-full py-6"
-            onClick={() => handleSocialSignup('Facebook')}
-            data-testid="button-signup-facebook"
-          >
-            <SiFacebook className="w-5 h-5" />
-            Sign up with Facebook
-          </Button>
-
-          <Button
-            variant="outline"
-            className="w-full justify-start gap-3 rounded-full py-6"
-            onClick={() => handleSocialSignup('Apple')}
-            data-testid="button-signup-apple"
-          >
-            <SiApple className="w-5 h-5" />
-            Sign up with Apple
-          </Button>
-
-          <Button
-            variant="outline"
-            className="w-full justify-start gap-3 rounded-full py-6"
+            className="w-full rounded-full bg-[#2C3E50] hover:bg-[#2C3E50]/90"
+            size="lg"
             onClick={() => setShowEmailForm(true)}
             data-testid="button-signup-email"
           >
-            <Mail className="w-5 h-5" />
-            Sign up with Email
+            Create your account
+          </Button>
+
+          <Button
+            variant="ghost"
+            className="w-full"
+            onClick={() => {
+              setIsSignup(false);
+              setShowEmailForm(true);
+            }}
+            data-testid="button-go-to-login"
+          >
+            Already have an account? Sign in
           </Button>
         </div>
-
-        <Button
-          variant="ghost"
-          className="w-full mt-6"
-          onClick={() => {
-            setIsSignup(false);
-            setShowEmailForm(true);
-          }}
-          data-testid="button-go-to-login"
-        >
-          Already have an account? Sign in
-        </Button>
       </div>
     </div>
   );
