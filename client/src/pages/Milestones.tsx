@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import BottomNav from '@/components/BottomNav';
 import MilestoneCard from '@/components/MilestoneCard';
@@ -12,18 +12,73 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useQuery } from '@tanstack/react-query';
-import type { Child, ChildMilestone } from '@shared/schema';
+import type { Child, ChildMilestone, Milestone } from '@shared/schema';
+
+const AGE_RANGES = [
+  { min: 0, max: 6, label: '0 - 6 months' },
+  { min: 6, max: 12, label: '6 - 12 months' },
+  { min: 12, max: 18, label: '12 - 18 months' },
+  { min: 18, max: 24, label: '18 - 24 months' },
+  { min: 24, max: 30, label: '24 - 30 months' },
+  { min: 30, max: 36, label: '30 - 36 months' },
+  { min: 36, max: 48, label: '36 - 48 months' },
+];
+
+const getCategoryColor = (category: string) => {
+  switch (category.toLowerCase()) {
+    case 'gross motor':
+      return 'bg-purple-100 dark:bg-purple-900/20';
+    case 'fine motor':
+      return 'bg-blue-100 dark:bg-blue-900/20';
+    case 'communication':
+    case 'language':
+      return 'bg-green-100 dark:bg-green-900/20';
+    case 'social & emotional':
+    case 'social-emotional':
+      return 'bg-amber-100 dark:bg-amber-900/20';
+    case 'cognitive':
+      return 'bg-pink-100 dark:bg-pink-900/20';
+    default:
+      return 'bg-gray-100 dark:bg-gray-900/20';
+  }
+};
 
 export default function Milestones() {
   const [, setLocation] = useLocation();
   const [activeNav, setActiveNav] = useState<'home' | 'milestones' | 'profile'>('milestones');
-  const [category, setCategory] = useState('developmental');
+  const [selectedRangeIndex, setSelectedRangeIndex] = useState(0);
 
   const { data: children = [] } = useQuery<Child[]>({
     queryKey: ['/api/children'],
   });
 
   const selectedChild = children[0];
+
+  // Calculate child's current age in months and set initial range
+  useEffect(() => {
+    if (selectedChild) {
+      const birthDate = new Date(selectedChild.birthDate);
+      const now = new Date();
+      const ageInMonths = Math.floor((now.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44));
+      
+      // Find the age range that contains the child's current age
+      const rangeIndex = AGE_RANGES.findIndex(range => 
+        ageInMonths >= range.min && ageInMonths < range.max
+      );
+      
+      if (rangeIndex !== -1) {
+        setSelectedRangeIndex(rangeIndex);
+      }
+    }
+  }, [selectedChild]);
+
+  const selectedRange = AGE_RANGES[selectedRangeIndex];
+
+  // Fetch milestones for the selected age range
+  const { data: milestones = [] } = useQuery<Milestone[]>({
+    queryKey: ['/api/milestones/age-range', selectedRange.min, selectedRange.max],
+    enabled: !!selectedRange,
+  });
 
   const { data: childMilestones = [] } = useQuery<ChildMilestone[]>({
     queryKey: ['/api/children', selectedChild?.id, 'milestones'],
@@ -48,116 +103,83 @@ export default function Milestones() {
     if (page === 'profile') setLocation('/profile');
   };
 
+  const handlePrevious = () => {
+    if (selectedRangeIndex > 0) {
+      setSelectedRangeIndex(selectedRangeIndex - 1);
+    }
+  };
+
+  const handleNext = () => {
+    if (selectedRangeIndex < AGE_RANGES.length - 1) {
+      setSelectedRangeIndex(selectedRangeIndex + 1);
+    }
+  };
+
+  // Group milestones by category
+  const milestonesByCategory = useMemo(() => {
+    const grouped: Record<string, Milestone[]> = {};
+    milestones.forEach(milestone => {
+      const category = milestone.category;
+      if (!grouped[category]) {
+        grouped[category] = [];
+      }
+      grouped[category].push(milestone);
+    });
+    return grouped;
+  }, [milestones]);
+
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="p-4 space-y-6 max-w-2xl mx-auto">
         <div className="flex items-center justify-between">
-          <Button variant="ghost" size="sm" data-testid="button-previous-range">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            data-testid="button-previous-range"
+            onClick={handlePrevious}
+            disabled={selectedRangeIndex === 0}
+          >
             <ChevronLeft className="w-4 h-4 mr-1" /> Previous
           </Button>
           <div className="bg-[#2C3E50] text-white px-6 py-2 rounded-full text-sm font-medium">
-            Current: 20 - 26 months
+            Current: {selectedRange.label}
           </div>
-          <Button variant="ghost" size="sm" data-testid="button-next-range">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            data-testid="button-next-range"
+            onClick={handleNext}
+            disabled={selectedRangeIndex === AGE_RANGES.length - 1}
+          >
             Next <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
 
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="w-fit border-none text-2xl font-bold p-0 h-auto" data-testid="select-category">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="developmental">Developmental</SelectItem>
-                <SelectItem value="physical">Physical</SelectItem>
-                <SelectItem value="social">Social & Emotional</SelectItem>
-              </SelectContent>
-            </Select>
-          </h1>
-        </div>
-
-        <div>
-          <h2 className="text-sm font-semibold mb-3 text-muted-foreground">Gross Motor</h2>
-          <div className="grid grid-cols-3 gap-3">
-            <MilestoneCard
-              title="Jump in place"
-              category=""
-              categoryColor="bg-purple-100 dark:bg-purple-900/20"
-              achieved={isMilestoneAchieved('jump-in-place')}
-              onClick={() => setLocation('/milestone/jump-in-place')}
-            />
-            <MilestoneCard
-              title="Kicks a ball"
-              category=""
-              categoryColor="bg-purple-100 dark:bg-purple-900/20"
-              achieved={isMilestoneAchieved('kicks-ball')}
-              onClick={() => setLocation('/milestone/kicks-ball')}
-            />
-            <MilestoneCard
-              title="Throws a ball"
-              category=""
-              categoryColor="bg-purple-100 dark:bg-purple-900/20"
-              achieved={isMilestoneAchieved('throws-ball')}
-              onClick={() => setLocation('/milestone/throws-ball')}
-            />
+        {milestones.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            No milestones available for this age range
           </div>
-        </div>
-
-        <div>
-          <h2 className="text-sm font-semibold mb-3 text-muted-foreground">Communication</h2>
-          <div className="grid grid-cols-3 gap-3">
-            <MilestoneCard
-              title="Say their name"
-              category=""
-              categoryColor="bg-green-100 dark:bg-green-900/20"
-              achieved={isMilestoneAchieved('say-name')}
-              onClick={() => setLocation('/milestone/say-name')}
-            />
-            <MilestoneCard
-              title="2 to 3 word sentences"
-              category=""
-              categoryColor="bg-green-100 dark:bg-green-900/20"
-              achieved={isMilestoneAchieved('2-3-word-sentences')}
-              onClick={() => setLocation('/milestone/2-3-word-sentences')}
-            />
-            <MilestoneCard
-              title="Knows 50 or more words"
-              category=""
-              categoryColor="bg-green-100 dark:bg-green-900/20"
-              achieved={isMilestoneAchieved('knows-50-words')}
-              onClick={() => setLocation('/milestone/knows-50-words')}
-            />
-          </div>
-        </div>
-
-        <div>
-          <h2 className="text-sm font-semibold mb-3 text-muted-foreground">Social & Emotional</h2>
-          <div className="grid grid-cols-3 gap-3">
-            <MilestoneCard
-              title="Points to objects to pictures"
-              category=""
-              categoryColor="bg-amber-100 dark:bg-amber-900/20"
-              achieved={isMilestoneAchieved('points-to-pictures')}
-              onClick={() => setLocation('/milestone/points-to-pictures')}
-            />
-            <MilestoneCard
-              title="Plays with others to please them"
-              category=""
-              categoryColor="bg-amber-100 dark:bg-amber-900/20"
-              achieved={isMilestoneAchieved('plays-with-others')}
-              onClick={() => setLocation('/milestone/plays-with-others')}
-            />
-            <MilestoneCard
-              title="Can look OK separately"
-              category=""
-              categoryColor="bg-amber-100 dark:bg-amber-900/20"
-              achieved={isMilestoneAchieved('look-separately')}
-              onClick={() => setLocation('/milestone/look-separately')}
-            />
-          </div>
-        </div>
+        ) : (
+          <>
+            {Object.entries(milestonesByCategory).map(([category, categoryMilestones]) => (
+              <div key={category}>
+                <h2 className="text-sm font-semibold mb-3 text-muted-foreground">{category}</h2>
+                <div className="grid grid-cols-3 gap-3">
+                  {categoryMilestones.map(milestone => (
+                    <MilestoneCard
+                      key={milestone.id}
+                      title={milestone.title}
+                      category=""
+                      categoryColor={getCategoryColor(milestone.category)}
+                      achieved={isMilestoneAchieved(milestone.id)}
+                      onClick={() => setLocation(`/milestone/${milestone.id}`)}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </>
+        )}
       </div>
 
       <BottomNav active={activeNav} onNavigate={handleNavigation} />
