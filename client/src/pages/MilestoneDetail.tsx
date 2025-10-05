@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import ProductCard from '@/components/ProductCard';
 import BottomNav from '@/components/BottomNav';
-import { X, Check } from 'lucide-react';
+import { X, Check, Lightbulb, AlertTriangle } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import type { Milestone, Child } from '@shared/schema';
@@ -17,8 +17,8 @@ interface AIRecommendation {
 export default function MilestoneDetail() {
   const [, setLocation] = useLocation();
   const [, params] = useRoute('/milestone/:id');
-  const [activeTab, setActiveTab] = useState<'about' | 'help'>('about');
-  const [activeHelpTab, setActiveHelpTab] = useState<'guide' | 'tools'>('guide');
+  const [activeTab, setActiveTab] = useState<'about' | 'action'>('action');
+  const [activeActionTab, setActiveActionTab] = useState<'todo' | 'tools'>('todo');
   const [activeNav, setActiveNav] = useState<'home' | 'milestones' | 'profile'>('milestones');
 
   const { data: children = [] } = useQuery<Child[]>({
@@ -45,10 +45,10 @@ export default function MilestoneDetail() {
   });
 
   useEffect(() => {
-    if (selectedChild && milestone && activeTab === 'help' && activeHelpTab === 'guide') {
+    if (selectedChild && milestone && activeTab === 'action' && activeActionTab === 'todo') {
       fetchRecommendations();
     }
-  }, [selectedChild, milestone, activeTab, activeHelpTab, fetchRecommendations]);
+  }, [selectedChild, milestone, activeTab, activeActionTab, fetchRecommendations]);
 
   const handleNavigation = (page: 'home' | 'milestones' | 'profile') => {
     setActiveNav(page);
@@ -84,6 +84,17 @@ export default function MilestoneDetail() {
       <div className="p-4 space-y-6 max-w-2xl mx-auto">
         <div className="flex gap-2">
           <button
+            onClick={() => setActiveTab('action')}
+            className={`flex-1 px-6 py-2.5 rounded-full font-medium text-sm transition-colors ${
+              activeTab === 'action'
+                ? 'bg-[#2C3E50] text-white'
+                : 'bg-muted text-foreground'
+            }`}
+            data-testid="tab-action"
+          >
+            Action
+          </button>
+          <button
             onClick={() => setActiveTab('about')}
             className={`flex-1 px-6 py-2.5 rounded-full font-medium text-sm transition-colors ${
               activeTab === 'about'
@@ -93,17 +104,6 @@ export default function MilestoneDetail() {
             data-testid="tab-about"
           >
             About
-          </button>
-          <button
-            onClick={() => setActiveTab('help')}
-            className={`flex-1 px-6 py-2.5 rounded-full font-medium text-sm transition-colors ${
-              activeTab === 'help'
-                ? 'bg-[#2C3E50] text-white'
-                : 'bg-muted text-foreground'
-            }`}
-            data-testid="tab-help"
-          >
-            Help
           </button>
         </div>
 
@@ -130,24 +130,24 @@ export default function MilestoneDetail() {
           </div>
         )}
 
-        {activeTab === 'help' && (
+        {activeTab === 'action' && (
           <div className="space-y-4">
             <div className="flex gap-2">
               <button
-                onClick={() => setActiveHelpTab('guide')}
+                onClick={() => setActiveActionTab('todo')}
                 className={`flex-1 px-6 py-2.5 rounded-full font-medium text-sm transition-colors ${
-                  activeHelpTab === 'guide'
+                  activeActionTab === 'todo'
                     ? 'bg-[#2C3E50] text-white'
                     : 'bg-muted text-foreground'
                 }`}
-                data-testid="tab-guide"
+                data-testid="tab-todo"
               >
-                Guide
+                To-do
               </button>
               <button
-                onClick={() => setActiveHelpTab('tools')}
+                onClick={() => setActiveActionTab('tools')}
                 className={`flex-1 px-6 py-2.5 rounded-full font-medium text-sm transition-colors ${
-                  activeHelpTab === 'tools'
+                  activeActionTab === 'tools'
                     ? 'bg-[#2C3E50] text-white'
                     : 'bg-muted text-foreground'
                 }`}
@@ -157,7 +157,7 @@ export default function MilestoneDetail() {
               </button>
             </div>
 
-            {activeHelpTab === 'guide' && (
+            {activeActionTab === 'todo' && (
               <div className="bg-muted/30 rounded-lg px-4 py-5 space-y-4">
                 <div>
                   <h3 className="font-semibold mb-2">How parents can help</h3>
@@ -199,10 +199,45 @@ export default function MilestoneDetail() {
                     </p>
                   )}
                 </div>
+
+                {recommendations && recommendations.length > 0 && (
+                  <>
+                    <div className="border-t border-border pt-4 mt-4">
+                      <div className="bg-blue-50 dark:bg-blue-950/20 rounded-md p-3 space-y-2">
+                        <div className="flex items-start gap-2">
+                          <Lightbulb className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            <span className="font-medium">Want more personalized recommendations?</span> These to-dos are based on the medical history you've provided.
+                          </p>
+                        </div>
+                        {selectedChild && (
+                          <button
+                            onClick={() => setLocation(`/medical-history/${selectedChild.id}`)}
+                            className="text-xs text-primary underline hover:no-underline font-medium ml-6"
+                            data-testid="link-update-medical-history"
+                          >
+                            Update Medical History →
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="border-t border-border pt-4 mt-4">
+                      <div className="bg-amber-50 dark:bg-amber-950/20 rounded-md p-3">
+                        <div className="flex items-start gap-2">
+                          <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            These to-dos are AI-generated suggestions. Please consult your GP or pediatrician if you have any concerns about your child's development.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
-            {activeHelpTab === 'tools' && (
+            {activeActionTab === 'tools' && (
               <div className="bg-muted/30 rounded-lg px-4 py-5">
                 <p className="text-sm text-muted-foreground text-center py-8">
                   Product recommendations coming soon
