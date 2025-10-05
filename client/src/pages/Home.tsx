@@ -120,10 +120,11 @@ export default function Home() {
     const developmental = milestones.filter(m => 
       ['Gross Motor', 'Fine motor', 'Communication', 'Social & Emotional', 'Cognitive'].includes(m.category)
     );
+    const teeth = milestones.filter(m => m.category === 'Teeth');
     const vision = milestones.filter(m => m.category === 'Vision');
     const hearing = milestones.filter(m => m.category === 'Hearing');
     
-    return { developmental, vision, hearing };
+    return { developmental, teeth, vision, hearing };
   }, [milestones]);
 
   const latestMetrics = useMemo(() => {
@@ -300,29 +301,33 @@ export default function Home() {
           </div>
         )}
 
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold">Teeth</h2>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              data-testid="button-view-all-teeth"
-            >
-              View all →
-            </Button>
+        {milestonesByCategory.teeth.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold">Teeth</h2>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                data-testid="button-view-all-teeth"
+                onClick={() => setLocation('/milestones')}
+              >
+                View all →
+              </Button>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {milestonesByCategory.teeth.slice(0, 3).map(milestone => (
+                <div 
+                  key={milestone.id}
+                  className="bg-pink-50 dark:bg-pink-950/20 rounded-lg p-4 min-h-[120px] flex items-center justify-center cursor-pointer hover-elevate active-elevate-2"
+                  onClick={() => setLocation(`/milestone/${milestone.id}`)}
+                  data-testid={`card-teeth-${milestone.id}`}
+                >
+                  <p className="text-sm font-medium text-center">{milestone.title}</p>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-pink-50 dark:bg-pink-950/20 rounded-lg p-4 min-h-[120px] flex items-center justify-center">
-              <p className="text-sm font-medium text-center">Lateral Incisors</p>
-            </div>
-            <div className="bg-pink-50 dark:bg-pink-950/20 rounded-lg p-4 min-h-[120px] flex items-center justify-center">
-              <p className="text-sm font-medium text-center">First Molars</p>
-            </div>
-            <div className="bg-pink-50 dark:bg-pink-950/20 rounded-lg p-4 min-h-[120px] flex items-center justify-center">
-              <p className="text-sm font-medium text-center">Canine</p>
-            </div>
-          </div>
-        </div>
+        )}
 
         {milestonesByCategory.vision.length > 0 && (
           <div>

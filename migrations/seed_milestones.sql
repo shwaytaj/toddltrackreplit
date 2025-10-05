@@ -127,3 +127,51 @@ VALUES
 ('cog-knows-colors-49-60', 'Knows colors', 'Cognitive', 49, 60, 'Can name 4 or more colors', 'Typical by 54-60 months'),
 ('cog-counts-20-49-60', 'Counts to 20', 'Cognitive', 49, 60, 'Can count to 20 or higher', 'Typical by 54-60 months')
 ON CONFLICT (id) DO NOTHING;
+
+-- Teeth milestones based on tooth eruption timeline (AAP/ADA guidelines)
+INSERT INTO milestones (id, title, category, age_range_months_min, age_range_months_max, description, typical_range)
+VALUES
+('teeth-lower-central-incisors', 'Lower Central Incisors', 'Teeth', 6, 10, 'First teeth to appear, usually the two bottom front teeth', 'Typical by 6-10 months'),
+('teeth-upper-central-incisors', 'Upper Central Incisors', 'Teeth', 8, 12, 'Two upper front teeth emerge', 'Typical by 8-12 months'),
+('teeth-upper-lateral-incisors', 'Upper Lateral Incisors', 'Teeth', 9, 13, 'Teeth on either side of the upper front teeth', 'Typical by 9-13 months'),
+('teeth-lower-lateral-incisors', 'Lower Lateral Incisors', 'Teeth', 10, 16, 'Teeth on either side of the lower front teeth', 'Typical by 10-16 months'),
+('teeth-first-molars-upper', 'First Molars (Upper)', 'Teeth', 13, 19, 'First set of back teeth for chewing on top', 'Typical by 13-19 months'),
+('teeth-first-molars-lower', 'First Molars (Lower)', 'Teeth', 14, 18, 'First set of back teeth for chewing on bottom', 'Typical by 14-18 months'),
+('teeth-canines-upper', 'Canines (Upper)', 'Teeth', 16, 22, 'Pointed teeth next to the lateral incisors on top', 'Typical by 16-22 months'),
+('teeth-canines-lower', 'Canines (Lower)', 'Teeth', 17, 23, 'Pointed teeth next to the lateral incisors on bottom', 'Typical by 17-23 months'),
+('teeth-second-molars-lower', 'Second Molars (Lower)', 'Teeth', 23, 31, 'Second set of back molars on bottom', 'Typical by 23-31 months'),
+('teeth-second-molars-upper', 'Second Molars (Upper)', 'Teeth', 25, 33, 'Second set of back molars on top', 'Typical by 25-33 months')
+ON CONFLICT (id) DO NOTHING;
+
+-- Comprehensive Vision milestones based on AAP visual development guidelines
+INSERT INTO milestones (id, title, category, age_range_months_min, age_range_months_max, description, typical_range)
+VALUES
+('vision-tracks-faces-0-3', 'Focuses on faces', 'Vision', 0, 3, 'Can focus on faces from 8-12 inches away and briefly track them', 'Present from birth'),
+('vision-follows-objects-0-3', 'Follows moving objects', 'Vision', 0, 3, 'Tracks moving objects with eyes from side to side', 'Typical by 2-3 months'),
+('vision-eye-color-4-6', 'Eye color develops', 'Vision', 4, 6, 'True eye color begins to emerge and stabilize', 'Typical by 6 months'),
+('vision-reaches-accurately-4-6', 'Reaches for objects', 'Vision', 4, 6, 'Uses vision to guide hand movements and reach accurately', 'Typical by 5-6 months'),
+('vision-depth-perception-7-12', 'Depth perception', 'Vision', 7, 12, 'Develops ability to judge distances and depth', 'Typical by 9-12 months'),
+('vision-eyes-together-7-12', 'Eyes work together', 'Vision', 7, 12, 'Both eyes work together smoothly and consistently', 'Typical by 10-12 months'),
+('vision-eye-hand-12-24', 'Eye-hand coordination', 'Vision', 12, 24, 'Improved coordination between what they see and hand movements', 'Typical by 18-24 months'),
+('vision-recognizes-objects-12-24', 'Recognizes familiar objects', 'Vision', 12, 24, 'Identifies familiar objects and people from a distance', 'Typical by 18-24 months'),
+('vision-eyes-straight-24-36', 'Eyes are straight', 'Vision', 24, 36, 'Eyes remain straight with no crossing or turning', 'Typical by 30-36 months'),
+('vision-good-depth-36-48', 'Good depth perception', 'Vision', 36, 48, 'Well-developed depth perception for running and climbing', 'Typical by 42-48 months'),
+('vision-identifies-colors-36-48', 'Identifies colors', 'Vision', 36, 48, 'Can name and identify basic colors accurately', 'Typical by 42-48 months')
+ON CONFLICT (id) DO NOTHING;
+
+-- Comprehensive Hearing milestones based on CDC auditory development guidelines  
+INSERT INTO milestones (id, title, category, age_range_months_min, age_range_months_max, description, typical_range)
+VALUES
+('hearing-startles-loud-0-3', 'Startles at loud sounds', 'Hearing', 0, 3, 'Reacts with startle reflex to sudden loud noises', 'Present from birth'),
+('hearing-calms-voice-0-3', 'Calms to familiar voices', 'Hearing', 0, 3, 'Soothes when hearing parent or caregiver voice', 'Typical by 1-3 months'),
+('hearing-turns-to-sounds-4-6', 'Turns toward sounds', 'Hearing', 4, 6, 'Turns head in the direction of voices and sounds', 'Typical by 4-6 months'),
+('hearing-responds-name-4-6', 'Responds to name', 'Hearing', 4, 6, 'Turns or looks when name is called', 'Typical by 6 months'),
+('hearing-understands-no-7-12', 'Understands "no"', 'Hearing', 7, 12, 'Pauses or stops activity when told "no"', 'Typical by 9-12 months'),
+('hearing-responds-music-7-12', 'Responds to music', 'Hearing', 7, 12, 'Shows enjoyment and moves to music or singing', 'Typical by 9-12 months'),
+('hearing-follows-1step-12-24', 'Follows 1-step directions', 'Hearing', 12, 24, 'Can follow simple one-step verbal directions', 'Typical by 18-24 months'),
+('hearing-points-body-parts-12-24', 'Points to body parts', 'Hearing', 12, 24, 'Points to body parts when asked verbally', 'Typical by 18-24 months'),
+('hearing-follows-2step-24-36', 'Follows 2-step directions', 'Hearing', 24, 36, 'Can follow instructions with two steps', 'Typical by 30-36 months'),
+('hearing-spatial-concepts-24-36', 'Understands spatial words', 'Hearing', 24, 36, 'Understands "in", "on", "under" when heard', 'Typical by 30-36 months'),
+('hearing-whispered-speech-36-48', 'Hears whispered speech', 'Hearing', 36, 48, 'Can hear and respond to whispered words', 'Typical by 42-48 months'),
+('hearing-quiet-sounds-36-48', 'Turns to quiet sounds', 'Hearing', 36, 48, 'Consistently turns toward soft sounds', 'Typical by 42-48 months')
+ON CONFLICT (id) DO NOTHING;
