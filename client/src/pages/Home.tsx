@@ -116,19 +116,15 @@ export default function Home() {
     childMilestones.filter(cm => cm.achieved).map(cm => cm.milestoneId)
   );
 
-  const { data: allMilestones = [] } = useQuery<Milestone[]>({
-    queryKey: ['/api/milestones'],
-  });
-
   const milestonesByCategory = useMemo(() => {
-    const developmental = allMilestones.filter(m => 
+    const developmental = milestones.filter(m => 
       ['Gross Motor', 'Fine motor', 'Communication', 'Social & Emotional', 'Cognitive'].includes(m.category)
     );
-    const vision = allMilestones.filter(m => m.category === 'Vision');
-    const hearing = allMilestones.filter(m => m.category === 'Hearing');
+    const vision = milestones.filter(m => m.category === 'Vision');
+    const hearing = milestones.filter(m => m.category === 'Hearing');
     
     return { developmental, vision, hearing };
-  }, [allMilestones]);
+  }, [milestones]);
 
   const latestMetrics = useMemo(() => {
     const weight = growthMetrics
