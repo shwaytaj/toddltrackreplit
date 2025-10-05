@@ -123,6 +123,14 @@ Preferred communication style: Simple, everyday language.
 - Added tooltip "Don't show this" on hover over close button for each recommendation (inline with toy title)
 - Implemented auto-refetch when recommendations are dismissed, with "No more recommendations" placeholder
 - Enhanced Amazon URLs with multiple parameters: category filtering, age-appropriate filtering, review-based sorting
+
+**Milestone Data Seeding (Oct 2025):**
+- Comprehensive developmental milestone data added for all age ranges (0-60 months)
+- Age ranges: 0-3, 4-6, 7-9, 10-12, 13-18, 19-24, 25-30, 31-36, 37-49, 49-60 months
+- Categories: Gross Motor (23 milestones), Fine Motor (16), Communication (18), Social & Emotional (15), Cognitive (12), Vision (4), Hearing (4)
+- Total: 92 developmental milestones based on CDC and AAP guidelines
+- Frontend age-range logic updated to properly handle children 48-60+ months
+- Milestones use overlapping ranges to ensure all child ages have appropriate guidance
 - Dismissed toys filtered using case-insensitive matching
 - **Caching Implementation**: Created `aiToyRecommendations` table to cache AI-generated toy recommendations
 - Cached recommendations are reused until medical history is updated, significantly reducing load times
