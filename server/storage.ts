@@ -19,6 +19,8 @@ import {
   type InsertTooth,
   type AiRecommendation,
   type InsertAiRecommendation,
+  type CompletedRecommendation,
+  type InsertCompletedRecommendation,
   users,
   children,
   milestones,
@@ -26,6 +28,7 @@ import {
   growthMetrics,
   teeth,
   aiRecommendations,
+  completedRecommendations,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -67,6 +70,11 @@ export interface IStorage {
   // AI recommendation operations
   getAiRecommendation(childId: string, milestoneId: string): Promise<AiRecommendation | undefined>;
   createAiRecommendation(recommendation: InsertAiRecommendation): Promise<AiRecommendation>;
+
+  // Completed recommendation operations
+  getCompletedRecommendations(childId: string, milestoneId?: string): Promise<CompletedRecommendation[]>;
+  createCompletedRecommendation(completed: InsertCompletedRecommendation): Promise<CompletedRecommendation>;
+  deleteCompletedRecommendation(childId: string, milestoneId: string, recommendationTitle: string): Promise<void>;
 }
 
 export class DbStorage implements IStorage {
@@ -246,6 +254,42 @@ export class DbStorage implements IStorage {
   async createAiRecommendation(recommendation: InsertAiRecommendation): Promise<AiRecommendation> {
     const result = await this.db.insert(aiRecommendations).values(recommendation as any).returning();
     return result[0];
+  }
+
+  // Completed recommendation operations
+  async getCompletedRecommendations(childId: string, milestoneId?: string): Promise<CompletedRecommendation[]> {
+    if (milestoneId) {
+      return await this.db
+        .select()
+        .from(completedRecommendations)
+        .where(
+          and(
+            eq(completedRecommendations.childId, childId),
+            eq(completedRecommendations.milestoneId, milestoneId)
+          )
+        );
+    }
+    return await this.db
+      .select()
+      .from(completedRecommendations)
+      .where(eq(completedRecommendations.childId, childId));
+  }
+
+  async createCompletedRecommendation(completed: InsertCompletedRecommendation): Promise<CompletedRecommendation> {
+    const result = await this.db.insert(completedRecommendations).values(completed).returning();
+    return result[0];
+  }
+
+  async deleteCompletedRecommendation(childId: string, milestoneId: string, recommendationTitle: string): Promise<void> {
+    await this.db
+      .delete(completedRecommendations)
+      .where(
+        and(
+          eq(completedRecommendations.childId, childId),
+          eq(completedRecommendations.milestoneId, milestoneId),
+          eq(completedRecommendations.recommendationTitle, recommendationTitle)
+        )
+      );
   }
 }
 
