@@ -528,9 +528,13 @@ Provide your response as a JSON array with objects containing "title" and "descr
         return res.status(404).json({ error: "Required data not found" });
       }
 
-      // Generate toy recommendations with Claude
+      // Get dismissed toys for this child and milestone
+      const dismissedToys = await storage.getDismissedToyRecommendations(childId, milestoneId);
+      const dismissedToyNames = new Set(dismissedToys.map(dt => dt.toyName.toLowerCase()));
+
+      // Generate toy recommendations with Claude (more recommendations now)
       const childAge = Math.floor((new Date().getTime() - new Date(child.birthDate).getTime()) / (1000 * 60 * 60 * 24 * 30));
-      const prompt = `You are a pediatric development expert and toy specialist. Based on the following information, recommend 3-5 specific toys or tools that parents can use to help their child achieve this milestone.
+      const prompt = `You are a pediatric development expert and toy specialist. Based on the following information, recommend 10-15 specific toys or tools that parents can use to help their child achieve this milestone.
 
 Child Information:
 - Age: ${childAge} months
@@ -583,6 +587,45 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
             if (!isValid || toyRecommendations.length === 0) {
               return res.status(500).json({ error: "Invalid recommendations structure" });
             }
+            
+            // Fetch images for each toy using stock_image_tool
+            const toysWithImages = await Promise.all(
+              toyRecommendations.map(async (toy) => {
+                try {
+                  const imageResponse = await fetch('http://localhost:5000/__replco/api/stock-images', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      description: toy.name,
+                      limit: 1,
+                      orientation: 'horizontal'
+                    })
+                  });
+                  
+                  if (imageResponse.ok) {
+                    const imageData = await imageResponse.json();
+                    return {
+                      ...toy,
+                      imageUrl: imageData.images?.[0]?.url || null
+                    };
+                  }
+                  return { ...toy, imageUrl: null };
+                } catch (imgError) {
+                  console.error(`Failed to fetch image for ${toy.name}:`, imgError);
+                  return { ...toy, imageUrl: null };
+                }
+              })
+            );
+            
+            toyRecommendations = toysWithImages;
+            
+            // Filter out dismissed toys
+            toyRecommendations = toyRecommendations.filter(toy => 
+              !dismissedToyNames.has(toy.name.toLowerCase())
+            );
+            
+            // Return only the first 5 non-dismissed toys
+            toyRecommendations = toyRecommendations.slice(0, 5);
           } catch (parseError) {
             console.error("Failed to parse toy recommendations:", parseError);
             return res.status(500).json({ error: "Failed to parse recommendations" });
@@ -598,6 +641,45 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
     } catch (error) {
       console.error("Toy recommendation error:", error);
       res.status(500).json({ error: "Failed to generate toy recommendations" });
+    }
+  });
+
+  // Dismiss toy recommendation route
+  app.post("/api/children/:childId/milestones/:milestoneId/dismiss-toy", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+    try {
+      const paramsSchema = z.object({
+        childId: z.string().uuid(),
+        milestoneId: z.string(),
+      });
+      
+      const bodySchema = z.object({
+        toyName: z.string(),
+      });
+
+      const { childId, milestoneId } = paramsSchema.parse(req.params);
+      const { toyName } = bodySchema.parse(req.body);
+
+      // Verify child ownership
+      const child = await storage.getChild(childId);
+      if (!child) return res.status(404).json({ error: "Child not found" });
+      
+      if (!child.parentIds.includes(req.user.id)) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+
+      // Create dismissed toy record
+      const dismissed = await storage.createDismissedToyRecommendation({
+        childId,
+        milestoneId,
+        toyName,
+      });
+
+      res.json(dismissed);
+    } catch (error) {
+      console.error("Dismiss toy error:", error);
+      res.status(500).json({ error: "Failed to dismiss toy recommendation" });
     }
   });
 

@@ -99,6 +99,14 @@ export const completedRecommendations = pgTable("completed_recommendations", {
   completedAt: timestamp("completed_at").defaultNow(),
 });
 
+export const dismissedToyRecommendations = pgTable("dismissed_toy_recommendations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  childId: varchar("child_id").notNull().references(() => children.id, { onDelete: "cascade" }),
+  milestoneId: varchar("milestone_id").notNull().references(() => milestones.id, { onDelete: "cascade" }),
+  toyName: text("toy_name").notNull(),
+  dismissedAt: timestamp("dismissed_at").defaultNow(),
+});
+
 // Insert schemas and types
 export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
@@ -137,6 +145,11 @@ export const insertCompletedRecommendationSchema = createInsertSchema(completedR
   completedAt: true,
 });
 
+export const insertDismissedToyRecommendationSchema = createInsertSchema(dismissedToyRecommendations).omit({
+  id: true,
+  dismissedAt: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -161,3 +174,6 @@ export type AiRecommendation = typeof aiRecommendations.$inferSelect;
 
 export type InsertCompletedRecommendation = z.infer<typeof insertCompletedRecommendationSchema>;
 export type CompletedRecommendation = typeof completedRecommendations.$inferSelect;
+
+export type InsertDismissedToyRecommendation = z.infer<typeof insertDismissedToyRecommendationSchema>;
+export type DismissedToyRecommendation = typeof dismissedToyRecommendations.$inferSelect;

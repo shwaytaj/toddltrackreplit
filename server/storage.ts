@@ -21,6 +21,8 @@ import {
   type InsertAiRecommendation,
   type CompletedRecommendation,
   type InsertCompletedRecommendation,
+  type DismissedToyRecommendation,
+  type InsertDismissedToyRecommendation,
   users,
   children,
   milestones,
@@ -29,6 +31,7 @@ import {
   teeth,
   aiRecommendations,
   completedRecommendations,
+  dismissedToyRecommendations,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -75,6 +78,10 @@ export interface IStorage {
   getCompletedRecommendations(childId: string, milestoneId?: string): Promise<CompletedRecommendation[]>;
   createCompletedRecommendation(completed: InsertCompletedRecommendation): Promise<CompletedRecommendation>;
   deleteCompletedRecommendation(childId: string, milestoneId: string, recommendationTitle: string): Promise<void>;
+
+  // Dismissed toy recommendation operations
+  getDismissedToyRecommendations(childId: string, milestoneId: string): Promise<DismissedToyRecommendation[]>;
+  createDismissedToyRecommendation(dismissed: InsertDismissedToyRecommendation): Promise<DismissedToyRecommendation>;
 }
 
 export class DbStorage implements IStorage {
@@ -290,6 +297,24 @@ export class DbStorage implements IStorage {
           eq(completedRecommendations.recommendationTitle, recommendationTitle)
         )
       );
+  }
+
+  // Dismissed toy recommendation operations
+  async getDismissedToyRecommendations(childId: string, milestoneId: string): Promise<DismissedToyRecommendation[]> {
+    return await this.db
+      .select()
+      .from(dismissedToyRecommendations)
+      .where(
+        and(
+          eq(dismissedToyRecommendations.childId, childId),
+          eq(dismissedToyRecommendations.milestoneId, milestoneId)
+        )
+      );
+  }
+
+  async createDismissedToyRecommendation(dismissed: InsertDismissedToyRecommendation): Promise<DismissedToyRecommendation> {
+    const result = await this.db.insert(dismissedToyRecommendations).values(dismissed).returning();
+    return result[0];
   }
 }
 

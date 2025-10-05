@@ -5,7 +5,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import ProductCard from '@/components/ProductCard';
 import BottomNav from '@/components/BottomNav';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { X, Check, Lightbulb, AlertTriangle, Loader2 } from 'lucide-react';
+import { SiAmazon, SiTarget, SiWalmart } from 'react-icons/si';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import type { Milestone, Child, ChildMilestone, CompletedRecommendation } from '@shared/schema';
@@ -20,6 +22,7 @@ interface ToyRecommendation {
   description: string;
   howToUse: string;
   searchQuery: string;
+  imageUrl?: string | null;
 }
 
 interface MilestoneWithRecommendations extends Milestone {
@@ -175,6 +178,22 @@ export default function MilestoneDetail() {
     },
     enabled: !!selectedChild && !!milestone && activeTab === 'action' && activeActionTab === 'tools',
     staleTime: 1000 * 60 * 60, // Cache for 1 hour
+  });
+
+  // Dismiss toy recommendation
+  const dismissToy = useMutation({
+    mutationFn: async (toyName: string) => {
+      if (!selectedChild || !milestone) return;
+      await apiRequest('POST', `/api/children/${selectedChild.id}/milestones/${milestone.id}/dismiss-toy`, {
+        toyName,
+      });
+    },
+    onSuccess: () => {
+      // Refetch toy recommendations to get new ones
+      queryClient.invalidateQueries({ 
+        queryKey: ['/api/children', selectedChild?.id, 'milestones', milestone?.id, 'toy-recommendations'] 
+      });
+    },
   });
 
   // Toggle recommendation completion
@@ -569,51 +588,79 @@ export default function MilestoneDetail() {
                     ) : toyRecommendations && toyRecommendations.length > 0 ? (
                       <div className="space-y-4">
                         {toyRecommendations.map((toy, idx) => (
-                          <div key={idx} className="border border-border rounded-lg p-4 space-y-3" data-testid={`toy-card-${idx}`}>
-                            <h4 className="font-semibold text-base">{toy.name}</h4>
-                            <p className="text-sm text-muted-foreground leading-relaxed">{toy.description}</p>
-                            <div className="bg-blue-50 dark:bg-blue-950/20 rounded-md p-2">
-                              <p className="text-xs text-muted-foreground">
-                                <span className="font-medium">How to use:</span> {toy.howToUse}
-                              </p>
-                            </div>
-                            <div className="flex flex-wrap gap-2 pt-2">
+                          <div key={idx} className="border border-border rounded-lg overflow-hidden relative" data-testid={`toy-card-${idx}`}>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    onClick={() => dismissToy.mutate(toy.name)}
+                                    className="absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover-elevate active-elevate-2 border border-border"
+                                    data-testid={`button-dismiss-toy-${idx}`}
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Don't show this</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            {toy.imageUrl && (
+                              <img 
+                                src={toy.imageUrl} 
+                                alt={toy.name}
+                                className="w-full h-48 object-cover"
+                              />
+                            )}
+                            <div className="p-4 space-y-3">
+                              <h4 className="font-semibold text-base">{toy.name}</h4>
+                              <p className="text-sm text-muted-foreground leading-relaxed">{toy.description}</p>
+                              <div className="bg-blue-50 dark:bg-blue-950/20 rounded-md p-2">
+                                <p className="text-xs text-muted-foreground">
+                                  <span className="font-medium">How to use:</span> {toy.howToUse}
+                                </p>
+                              </div>
+                              <div className="flex flex-wrap gap-2 pt-2">
                               <a
                                 href={milestone ? buildAmazonUrl(toy.searchQuery, milestone.ageRangeMonthsMin, milestone.ageRangeMonthsMax) : `https://www.amazon.com/s?k=${encodeURIComponent(toy.searchQuery)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover-elevate active-elevate-2"
+                                className="inline-flex items-center justify-center w-10 h-10 rounded-md bg-[#FF9900] text-white hover-elevate active-elevate-2"
                                 data-testid={`link-amazon-${idx}`}
+                                title="Search on Amazon"
                               >
-                                Search on Amazon
+                                <SiAmazon className="w-5 h-5" />
                               </a>
                               <a
                                 href={`https://www.target.com/s?searchTerm=${encodeURIComponent(toy.searchQuery)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md bg-red-600 text-white hover-elevate active-elevate-2"
+                                className="inline-flex items-center justify-center w-10 h-10 rounded-md bg-[#CC0000] text-white hover-elevate active-elevate-2"
                                 data-testid={`link-target-${idx}`}
+                                title="Search on Target"
                               >
-                                Search on Target
+                                <SiTarget className="w-5 h-5" />
                               </a>
                               <a
                                 href={`https://www.walmart.com/search?q=${encodeURIComponent(toy.searchQuery)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md bg-blue-600 text-white hover-elevate active-elevate-2"
+                                className="inline-flex items-center justify-center w-10 h-10 rounded-md bg-[#0071CE] text-white hover-elevate active-elevate-2"
                                 data-testid={`link-walmart-${idx}`}
+                                title="Search on Walmart"
                               >
-                                Search on Walmart
+                                <SiWalmart className="w-5 h-5" />
                               </a>
+                              </div>
                             </div>
                           </div>
                         ))}
                       </div>
-                    ) : (
+                    ) : !loadingToyRecommendations && (!toyRecommendations || toyRecommendations.length === 0) ? (
                       <div className="text-center py-8 text-muted-foreground">
-                        No toy recommendations available
+                        No more recommendations
                       </div>
-                    )}
+                    ) : null}
                     
                     {toyRecommendations && toyRecommendations.length > 0 && (
                       <div className="border-t border-border pt-4 mt-4">
