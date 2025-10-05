@@ -38,11 +38,21 @@ export default function Login() {
         setLocation('/home');
       }
     } catch (error) {
-      toast({
-        title: isSignup ? "Signup failed" : "Login failed",
-        description: error instanceof Error ? error.message : isSignup ? "Failed to create account" : "Invalid credentials",
-        variant: "destructive",
-      });
+      const errorMessage = error instanceof Error ? error.message : '';
+      
+      if (isSignup && errorMessage.includes('Email already exists')) {
+        setIsSignup(false);
+        toast({
+          title: "Account exists",
+          description: "You already have an account. Please sign in instead.",
+        });
+      } else {
+        toast({
+          title: isSignup ? "Signup failed" : "Login failed",
+          description: errorMessage || (isSignup ? "Failed to create account" : "Invalid credentials"),
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
