@@ -26,6 +26,47 @@ interface MilestoneWithRecommendations extends Milestone {
   recommendations: AIRecommendation[];
 }
 
+// Helper function to build enhanced Amazon URL with filters
+function buildAmazonUrl(searchQuery: string, ageRangeMonthsMin: number, ageRangeMonthsMax: number): string {
+  const baseUrl = 'https://www.amazon.com/s';
+  const params = new URLSearchParams();
+  
+  // Add search query
+  params.append('k', searchQuery);
+  
+  // Add Toys & Games category
+  params.append('rh', 'n:165793011');
+  
+  // Map age range to Amazon age filter IDs
+  const avgAgeMonths = (ageRangeMonthsMin + ageRangeMonthsMax) / 2;
+  let ageRangeFilter = '';
+  
+  if (avgAgeMonths <= 6) {
+    ageRangeFilter = 'p_n_age_range:2590655011'; // 0-6 months
+  } else if (avgAgeMonths <= 12) {
+    ageRangeFilter = 'p_n_age_range:2590656011'; // 6-12 months
+  } else if (avgAgeMonths <= 24) {
+    ageRangeFilter = 'p_n_age_range:2590657011'; // 12-24 months
+  } else if (avgAgeMonths <= 48) {
+    ageRangeFilter = 'p_n_age_range:2590658011'; // 2-4 years
+  } else if (avgAgeMonths <= 84) {
+    ageRangeFilter = 'p_n_age_range:2590659011'; // 5-7 years
+  } else {
+    ageRangeFilter = 'p_n_age_range:2590660011'; // 8-13 years
+  }
+  
+  // Add age range filter
+  if (ageRangeFilter) {
+    const currentRh = params.get('rh') || '';
+    params.set('rh', currentRh + ',' + ageRangeFilter);
+  }
+  
+  // Sort by customer reviews
+  params.append('s', 'review-rank');
+  
+  return `${baseUrl}?${params.toString()}`;
+}
+
 export default function MilestoneDetail() {
   const [, setLocation] = useLocation();
   const [, params] = useRoute('/milestone/:id');
@@ -538,7 +579,7 @@ export default function MilestoneDetail() {
                             </div>
                             <div className="flex flex-wrap gap-2 pt-2">
                               <a
-                                href={`https://www.amazon.com/s?k=${encodeURIComponent(toy.searchQuery)}`}
+                                href={milestone ? buildAmazonUrl(toy.searchQuery, milestone.ageRangeMonthsMin, milestone.ageRangeMonthsMax) : `https://www.amazon.com/s?k=${encodeURIComponent(toy.searchQuery)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover-elevate active-elevate-2"
