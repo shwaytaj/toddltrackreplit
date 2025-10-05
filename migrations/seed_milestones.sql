@@ -146,7 +146,6 @@ ON CONFLICT (id) DO NOTHING;
 -- Comprehensive Vision milestones based on AAP visual development guidelines
 INSERT INTO milestones (id, title, category, age_range_months_min, age_range_months_max, description, typical_range)
 VALUES
-('vision-tracks-faces-0-3', 'Focuses on faces', 'Vision', 0, 3, 'Can focus on faces from 8-12 inches away and briefly track them', 'Present from birth'),
 ('vision-follows-objects-0-3', 'Follows moving objects', 'Vision', 0, 3, 'Tracks moving objects with eyes from side to side', 'Typical by 2-3 months'),
 ('vision-eye-color-4-6', 'Eye color develops', 'Vision', 4, 6, 'True eye color begins to emerge and stabilize', 'Typical by 6 months'),
 ('vision-reaches-accurately-4-6', 'Reaches for objects', 'Vision', 4, 6, 'Uses vision to guide hand movements and reach accurately', 'Typical by 5-6 months'),
