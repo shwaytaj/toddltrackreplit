@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useLocation } from 'wouter';
 import BottomNav from '@/components/BottomNav';
 import MilestoneCard from '@/components/MilestoneCard';
@@ -11,11 +11,36 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useQuery } from '@tanstack/react-query';
+import type { Child, ChildMilestone } from '@shared/schema';
 
 export default function Milestones() {
   const [, setLocation] = useLocation();
   const [activeNav, setActiveNav] = useState<'home' | 'milestones' | 'profile'>('milestones');
   const [category, setCategory] = useState('developmental');
+
+  const { data: children = [] } = useQuery<Child[]>({
+    queryKey: ['/api/children'],
+  });
+
+  const selectedChild = children[0];
+
+  const { data: childMilestones = [] } = useQuery<ChildMilestone[]>({
+    queryKey: ['/api/children', selectedChild?.id, 'milestones'],
+    enabled: !!selectedChild,
+  });
+
+  const achievedMilestoneIds = useMemo(() => {
+    return new Set(
+      childMilestones
+        .filter(cm => cm.achieved)
+        .map(cm => cm.milestoneId)
+    );
+  }, [childMilestones]);
+
+  const isMilestoneAchieved = (milestoneId: string) => {
+    return achievedMilestoneIds.has(milestoneId);
+  };
 
   const handleNavigation = (page: 'home' | 'milestones' | 'profile') => {
     setActiveNav(page);
@@ -60,18 +85,21 @@ export default function Milestones() {
               title="Jump in place"
               category=""
               categoryColor="bg-purple-100 dark:bg-purple-900/20"
+              achieved={isMilestoneAchieved('jump-in-place')}
               onClick={() => setLocation('/milestone/jump-in-place')}
             />
             <MilestoneCard
               title="Kicks a ball"
               category=""
               categoryColor="bg-purple-100 dark:bg-purple-900/20"
+              achieved={isMilestoneAchieved('kicks-ball')}
               onClick={() => setLocation('/milestone/kicks-ball')}
             />
             <MilestoneCard
               title="Throws a ball"
               category=""
               categoryColor="bg-purple-100 dark:bg-purple-900/20"
+              achieved={isMilestoneAchieved('throws-ball')}
               onClick={() => setLocation('/milestone/throws-ball')}
             />
           </div>
@@ -84,19 +112,21 @@ export default function Milestones() {
               title="Say their name"
               category=""
               categoryColor="bg-green-100 dark:bg-green-900/20"
+              achieved={isMilestoneAchieved('say-name')}
               onClick={() => setLocation('/milestone/say-name')}
             />
             <MilestoneCard
               title="2 to 3 word sentences"
               category=""
               categoryColor="bg-green-100 dark:bg-green-900/20"
-              achieved
+              achieved={isMilestoneAchieved('2-3-word-sentences')}
               onClick={() => setLocation('/milestone/2-3-word-sentences')}
             />
             <MilestoneCard
               title="Knows 50 or more words"
               category=""
               categoryColor="bg-green-100 dark:bg-green-900/20"
+              achieved={isMilestoneAchieved('knows-50-words')}
               onClick={() => setLocation('/milestone/knows-50-words')}
             />
           </div>
@@ -109,18 +139,21 @@ export default function Milestones() {
               title="Points to objects to pictures"
               category=""
               categoryColor="bg-amber-100 dark:bg-amber-900/20"
+              achieved={isMilestoneAchieved('points-to-pictures')}
               onClick={() => setLocation('/milestone/points-to-pictures')}
             />
             <MilestoneCard
               title="Plays with others to please them"
               category=""
               categoryColor="bg-amber-100 dark:bg-amber-900/20"
+              achieved={isMilestoneAchieved('plays-with-others')}
               onClick={() => setLocation('/milestone/plays-with-others')}
             />
             <MilestoneCard
               title="Can look OK separately"
               category=""
               categoryColor="bg-amber-100 dark:bg-amber-900/20"
+              achieved={isMilestoneAchieved('look-separately')}
               onClick={() => setLocation('/milestone/look-separately')}
             />
           </div>
