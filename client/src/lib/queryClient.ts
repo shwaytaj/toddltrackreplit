@@ -27,11 +27,14 @@ type UnauthorizedBehavior = "returnNull" | "throw";
 export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
-  ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
+  ({ on401: defaultUnauthorizedBehavior }) =>
+  async ({ queryKey, meta }) => {
     const res = await fetch(queryKey.join("/") as string, {
       credentials: "include",
     });
+
+    const unauthorizedBehavior = 
+      (meta?.unauthorizedBehavior as UnauthorizedBehavior | undefined) ?? defaultUnauthorizedBehavior;
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;
