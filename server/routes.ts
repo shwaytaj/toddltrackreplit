@@ -48,8 +48,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/auth/login", passport.authenticate("local"), (req, res) => {
-    res.json({ id: req.user!.id, email: req.user!.email });
+  app.post("/api/auth/login", (req, res, next) => {
+    passport.authenticate("local", (err: any, user: any, info: any) => {
+      if (err) {
+        return res.status(500).json({ error: "Authentication error" });
+      }
+      if (!user) {
+        return res.status(401).json({ error: "Invalid email or password. Please check your credentials and try again." });
+      }
+      req.logIn(user, (err) => {
+        if (err) {
+          return res.status(500).json({ error: "Login session error" });
+        }
+        return res.json({ id: user.id, email: user.email });
+      });
+    })(req, res, next);
   });
 
   app.post("/api/auth/logout", (req, res) => {

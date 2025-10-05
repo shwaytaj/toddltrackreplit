@@ -44,10 +44,16 @@ export default function Login() {
           title: "Account exists",
           description: "You already have an account. Please sign in instead.",
         });
+      } else if (!isSignup && errorMessage.includes('Invalid email or password')) {
+        toast({
+          title: "Login failed",
+          description: "The email or password you entered is incorrect. Please try again.",
+          variant: "destructive",
+        });
       } else {
         toast({
           title: isSignup ? "Signup failed" : "Login failed",
-          description: errorMessage || (isSignup ? "Failed to create account" : "Invalid credentials"),
+          description: errorMessage || (isSignup ? "Failed to create account" : "Please check your email and password"),
           variant: "destructive",
         });
       }
