@@ -5,7 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import ProductCard from '@/components/ProductCard';
 import BottomNav from '@/components/BottomNav';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { X, Check, Lightbulb, AlertTriangle } from 'lucide-react';
+import { X, Check, Lightbulb, AlertTriangle, Loader2 } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import type { Milestone, Child, ChildMilestone, CompletedRecommendation } from '@shared/schema';
@@ -507,8 +507,9 @@ export default function MilestoneDetail() {
                     <h3 className="font-semibold mb-4">Recommended toys & tools</h3>
                     
                     {loadingToyRecommendations ? (
-                      <div className="text-center py-8 text-muted-foreground">
-                        Personalising toy recommendations based on the provided medical history
+                      <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Personalising toy recommendations based on the provided medical history</span>
                       </div>
                     ) : toyRecommendationsError ? (
                       <div className="text-center py-8 space-y-3">
