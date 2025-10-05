@@ -98,7 +98,7 @@ export default function MilestoneDetail() {
     enabled: !!selectedChild,
   });
 
-  const { data: recommendations, mutate: fetchRecommendations, isPending: loadingRecommendations } = useMutation<AIRecommendation[]>({
+  const { data: recommendations, mutate: fetchRecommendations, isPending: loadingRecommendations } = useMutation<AIRecommendation[], Error, string[] | undefined>({
     mutationFn: async (excludeCompleted?: string[]) => {
       if (!selectedChild || !milestone) return [];
       const response = await apiRequest(
@@ -137,7 +137,7 @@ export default function MilestoneDetail() {
 
   useEffect(() => {
     if (selectedChild && milestone && activeTab === 'action' && activeActionTab === 'todo') {
-      fetchRecommendations();
+      fetchRecommendations(undefined);
     }
   }, [selectedChild, milestone, activeTab, activeActionTab, fetchRecommendations]);
 
