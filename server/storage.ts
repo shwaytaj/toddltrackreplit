@@ -23,6 +23,8 @@ import {
   type InsertCompletedRecommendation,
   type DismissedToyRecommendation,
   type InsertDismissedToyRecommendation,
+  type AiToyRecommendation,
+  type InsertAiToyRecommendation,
   users,
   children,
   milestones,
@@ -32,6 +34,7 @@ import {
   aiRecommendations,
   completedRecommendations,
   dismissedToyRecommendations,
+  aiToyRecommendations,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -82,6 +85,10 @@ export interface IStorage {
   // Dismissed toy recommendation operations
   getDismissedToyRecommendations(childId: string, milestoneId: string): Promise<DismissedToyRecommendation[]>;
   createDismissedToyRecommendation(dismissed: InsertDismissedToyRecommendation): Promise<DismissedToyRecommendation>;
+
+  // AI toy recommendation operations
+  getAiToyRecommendation(childId: string, milestoneId: string): Promise<AiToyRecommendation | undefined>;
+  createAiToyRecommendation(recommendation: InsertAiToyRecommendation): Promise<AiToyRecommendation>;
 }
 
 export class DbStorage implements IStorage {
@@ -314,6 +321,25 @@ export class DbStorage implements IStorage {
 
   async createDismissedToyRecommendation(dismissed: InsertDismissedToyRecommendation): Promise<DismissedToyRecommendation> {
     const result = await this.db.insert(dismissedToyRecommendations).values(dismissed).returning();
+    return result[0];
+  }
+
+  // AI toy recommendation operations
+  async getAiToyRecommendation(childId: string, milestoneId: string): Promise<AiToyRecommendation | undefined> {
+    const result = await this.db
+      .select()
+      .from(aiToyRecommendations)
+      .where(
+        and(
+          eq(aiToyRecommendations.childId, childId),
+          eq(aiToyRecommendations.milestoneId, milestoneId)
+        )
+      );
+    return result[0];
+  }
+
+  async createAiToyRecommendation(recommendation: InsertAiToyRecommendation): Promise<AiToyRecommendation> {
+    const result = await this.db.insert(aiToyRecommendations).values(recommendation as any).returning();
     return result[0];
   }
 }

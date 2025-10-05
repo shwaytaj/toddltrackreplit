@@ -107,16 +107,18 @@ Preferred communication style: Simple, everyday language.
 - All data now fetched from backend: child name, age, milestones, growth metrics, achievements
 
 **Toy Recommendations Enhancements (Oct 2025):**
-- Enhanced toy recommendations with stock product images fetched via stock_image_tool
 - Replaced retailer button text with company logos (Amazon, Target, Walmart) using react-icons
 - Implemented dismissible recommendations system with database persistence per child
 - Created `dismissed_toy_recommendations` table to track user dismissals
 - Backend generates 10-15 toy recommendations, filters dismissed ones, returns up to 5 fresh recommendations
-- Added tooltip "Don't show this" on hover over close button for each recommendation
+- Added tooltip "Don't show this" on hover over close button for each recommendation (inline with toy title)
 - Implemented auto-refetch when recommendations are dismissed, with "No more recommendations" placeholder
 - Enhanced Amazon URLs with multiple parameters: category filtering, age-appropriate filtering, review-based sorting
-- Stock images fetched in parallel with graceful fallback when image fetch fails
 - Dismissed toys filtered using case-insensitive matching
+- **Caching Implementation**: Created `aiToyRecommendations` table to cache AI-generated toy recommendations
+- Cached recommendations are reused until medical history is updated, significantly reducing load times
+- Cache invalidation based on child and parent medical history version timestamps
+- Similar caching pattern to to-do recommendations for consistent performance
 
 ### External Dependencies
 

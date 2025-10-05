@@ -532,7 +532,27 @@ Provide your response as a JSON array with objects containing "title" and "descr
       const dismissedToys = await storage.getDismissedToyRecommendations(childId, milestoneId);
       const dismissedToyNames = new Set(dismissedToys.map(dt => dt.toyName.toLowerCase()));
 
-      // Generate toy recommendations with Claude (more recommendations now)
+      // Check for cached toy recommendations
+      const cached = await storage.getAiToyRecommendation(childId, milestoneId);
+      
+      const childDataVersion = child.medicalHistoryUpdatedAt || new Date(0);
+      const parentDataVersion = parent.medicalHistoryUpdatedAt || new Date(0);
+
+      // Use cached if data hasn't changed
+      if (cached && 
+          cached.childDataVersion >= childDataVersion &&
+          cached.parentDataVersion >= parentDataVersion) {
+        // Filter out dismissed toys from cached recommendations
+        let filteredRecommendations = cached.recommendations.filter(toy => 
+          !dismissedToyNames.has(toy.name.toLowerCase())
+        );
+        
+        // Return only the first 5 non-dismissed toys
+        filteredRecommendations = filteredRecommendations.slice(0, 5);
+        return res.json(filteredRecommendations);
+      }
+
+      // Generate new toy recommendations with Claude (more recommendations now)
       const childAge = Math.floor((new Date().getTime() - new Date(child.birthDate).getTime()) / (1000 * 60 * 60 * 24 * 30));
       const prompt = `You are a pediatric development expert and toy specialist. Based on the following information, recommend 10-15 specific toys or tools that parents can use to help their child achieve this milestone.
 
@@ -587,6 +607,15 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
             if (!isValid || toyRecommendations.length === 0) {
               return res.status(500).json({ error: "Invalid recommendations structure" });
             }
+
+            // Cache the new toy recommendations
+            await storage.createAiToyRecommendation({
+              childId,
+              milestoneId,
+              recommendations: toyRecommendations,
+              childDataVersion,
+              parentDataVersion,
+            });
             
             // Filter out dismissed toys
             toyRecommendations = toyRecommendations.filter(toy => 
