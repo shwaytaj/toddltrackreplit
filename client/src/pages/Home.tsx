@@ -11,23 +11,31 @@ import { useQuery } from '@tanstack/react-query';
 import { useUser } from '@/hooks/use-user';
 import type { Child, Milestone, ChildMilestone, GrowthMetric } from '@shared/schema';
 
-function calculateAge(birthDate: Date) {
+function calculateAge(birthDate: Date | string) {
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
   const birth = new Date(birthDate);
+  birth.setHours(0, 0, 0, 0);
   
-  let months = (today.getFullYear() - birth.getFullYear()) * 12;
-  months += today.getMonth() - birth.getMonth();
+  let years = today.getFullYear() - birth.getFullYear();
+  let months = today.getMonth() - birth.getMonth();
+  let days = today.getDate() - birth.getDate();
   
-  const dayDiff = today.getDate() - birth.getDate();
-  let days = dayDiff;
-  
-  if (dayDiff < 0) {
+  if (days < 0) {
     months--;
-    const daysInPrevMonth = new Date(today.getFullYear(), today.getMonth(), 0).getDate();
-    days = daysInPrevMonth + dayDiff;
+    const prevMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+    days = prevMonth.getDate() + days;
   }
   
-  return { months, days: Math.max(0, days) };
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+  
+  const totalMonths = years * 12 + months;
+  
+  return { months: totalMonths, days: Math.max(0, days) };
 }
 
 function getAgeRange(months: number): { min: number; max: number; label: string } {
