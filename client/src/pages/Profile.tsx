@@ -107,6 +107,7 @@ export default function Profile() {
             variant="outline" 
             className="w-full" 
             data-testid="button-medical-history"
+            onClick={() => activeChild && setLocation(`/medical-history/${activeChild}`)}
           >
             Medical History
           </Button>

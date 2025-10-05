@@ -14,6 +14,7 @@ export const users = pgTable("users", {
     allergies?: string[];
     medications?: string[];
     familyHistory?: string[];
+    notes?: string;
   }>(),
   medicalHistoryUpdatedAt: timestamp("medical_history_updated_at"),
 });
@@ -31,6 +32,7 @@ export const children = pgTable("children", {
     medications?: string[];
     birthComplications?: string[];
     currentConcerns?: string[];
+    notes?: string;
   }>(),
   medicalHistoryUpdatedAt: timestamp("medical_history_updated_at"),
   createdAt: timestamp("created_at").defaultNow(),

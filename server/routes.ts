@@ -64,6 +64,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ id: req.user.id, email: req.user.email });
   });
 
+  app.get("/api/user", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    const user = await storage.getUser(req.user.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    const { password, ...sanitizedUser } = user;
+    res.json(sanitizedUser);
+  });
+
   // Children routes
   app.get("/api/children", async (req, res) => {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
@@ -118,6 +126,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           medications: z.array(z.string()).optional(),
           birthComplications: z.array(z.string()).optional(),
           currentConcerns: z.array(z.string()).optional(),
+          notes: z.string().optional(),
         }),
       });
       
@@ -455,6 +464,7 @@ Provide your response as a JSON array with objects containing "title" and "descr
           allergies: z.array(z.string()).optional(),
           medications: z.array(z.string()).optional(),
           familyHistory: z.array(z.string()).optional(),
+          notes: z.string().optional(),
         }),
       });
       
