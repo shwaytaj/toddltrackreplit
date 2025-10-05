@@ -317,7 +317,7 @@ export default function MilestoneDetail() {
                     
 {loadingRecommendations ? (
                       <div className="text-center py-8 text-muted-foreground">
-                        Generating recommendations...
+                        Personalising recommendations based on the provided medical history
                       </div>
                     ) : recommendations && recommendations.length > 0 ? (
                       <div className="max-h-96 overflow-y-auto space-y-4 pr-2">
