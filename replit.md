@@ -99,6 +99,14 @@ Preferred communication style: Simple, everyday language.
 - insertUserSchema updated to use email field
 - All auth routes (register/login) now use email instead of username
 
+**Production Authentication Fix (Oct 2025):**
+- Fixed production login redirect issue where users were redirected to signup page after successful login
+- Updated queryClient to properly read `meta.unauthorizedBehavior` from query options
+- This allows `useUser` hook to return null on 401 errors instead of throwing, preventing unwanted redirects
+- Enhanced session cookie configuration with `httpOnly: true` and environment-aware `sameSite` settings
+- Session cookies now use `sameSite: "none"` in production for cross-origin reliability
+- Authentication flow verified end-to-end with Playwright testing
+
 **Recent Home Page Fixes (Oct 2025):**
 - Fixed Home page to display real child data instead of hardcoded mock data
 - Implemented accurate age calculation handling all edge cases (month-end birthdays, 0-month children)
