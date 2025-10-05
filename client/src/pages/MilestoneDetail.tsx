@@ -342,8 +342,9 @@ export default function MilestoneDetail() {
                     <h3 className="font-semibold mb-4">How parents can help</h3>
                     
 {loadingRecommendations ? (
-                      <div className="text-center py-8 text-muted-foreground">
-                        Personalising recommendations based on the provided medical history
+                      <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Personalising recommendations based on the provided medical history</span>
                       </div>
                     ) : recommendations && recommendations.length > 0 ? (
                       <div className="max-h-96 overflow-y-auto space-y-4 pr-2">
