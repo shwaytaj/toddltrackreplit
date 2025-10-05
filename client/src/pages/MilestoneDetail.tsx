@@ -332,7 +332,7 @@ export default function MilestoneDetail() {
                     
                     {recommendations && recommendations.length > 0 && (
                       <p className="text-xs text-muted-foreground mt-4">
-                        More guides will be suggested after you have tried all the above
+                        Check off activities as you try them. More recommendations will appear as you progress.
                       </p>
                     )}
                   </div>
