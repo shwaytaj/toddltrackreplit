@@ -248,7 +248,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const newAchieved = !existingRecord.achieved;
         const updated = await storage.updateChildMilestone(existingRecord.id, {
           achieved: newAchieved,
-          achievedAt: newAchieved ? new Date().toISOString() : null,
+          achievedAt: newAchieved ? new Date() : null,
         } as any);
         return res.json(updated);
       } else {
@@ -256,7 +256,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           childId: req.params.childId,
           milestoneId: req.params.milestoneId,
           achieved: true,
-          achievedAt: new Date().toISOString(),
+          achievedAt: new Date(),
         } as any);
         return res.json(newRecord);
       }

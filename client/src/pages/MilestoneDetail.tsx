@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import ProductCard from '@/components/ProductCard';
 import BottomNav from '@/components/BottomNav';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { X, Check, Lightbulb, AlertTriangle } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -49,8 +50,13 @@ export default function MilestoneDetail() {
   });
 
   const toggleAchievement = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (newValue: 'achieved' | 'not-achieved') => {
       if (!selectedChild || !milestone) return;
+      const currentlyAchieved = achievementStatus?.achieved || false;
+      const shouldBeAchieved = newValue === 'achieved';
+      
+      if (currentlyAchieved === shouldBeAchieved) return;
+      
       const response = await apiRequest(
         'POST',
         `/api/children/${selectedChild.id}/milestones/${milestone.id}/toggle`
@@ -155,19 +161,32 @@ export default function MilestoneDetail() {
               </div>
             )}
 
-            <Button 
-              className={`w-full rounded-full text-white ${
-                achievementStatus?.achieved
-                  ? 'bg-gray-400 hover:bg-gray-500'
-                  : 'bg-green-500 hover:bg-green-600'
-              }`}
-              onClick={() => toggleAchievement.mutate()}
+            <ToggleGroup 
+              type="single" 
+              value={achievementStatus?.achieved ? 'achieved' : 'not-achieved'}
+              onValueChange={(value) => {
+                if (value) toggleAchievement.mutate(value as 'achieved' | 'not-achieved');
+              }}
+              className="w-full"
               disabled={toggleAchievement.isPending}
-              data-testid="button-achievement-status"
+              data-testid="toggle-achievement-status"
             >
-              <Check className="w-4 h-4 mr-2" />
-              {achievementStatus?.achieved ? 'Not achieved' : 'Achieved'}
-            </Button>
+              <ToggleGroupItem 
+                value="not-achieved" 
+                className="flex-1 rounded-l-full"
+                data-testid="toggle-not-achieved"
+              >
+                Not Achieved
+              </ToggleGroupItem>
+              <ToggleGroupItem 
+                value="achieved" 
+                className="flex-1 rounded-r-full"
+                data-testid="toggle-achieved"
+              >
+                <Check className="w-4 h-4 mr-1" />
+                Achieved
+              </ToggleGroupItem>
+            </ToggleGroup>
           </div>
         )}
 
@@ -289,19 +308,32 @@ export default function MilestoneDetail() {
                 )}
 
                 <div className="border-t border-border pt-4 mt-4">
-                  <Button 
-                    className={`w-full rounded-full text-white ${
-                      achievementStatus?.achieved
-                        ? 'bg-gray-400 hover:bg-gray-500'
-                        : 'bg-green-500 hover:bg-green-600'
-                    }`}
-                    onClick={() => toggleAchievement.mutate()}
+                  <ToggleGroup 
+                    type="single" 
+                    value={achievementStatus?.achieved ? 'achieved' : 'not-achieved'}
+                    onValueChange={(value) => {
+                      if (value) toggleAchievement.mutate(value as 'achieved' | 'not-achieved');
+                    }}
+                    className="w-full"
                     disabled={toggleAchievement.isPending}
-                    data-testid="button-achievement-toggle"
+                    data-testid="toggle-achievement-action"
                   >
-                    <Check className="w-4 h-4 mr-2" />
-                    {achievementStatus?.achieved ? 'Not achieved' : 'Achieved'}
-                  </Button>
+                    <ToggleGroupItem 
+                      value="not-achieved" 
+                      className="flex-1 rounded-l-full"
+                      data-testid="toggle-not-achieved-action"
+                    >
+                      Not Achieved
+                    </ToggleGroupItem>
+                    <ToggleGroupItem 
+                      value="achieved" 
+                      className="flex-1 rounded-r-full"
+                      data-testid="toggle-achieved-action"
+                    >
+                      <Check className="w-4 h-4 mr-1" />
+                      Achieved
+                    </ToggleGroupItem>
+                  </ToggleGroup>
                 </div>
               </div>
             )}
