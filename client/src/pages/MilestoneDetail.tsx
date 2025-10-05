@@ -231,10 +231,7 @@ export default function MilestoneDetail() {
                   </div>
                 ) : (
                   <div>
-                    <h3 className="font-semibold mb-2">How parents can help</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      {loadingRecommendations ? 'Loading personalized recommendations...' : 'AI-powered guidance personalized for your child'}
-                    </p>
+                    <h3 className="font-semibold mb-4">How parents can help</h3>
                     
                     {loadingRecommendations ? (
                       <div className="text-center py-8 text-muted-foreground">
