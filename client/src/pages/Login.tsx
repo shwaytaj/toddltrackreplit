@@ -94,6 +94,11 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 data-testid="input-password"
               />
+              {!isSignup && (
+                <p className="text-sm text-muted-foreground">
+                  Can't access your account? Create a new account with a different email address.
+                </p>
+              )}
             </div>
 
             <Button
