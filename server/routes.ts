@@ -588,37 +588,6 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
               return res.status(500).json({ error: "Invalid recommendations structure" });
             }
             
-            // Fetch images for each toy using stock_image_tool
-            const toysWithImages = await Promise.all(
-              toyRecommendations.map(async (toy) => {
-                try {
-                  const imageResponse = await fetch('http://localhost:5000/__replco/api/stock-images', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      description: toy.name,
-                      limit: 1,
-                      orientation: 'horizontal'
-                    })
-                  });
-                  
-                  if (imageResponse.ok) {
-                    const imageData = await imageResponse.json();
-                    return {
-                      ...toy,
-                      imageUrl: imageData.images?.[0]?.url || null
-                    };
-                  }
-                  return { ...toy, imageUrl: null };
-                } catch (imgError) {
-                  console.error(`Failed to fetch image for ${toy.name}:`, imgError);
-                  return { ...toy, imageUrl: null };
-                }
-              })
-            );
-            
-            toyRecommendations = toysWithImages;
-            
             // Filter out dismissed toys
             toyRecommendations = toyRecommendations.filter(toy => 
               !dismissedToyNames.has(toy.name.toLowerCase())

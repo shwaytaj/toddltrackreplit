@@ -588,32 +588,27 @@ export default function MilestoneDetail() {
                     ) : toyRecommendations && toyRecommendations.length > 0 ? (
                       <div className="space-y-4">
                         {toyRecommendations.map((toy, idx) => (
-                          <div key={idx} className="border border-border rounded-lg overflow-hidden relative" data-testid={`toy-card-${idx}`}>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    onClick={() => dismissToy.mutate(toy.name)}
-                                    className="absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover-elevate active-elevate-2 border border-border"
-                                    data-testid={`button-dismiss-toy-${idx}`}
-                                  >
-                                    <X className="w-4 h-4" />
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Don't show this</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                            {toy.imageUrl && (
-                              <img 
-                                src={toy.imageUrl} 
-                                alt={toy.name}
-                                className="w-full h-48 object-cover"
-                              />
-                            )}
+                          <div key={idx} className="border border-border rounded-lg overflow-hidden" data-testid={`toy-card-${idx}`}>
                             <div className="p-4 space-y-3">
-                              <h4 className="font-semibold text-base">{toy.name}</h4>
+                              <div className="flex items-start justify-between gap-2">
+                                <h4 className="font-semibold text-base flex-1">{toy.name}</h4>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <button
+                                        onClick={() => dismissToy.mutate(toy.name)}
+                                        className="w-6 h-6 rounded-full flex items-center justify-center hover-elevate active-elevate-2 flex-shrink-0"
+                                        data-testid={`button-dismiss-toy-${idx}`}
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Don't show this</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
                               <p className="text-sm text-muted-foreground leading-relaxed">{toy.description}</p>
                               <div className="bg-blue-50 dark:bg-blue-950/20 rounded-md p-2">
                                 <p className="text-xs text-muted-foreground">
