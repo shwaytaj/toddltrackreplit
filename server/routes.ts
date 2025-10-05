@@ -51,14 +51,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/login", (req, res, next) => {
     passport.authenticate("local", (err: any, user: any, info: any) => {
       if (err) {
-        return res.status(500).json({ error: "Authentication error" });
+        return next(err);
       }
       if (!user) {
-        return res.status(401).json({ error: "Invalid email or password. Please check your credentials and try again." });
+        const message = info?.message || "Invalid email or password. Please check your credentials and try again.";
+        return res.status(401).json({ error: message });
       }
-      req.logIn(user, (err) => {
-        if (err) {
-          return res.status(500).json({ error: "Login session error" });
+      req.logIn(user, (loginErr) => {
+        if (loginErr) {
+          return next(loginErr);
         }
         return res.json({ id: user.id, email: user.email });
       });
