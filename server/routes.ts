@@ -228,6 +228,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/children/:childId/milestones/:milestoneId/toggle", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    
+    const child = await storage.getChild(req.params.childId);
+    if (!child) return res.status(404).json({ error: "Child not found" });
+    
+    if (!child.parentIds.includes(req.user.id)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    
+    try {
+      const existingRecord = await storage.getChildMilestone(
+        req.params.childId, 
+        req.params.milestoneId
+      );
+      
+      if (existingRecord) {
+        const newAchieved = !existingRecord.achieved;
+        const updated = await storage.updateChildMilestone(existingRecord.id, {
+          achieved: newAchieved,
+          achievedAt: newAchieved ? new Date() : null,
+        });
+        return res.json(updated);
+      } else {
+        const newRecord = await storage.createChildMilestone({
+          childId: req.params.childId,
+          milestoneId: req.params.milestoneId,
+          achieved: true,
+          achievedAt: new Date(),
+        });
+        return res.json(newRecord);
+      }
+    } catch (error) {
+      console.error("Toggle milestone error:", error);
+      res.status(500).json({ error: "Failed to toggle milestone" });
+    }
+  });
+
   // Growth metrics routes
   app.get("/api/children/:childId/growth-metrics", async (req, res) => {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
