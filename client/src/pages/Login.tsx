@@ -167,6 +167,18 @@ export default function Login() {
             Sign up with Email
           </Button>
         </div>
+
+        <Button
+          variant="ghost"
+          className="w-full mt-6"
+          onClick={() => {
+            setIsSignup(false);
+            setShowEmailForm(true);
+          }}
+          data-testid="button-go-to-login"
+        >
+          Already have an account? Sign in
+        </Button>
       </div>
     </div>
   );
