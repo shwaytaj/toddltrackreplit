@@ -15,6 +15,13 @@ interface AIRecommendation {
   description: string;
 }
 
+interface ToyRecommendation {
+  name: string;
+  description: string;
+  howToUse: string;
+  searchQuery: string;
+}
+
 interface MilestoneWithRecommendations extends Milestone {
   recommendations: AIRecommendation[];
 }
@@ -111,6 +118,24 @@ export default function MilestoneDetail() {
     },
   });
 
+  const { data: toyRecommendations, isLoading: loadingToyRecommendations, error: toyRecommendationsError, refetch: refetchToyRecommendations } = useQuery<ToyRecommendation[]>({
+    queryKey: ['/api/children', selectedChild?.id, 'milestones', milestone?.id, 'toy-recommendations'],
+    queryFn: async () => {
+      if (!selectedChild || !milestone) return [];
+      const response = await apiRequest(
+        'POST',
+        `/api/children/${selectedChild.id}/milestones/${milestone.id}/toy-recommendations`
+      );
+      if (!response.ok) {
+        throw new Error('Failed to fetch toy recommendations');
+      }
+      const data = await response.json();
+      return data;
+    },
+    enabled: !!selectedChild && !!milestone && activeTab === 'action' && activeActionTab === 'tools',
+    staleTime: 1000 * 60 * 60, // Cache for 1 hour
+  });
+
   // Toggle recommendation completion
   const toggleRecommendation = useMutation({
     mutationFn: async ({ milestoneId, title, description, isCompleted }: { milestoneId: string; title: string; description: string; isCompleted: boolean }) => {
@@ -141,6 +166,7 @@ export default function MilestoneDetail() {
       fetchRecommendations(undefined);
     }
   }, [selectedChild, milestone, activeTab, activeActionTab, fetchRecommendations]);
+
 
   // Check if all current recommendations are completed and fetch new ones
   useEffect(() => {
@@ -465,10 +491,101 @@ export default function MilestoneDetail() {
             )}
 
             {activeActionTab === 'tools' && (
-              <div className="bg-muted/30 rounded-lg px-4 py-5">
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  Product recommendations coming soon
-                </p>
+              <div className="bg-muted/30 rounded-lg px-4 py-5 space-y-4">
+                {achievementStatus?.achieved ? (
+                  <div className="text-center py-12">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 mb-4">
+                      <Check className="w-8 h-8 text-green-600 dark:text-green-400" />
+                    </div>
+                    <h3 className="font-semibold text-lg mb-2">Milestone Achieved!</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Great job! Your child has achieved this milestone.
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <h3 className="font-semibold mb-4">Recommended toys & tools</h3>
+                    
+                    {loadingToyRecommendations ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        Personalising toy recommendations based on the provided medical history
+                      </div>
+                    ) : toyRecommendationsError ? (
+                      <div className="text-center py-8 space-y-3">
+                        <p className="text-sm text-muted-foreground">
+                          Failed to load toy recommendations
+                        </p>
+                        <button
+                          onClick={() => refetchToyRecommendations()}
+                          className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover-elevate active-elevate-2"
+                          data-testid="button-retry-toys"
+                        >
+                          Try Again
+                        </button>
+                      </div>
+                    ) : toyRecommendations && toyRecommendations.length > 0 ? (
+                      <div className="space-y-4">
+                        {toyRecommendations.map((toy, idx) => (
+                          <div key={idx} className="border border-border rounded-lg p-4 space-y-3" data-testid={`toy-card-${idx}`}>
+                            <h4 className="font-semibold text-base">{toy.name}</h4>
+                            <p className="text-sm text-muted-foreground leading-relaxed">{toy.description}</p>
+                            <div className="bg-blue-50 dark:bg-blue-950/20 rounded-md p-2">
+                              <p className="text-xs text-muted-foreground">
+                                <span className="font-medium">How to use:</span> {toy.howToUse}
+                              </p>
+                            </div>
+                            <div className="flex flex-wrap gap-2 pt-2">
+                              <a
+                                href={`https://www.amazon.com/s?k=${encodeURIComponent(toy.searchQuery)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover-elevate active-elevate-2"
+                                data-testid={`link-amazon-${idx}`}
+                              >
+                                Search on Amazon
+                              </a>
+                              <a
+                                href={`https://www.target.com/s?searchTerm=${encodeURIComponent(toy.searchQuery)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md bg-red-600 text-white hover-elevate active-elevate-2"
+                                data-testid={`link-target-${idx}`}
+                              >
+                                Search on Target
+                              </a>
+                              <a
+                                href={`https://www.walmart.com/search?q=${encodeURIComponent(toy.searchQuery)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md bg-blue-600 text-white hover-elevate active-elevate-2"
+                                data-testid={`link-walmart-${idx}`}
+                              >
+                                Search on Walmart
+                              </a>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No toy recommendations available
+                      </div>
+                    )}
+                    
+                    {toyRecommendations && toyRecommendations.length > 0 && (
+                      <div className="border-t border-border pt-4 mt-4">
+                        <div className="bg-amber-50 dark:bg-amber-950/20 rounded-md p-3">
+                          <div className="flex items-start gap-2">
+                            <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                              These are AI-generated suggestions. Please verify toy safety and age-appropriateness before purchasing.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>

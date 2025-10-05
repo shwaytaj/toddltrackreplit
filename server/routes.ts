@@ -500,6 +500,107 @@ Provide your response as a JSON array with objects containing "title" and "descr
     }
   });
 
+  // Toy recommendations route
+  app.post("/api/children/:childId/milestones/:milestoneId/toy-recommendations", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+    try {
+      // Validate params
+      const paramsSchema = z.object({
+        childId: z.string().uuid(),
+        milestoneId: z.string(),
+      });
+      
+      const { childId, milestoneId } = paramsSchema.parse(req.params);
+
+      // Get child and verify ownership
+      const child = await storage.getChild(childId);
+      if (!child) return res.status(404).json({ error: "Child not found" });
+      
+      if (!child.parentIds.includes(req.user.id)) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+
+      const milestone = await storage.getMilestone(milestoneId);
+      const parent = await storage.getUser(req.user.id);
+
+      if (!milestone || !parent) {
+        return res.status(404).json({ error: "Required data not found" });
+      }
+
+      // Generate toy recommendations with Claude
+      const childAge = Math.floor((new Date().getTime() - new Date(child.birthDate).getTime()) / (1000 * 60 * 60 * 24 * 30));
+      const prompt = `You are a pediatric development expert and toy specialist. Based on the following information, recommend 3-5 specific toys or tools that parents can use to help their child achieve this milestone.
+
+Child Information:
+- Age: ${childAge} months
+- Medical History: ${JSON.stringify(child.medicalHistory || {})}
+
+Parent Information:
+- Medical History: ${JSON.stringify(parent.medicalHistory || {})}
+
+Milestone:
+- Title: ${milestone.title}
+- Category: ${milestone.category}
+- Description: ${milestone.description}
+
+Provide your response as a JSON array with objects containing:
+- "name": The specific product name (real toys that exist on the market)
+- "description": Why this toy/tool helps with this milestone (2-3 sentences)
+- "howToUse": Brief tips on how parents can use it with their child (1-2 sentences)
+- "searchQuery": A concise search query to find this product (e.g., "Fisher Price Musical Walker" or "Melissa Doug Sorting Cube")
+
+Focus on real, widely-available products from retailers like Amazon, Target, Walmart, etc. Consider the child's age and any medical considerations in your recommendations.`;
+
+      const message = await anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 2048,
+        messages: [
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+      });
+
+      const content = message.content[0];
+      let toyRecommendations: any[] = [];
+      
+      if (content.type === "text") {
+        const jsonMatch = content.text.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          try {
+            toyRecommendations = JSON.parse(jsonMatch[0]);
+            
+            // Validate the structure of each recommendation
+            const isValid = toyRecommendations.every((toy: any) => 
+              toy.name && 
+              toy.description && 
+              toy.howToUse && 
+              toy.searchQuery
+            );
+            
+            if (!isValid || toyRecommendations.length === 0) {
+              return res.status(500).json({ error: "Invalid recommendations structure" });
+            }
+          } catch (parseError) {
+            console.error("Failed to parse toy recommendations:", parseError);
+            return res.status(500).json({ error: "Failed to parse recommendations" });
+          }
+        } else {
+          return res.status(500).json({ error: "No valid recommendations found in response" });
+        }
+      } else {
+        return res.status(500).json({ error: "Invalid response type from AI" });
+      }
+
+      res.json(toyRecommendations);
+    } catch (error) {
+      console.error("Toy recommendation error:", error);
+      res.status(500).json({ error: "Failed to generate toy recommendations" });
+    }
+  });
+
   // Completed recommendations routes
   app.get("/api/children/:childId/completed-recommendations", async (req, res) => {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
