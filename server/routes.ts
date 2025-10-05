@@ -524,12 +524,13 @@ Provide your response as a JSON array with objects containing "title" and "descr
 
     try {
       const { childId } = req.params;
-      const { milestoneId, recommendationTitle } = req.body;
+      const { milestoneId, recommendationTitle, recommendationDescription } = req.body;
 
       const completed = await storage.createCompletedRecommendation({
         childId,
         milestoneId,
         recommendationTitle,
+        recommendationDescription,
       });
       res.json(completed);
     } catch (error) {

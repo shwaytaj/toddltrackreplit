@@ -113,7 +113,7 @@ export default function MilestoneDetail() {
 
   // Toggle recommendation completion
   const toggleRecommendation = useMutation({
-    mutationFn: async ({ milestoneId, title, isCompleted }: { milestoneId: string; title: string; isCompleted: boolean }) => {
+    mutationFn: async ({ milestoneId, title, description, isCompleted }: { milestoneId: string; title: string; description: string; isCompleted: boolean }) => {
       if (!selectedChild) return;
       
       if (isCompleted) {
@@ -125,6 +125,7 @@ export default function MilestoneDetail() {
         await apiRequest('POST', `/api/children/${selectedChild.id}/completed-recommendations`, {
           milestoneId,
           recommendationTitle: title,
+          recommendationDescription: description,
         });
       }
     },
@@ -314,25 +315,18 @@ export default function MilestoneDetail() {
                   <div>
                     <h3 className="font-semibold mb-4">How parents can help</h3>
                     
-                    {loadingRecommendations ? (
+{loadingRecommendations ? (
                       <div className="text-center py-8 text-muted-foreground">
                         Generating recommendations...
                       </div>
                     ) : recommendations && recommendations.length > 0 ? (
-                      <div className="space-y-4">
+                      <div className="max-h-96 overflow-y-auto space-y-4 pr-2">
                         {recommendations
-                          .slice()
-                          .sort((a, b) => {
-                            if (!milestone) return 0;
-                            const aCompleted = isRecommendationCompleted(milestone.id, a.title);
-                            const bCompleted = isRecommendationCompleted(milestone.id, b.title);
-                            if (aCompleted === bCompleted) return 0;
-                            return aCompleted ? 1 : -1;
-                          })
+                          .filter(rec => !isRecommendationCompleted(milestone.id, rec.title))
                           .map((guide, idx) => {
-                          const isCompleted = milestone ? isRecommendationCompleted(milestone.id, guide.title) : false;
+                          const isCompleted = false;
                           return (
-                            <div key={idx} className="flex items-start gap-3">
+                            <div key={`active-${idx}`} className="flex items-start gap-3">
                               <Checkbox 
                                 id={`guide-${idx}`} 
                                 className="mt-0.5" 
@@ -342,6 +336,7 @@ export default function MilestoneDetail() {
                                     toggleRecommendation.mutate({
                                       milestoneId: milestone.id,
                                       title: guide.title,
+                                      description: guide.description,
                                       isCompleted,
                                     });
                                   }
@@ -349,14 +344,45 @@ export default function MilestoneDetail() {
                                 data-testid={`checkbox-guide-${idx}`} 
                               />
                               <div className="flex-1">
-                                <label htmlFor={`guide-${idx}`} className={`text-sm font-semibold cursor-pointer block ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>
+                                <label htmlFor={`guide-${idx}`} className="text-sm font-semibold cursor-pointer block">
                                   {guide.title}
                                 </label>
-                                <p className={`text-xs text-muted-foreground mt-1 leading-relaxed ${isCompleted ? 'line-through' : ''}`}>{guide.description}</p>
+                                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{guide.description}</p>
                               </div>
                             </div>
                           );
                         })}
+                        
+                        {completedRecommendations
+                          .filter(cr => cr.milestoneId === milestone.id && cr.recommendationDescription)
+                          .map((completed, idx) => {
+                            return (
+                              <div key={`completed-${idx}`} className="flex items-start gap-3">
+                                <Checkbox 
+                                  id={`completed-guide-${idx}`} 
+                                  className="mt-0.5" 
+                                  checked={true}
+                                  onCheckedChange={(checked) => {
+                                    if (milestone) {
+                                      toggleRecommendation.mutate({
+                                        milestoneId: milestone.id,
+                                        title: completed.recommendationTitle,
+                                        description: completed.recommendationDescription || '',
+                                        isCompleted: true,
+                                      });
+                                    }
+                                  }}
+                                  data-testid={`checkbox-completed-guide-${idx}`} 
+                                />
+                                <div className="flex-1">
+                                  <label htmlFor={`completed-guide-${idx}`} className="text-sm font-semibold cursor-pointer block line-through text-muted-foreground">
+                                    {completed.recommendationTitle}
+                                  </label>
+                                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed line-through">{completed.recommendationDescription}</p>
+                                </div>
+                              </div>
+                            );
+                          })}
                       </div>
                     ) : (
                       <div className="text-center py-8 text-muted-foreground">
