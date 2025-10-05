@@ -173,7 +173,7 @@ export default function MilestoneDetail() {
             >
               <ToggleGroupItem 
                 value="not-achieved" 
-                className="flex-1 rounded-l-full"
+                className="flex-1 rounded-l-full data-[state=on]:bg-red-100 data-[state=on]:text-red-800 dark:data-[state=on]:bg-red-950 dark:data-[state=on]:text-red-200"
                 data-testid="toggle-not-achieved"
               >
                 Not Achieved
@@ -320,7 +320,7 @@ export default function MilestoneDetail() {
                   >
                     <ToggleGroupItem 
                       value="not-achieved" 
-                      className="flex-1 rounded-l-full"
+                      className="flex-1 rounded-l-full data-[state=on]:bg-red-100 data-[state=on]:text-red-800 dark:data-[state=on]:bg-red-950 dark:data-[state=on]:text-red-200"
                       data-testid="toggle-not-achieved-action"
                     >
                       Not Achieved
