@@ -6,8 +6,8 @@ import ProductCard from '@/components/ProductCard';
 import BottomNav from '@/components/BottomNav';
 import { X, Check, Lightbulb, AlertTriangle } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import type { Milestone, Child } from '@shared/schema';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import type { Milestone, Child, ChildMilestone } from '@shared/schema';
 
 interface AIRecommendation {
   title: string;
@@ -31,6 +31,38 @@ export default function MilestoneDetail() {
 
   const milestone = allMilestones.find(m => m.id === params?.id);
   const selectedChild = children[0];
+
+  const { data: achievementStatus } = useQuery<ChildMilestone | null>({
+    queryKey: ['/api/children', selectedChild?.id, 'milestones', milestone?.id],
+    enabled: !!selectedChild && !!milestone,
+    queryFn: async () => {
+      if (!selectedChild || !milestone) return null;
+      try {
+        const response = await fetch(`/api/children/${selectedChild.id}/milestones`);
+        if (!response.ok) return null;
+        const allChildMilestones: ChildMilestone[] = await response.json();
+        return allChildMilestones.find(cm => cm.milestoneId === milestone.id) || null;
+      } catch {
+        return null;
+      }
+    },
+  });
+
+  const toggleAchievement = useMutation({
+    mutationFn: async () => {
+      if (!selectedChild || !milestone) return;
+      const response = await apiRequest(
+        'POST',
+        `/api/children/${selectedChild.id}/milestones/${milestone.id}/toggle`
+      );
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ 
+        queryKey: ['/api/children', selectedChild?.id, 'milestones', milestone?.id] 
+      });
+    },
+  });
 
   const { data: recommendations, mutate: fetchRecommendations, isPending: loadingRecommendations } = useMutation<AIRecommendation[]>({
     mutationFn: async () => {
@@ -114,18 +146,27 @@ export default function MilestoneDetail() {
               <p className="text-sm text-muted-foreground leading-relaxed">{milestone.description}</p>
             </div>
 
-            <div>
-              <h3 className="font-semibold mb-2">Age Range</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {milestone.ageRangeMonthsMin} - {milestone.ageRangeMonthsMax} months
-              </p>
-            </div>
+            {milestone.typicalRange && (
+              <div>
+                <h3 className="font-semibold mb-2">Typical range</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {milestone.typicalRange}
+                </p>
+              </div>
+            )}
 
             <Button 
-              className="w-full rounded-full bg-green-500 hover:bg-green-600 text-white"
+              className={`w-full rounded-full text-white ${
+                achievementStatus?.achieved
+                  ? 'bg-gray-400 hover:bg-gray-500'
+                  : 'bg-green-500 hover:bg-green-600'
+              }`}
+              onClick={() => toggleAchievement.mutate()}
+              disabled={toggleAchievement.isPending}
               data-testid="button-achievement-status"
             >
-              Mark as Achieved
+              <Check className="w-4 h-4 mr-2" />
+              {achievementStatus?.achieved ? 'Not achieved' : 'Achieved'}
             </Button>
           </div>
         )}
@@ -159,48 +200,60 @@ export default function MilestoneDetail() {
 
             {activeActionTab === 'todo' && (
               <div className="bg-muted/30 rounded-lg px-4 py-5 space-y-4">
-                <div>
-                  <h3 className="font-semibold mb-2">How parents can help</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {loadingRecommendations ? 'Loading personalized recommendations...' : 'AI-powered guidance personalized for your child'}
-                  </p>
-                  
-                  {loadingRecommendations ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      Generating recommendations...
+                {achievementStatus?.achieved ? (
+                  <div className="text-center py-12">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 mb-4">
+                      <Check className="w-8 h-8 text-green-600 dark:text-green-400" />
                     </div>
-                  ) : recommendations && recommendations.length > 0 ? (
-                    <div className="space-y-4">
-                      {recommendations.map((guide, idx) => (
-                        <div key={idx} className="flex items-start gap-3">
-                          <Checkbox 
-                            id={`guide-${idx}`} 
-                            className="mt-0.5" 
-                            data-testid={`checkbox-guide-${idx}`} 
-                          />
-                          <div className="flex-1">
-                            <label htmlFor={`guide-${idx}`} className="text-sm font-semibold cursor-pointer block">
-                              {guide.title}
-                            </label>
-                            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{guide.description}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No recommendations available
-                    </div>
-                  )}
-                  
-                  {recommendations && recommendations.length > 0 && (
-                    <p className="text-xs text-muted-foreground mt-4">
-                      More guides will be suggested after you have tried all the above
+                    <h3 className="font-semibold text-lg mb-2">Milestone Achieved!</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Great job! Your child has achieved this milestone.
                     </p>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <div>
+                    <h3 className="font-semibold mb-2">How parents can help</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {loadingRecommendations ? 'Loading personalized recommendations...' : 'AI-powered guidance personalized for your child'}
+                    </p>
+                    
+                    {loadingRecommendations ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        Generating recommendations...
+                      </div>
+                    ) : recommendations && recommendations.length > 0 ? (
+                      <div className="space-y-4">
+                        {recommendations.map((guide, idx) => (
+                          <div key={idx} className="flex items-start gap-3">
+                            <Checkbox 
+                              id={`guide-${idx}`} 
+                              className="mt-0.5" 
+                              data-testid={`checkbox-guide-${idx}`} 
+                            />
+                            <div className="flex-1">
+                              <label htmlFor={`guide-${idx}`} className="text-sm font-semibold cursor-pointer block">
+                                {guide.title}
+                              </label>
+                              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{guide.description}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No recommendations available
+                      </div>
+                    )}
+                    
+                    {recommendations && recommendations.length > 0 && (
+                      <p className="text-xs text-muted-foreground mt-4">
+                        More guides will be suggested after you have tried all the above
+                      </p>
+                    )}
+                  </div>
+                )}
 
-                {recommendations && recommendations.length > 0 && (
+                {!achievementStatus?.achieved && recommendations && recommendations.length > 0 && (
                   <>
                     <div className="border-t border-border pt-4 mt-4">
                       <div className="bg-blue-50 dark:bg-blue-950/20 rounded-md p-3 space-y-2">
@@ -234,6 +287,22 @@ export default function MilestoneDetail() {
                     </div>
                   </>
                 )}
+
+                <div className="border-t border-border pt-4 mt-4">
+                  <Button 
+                    className={`w-full rounded-full text-white ${
+                      achievementStatus?.achieved
+                        ? 'bg-gray-400 hover:bg-gray-500'
+                        : 'bg-green-500 hover:bg-green-600'
+                    }`}
+                    onClick={() => toggleAchievement.mutate()}
+                    disabled={toggleAchievement.isPending}
+                    data-testid="button-achievement-toggle"
+                  >
+                    <Check className="w-4 h-4 mr-2" />
+                    {achievementStatus?.achieved ? 'Not achieved' : 'Achieved'}
+                  </Button>
+                </div>
               </div>
             )}
 
