@@ -45,7 +45,9 @@ function getAgeRange(months: number): { min: number; max: number; label: string 
   if (months < 24) return { min: 18, max: 24, label: '18 - 24 month' };
   if (months < 30) return { min: 24, max: 30, label: '24 - 30 month' };
   if (months < 36) return { min: 30, max: 36, label: '30 - 36 month' };
-  return { min: 36, max: 48, label: '36 - 48 month' };
+  if (months < 48) return { min: 36, max: 48, label: '36 - 48 month' };
+  if (months < 60) return { min: 48, max: 60, label: '48 - 60 month' };
+  return { min: 60, max: 72, label: '5+ years' };
 }
 
 const categoryColors: Record<string, string> = {
