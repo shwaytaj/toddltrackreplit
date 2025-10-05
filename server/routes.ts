@@ -404,7 +404,7 @@ Milestone:
 Provide your response as a JSON array with objects containing "title" and "description" fields. Each recommendation should be specific, actionable, and personalized based on the medical histories provided. Keep titles short (5-7 words) and descriptions concise but practical (2-3 sentences).`;
 
       const message = await anthropic.messages.create({
-        model: "claude-3-5-sonnet-20240620",
+        model: "claude-3-5-sonnet-20241022",
         max_tokens: 1024,
         messages: [
           {
