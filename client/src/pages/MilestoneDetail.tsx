@@ -117,7 +117,7 @@ export default function MilestoneDetail() {
             <div>
               <h3 className="font-semibold mb-2">Age Range</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                {milestone.minAgeMonths} - {milestone.maxAgeMonths} months
+                {milestone.ageRangeMonthsMin} - {milestone.ageRangeMonthsMax} months
               </p>
             </div>
 
@@ -203,10 +203,10 @@ export default function MilestoneDetail() {
             )}
 
             {activeHelpTab === 'tools' && (
-              <div className="space-y-3">
-                {products.map((product, idx) => (
-                  <ProductCard key={idx} {...product} />
-                ))}
+              <div className="bg-muted/30 rounded-lg px-4 py-5">
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  Product recommendations coming soon
+                </p>
               </div>
             )}
           </div>

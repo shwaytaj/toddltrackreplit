@@ -353,7 +353,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate params
       const paramsSchema = z.object({
         childId: z.string().uuid(),
-        milestoneId: z.string().uuid(),
+        milestoneId: z.string(),
       });
       
       const { childId, milestoneId } = paramsSchema.parse(req.params);
@@ -404,7 +404,7 @@ Milestone:
 Provide your response as a JSON array with objects containing "title" and "description" fields. Each recommendation should be specific, actionable, and personalized based on the medical histories provided. Keep titles short (5-7 words) and descriptions concise but practical (2-3 sentences).`;
 
       const message = await anthropic.messages.create({
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-3-5-sonnet-20240620",
         max_tokens: 1024,
         messages: [
           {
