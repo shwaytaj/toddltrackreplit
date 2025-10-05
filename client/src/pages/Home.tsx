@@ -104,6 +104,20 @@ export default function Home() {
 
   const achievedMilestoneIds = new Set(childMilestones.map(cm => cm.milestoneId));
 
+  const { data: allMilestones = [] } = useQuery<Milestone[]>({
+    queryKey: ['/api/milestones'],
+  });
+
+  const milestonesByCategory = useMemo(() => {
+    const developmental = allMilestones.filter(m => 
+      ['Gross Motor', 'Fine motor', 'Communication', 'Social & Emotional', 'Cognitive'].includes(m.category)
+    );
+    const vision = allMilestones.filter(m => m.category === 'Vision');
+    const hearing = allMilestones.filter(m => m.category === 'Hearing');
+    
+    return { developmental, vision, hearing };
+  }, [allMilestones]);
+
   const latestMetrics = useMemo(() => {
     const weight = growthMetrics
       .filter(m => m.type === 'weight')
@@ -192,35 +206,40 @@ export default function Home() {
           </div>
         ) : null}
 
-        {milestones.length > 0 && (
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold">{ageRange?.label} Milestones</h2>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                data-testid="button-view-all-milestones"
-                onClick={() => setLocation('/milestones')}
-              >
-                View all →
-              </Button>
-            </div>
-            <h3 className="text-sm font-medium mb-2">Developmental</h3>
-            <div className="grid grid-cols-3 gap-3">
-              {milestones.slice(0, 3).map(milestone => (
-                <MilestoneCard
-                  key={milestone.id}
-                  title={milestone.title}
-                  category={milestone.category}
-                  categoryColor={categoryColors[milestone.category] || 'bg-gray-100 dark:bg-gray-900/20'}
-                  achieved={achievedMilestoneIds.has(milestone.id)}
-                  onClick={() => setLocation(`/milestone/${milestone.id}`)}
-                  data-testid={`card-milestone-${milestone.id}`}
-                />
-              ))}
-            </div>
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold">{ageRange?.label} Milestones</h2>
           </div>
-        )}
+
+          {milestonesByCategory.developmental.length > 0 && (
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium">Developmental</h3>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  data-testid="button-view-all-developmental"
+                  onClick={() => setLocation('/milestones')}
+                >
+                  View all →
+                </Button>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                {milestonesByCategory.developmental.slice(0, 3).map(milestone => (
+                  <MilestoneCard
+                    key={milestone.id}
+                    title={milestone.title}
+                    category={milestone.category}
+                    categoryColor={categoryColors[milestone.category] || 'bg-gray-100 dark:bg-gray-900/20'}
+                    achieved={achievedMilestoneIds.has(milestone.id)}
+                    onClick={() => setLocation(`/milestone/${milestone.id}`)}
+                    data-testid={`card-milestone-${milestone.id}`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
         {(latestMetrics.weight || latestMetrics.height || latestMetrics.head) && (
           <div>
@@ -269,6 +288,84 @@ export default function Home() {
                   data-testid="card-growth-head"
                 />
               )}
+            </div>
+          </div>
+        )}
+
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold">Teeth</h2>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              data-testid="button-view-all-teeth"
+            >
+              View all →
+            </Button>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-pink-50 dark:bg-pink-950/20 rounded-lg p-4 min-h-[120px] flex items-center justify-center">
+              <p className="text-sm font-medium text-center">Lateral Incisors</p>
+            </div>
+            <div className="bg-pink-50 dark:bg-pink-950/20 rounded-lg p-4 min-h-[120px] flex items-center justify-center">
+              <p className="text-sm font-medium text-center">First Molars</p>
+            </div>
+            <div className="bg-pink-50 dark:bg-pink-950/20 rounded-lg p-4 min-h-[120px] flex items-center justify-center">
+              <p className="text-sm font-medium text-center">Canine</p>
+            </div>
+          </div>
+        </div>
+
+        {milestonesByCategory.vision.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold">Vision</h2>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                data-testid="button-view-all-vision"
+              >
+                View all →
+              </Button>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {milestonesByCategory.vision.slice(0, 3).map(milestone => (
+                <div 
+                  key={milestone.id}
+                  className="bg-amber-50 dark:bg-amber-950/20 rounded-lg p-4 min-h-[120px] flex items-center justify-center cursor-pointer hover-elevate active-elevate-2"
+                  onClick={() => setLocation(`/milestone/${milestone.id}`)}
+                  data-testid={`card-vision-${milestone.id}`}
+                >
+                  <p className="text-sm font-medium text-center">{milestone.title}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {milestonesByCategory.hearing.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold">Hearing</h2>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                data-testid="button-view-all-hearing"
+              >
+                View all →
+              </Button>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {milestonesByCategory.hearing.slice(0, 3).map(milestone => (
+                <div 
+                  key={milestone.id}
+                  className="bg-teal-50 dark:bg-teal-950/20 rounded-lg p-4 min-h-[120px] flex items-center justify-center cursor-pointer hover-elevate active-elevate-2"
+                  onClick={() => setLocation(`/milestone/${milestone.id}`)}
+                  data-testid={`card-hearing-${milestone.id}`}
+                >
+                  <p className="text-sm font-medium text-center">{milestone.title}</p>
+                </div>
+              ))}
             </div>
           </div>
         )}
