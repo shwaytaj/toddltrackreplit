@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLocation, useRoute } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -8,11 +8,15 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { X, Check, Lightbulb, AlertTriangle } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import type { Milestone, Child, ChildMilestone } from '@shared/schema';
+import type { Milestone, Child, ChildMilestone, CompletedRecommendation } from '@shared/schema';
 
 interface AIRecommendation {
   title: string;
   description: string;
+}
+
+interface MilestoneWithRecommendations extends Milestone {
+  recommendations: AIRecommendation[];
 }
 
 export default function MilestoneDetail() {
@@ -21,6 +25,7 @@ export default function MilestoneDetail() {
   const [activeTab, setActiveTab] = useState<'about' | 'action'>('action');
   const [activeActionTab, setActiveActionTab] = useState<'todo' | 'tools'>('todo');
   const [activeNav, setActiveNav] = useState<'home' | 'milestones' | 'profile'>('milestones');
+  const [loadedMilestoneIds, setLoadedMilestoneIds] = useState<string[]>([]);
 
   const { data: children = [] } = useQuery<Child[]>({
     queryKey: ['/api/children'],
@@ -70,6 +75,26 @@ export default function MilestoneDetail() {
     },
   });
 
+  // Fetch all child milestones to find unachieved ones
+  const { data: allChildMilestones = [] } = useQuery<ChildMilestone[]>({
+    queryKey: ['/api/children', selectedChild?.id, 'milestones'],
+    enabled: !!selectedChild,
+  });
+
+  // Get unachieved milestones
+  const unachievedMilestones = useMemo(() => {
+    return allChildMilestones
+      .filter(cm => !cm.achieved)
+      .map(cm => allMilestones.find(m => m.id === cm.milestoneId))
+      .filter((m): m is Milestone => m !== undefined);
+  }, [allChildMilestones, allMilestones]);
+
+  // Fetch completed recommendations for this child
+  const { data: completedRecommendations = [] } = useQuery<CompletedRecommendation[]>({
+    queryKey: ['/api/children', selectedChild?.id, 'completed-recommendations'],
+    enabled: !!selectedChild,
+  });
+
   const { data: recommendations, mutate: fetchRecommendations, isPending: loadingRecommendations } = useMutation<AIRecommendation[]>({
     mutationFn: async () => {
       if (!selectedChild || !milestone) return [];
@@ -82,11 +107,42 @@ export default function MilestoneDetail() {
     },
   });
 
+  // Toggle recommendation completion
+  const toggleRecommendation = useMutation({
+    mutationFn: async ({ milestoneId, title, isCompleted }: { milestoneId: string; title: string; isCompleted: boolean }) => {
+      if (!selectedChild) return;
+      
+      if (isCompleted) {
+        await apiRequest('DELETE', `/api/children/${selectedChild.id}/completed-recommendations`, {
+          milestoneId,
+          recommendationTitle: title,
+        });
+      } else {
+        await apiRequest('POST', `/api/children/${selectedChild.id}/completed-recommendations`, {
+          milestoneId,
+          recommendationTitle: title,
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ 
+        queryKey: ['/api/children', selectedChild?.id, 'completed-recommendations'] 
+      });
+    },
+  });
+
   useEffect(() => {
     if (selectedChild && milestone && activeTab === 'action' && activeActionTab === 'todo') {
       fetchRecommendations();
     }
   }, [selectedChild, milestone, activeTab, activeActionTab, fetchRecommendations]);
+
+  // Check if a recommendation is completed
+  const isRecommendationCompleted = (milestoneId: string, title: string) => {
+    return completedRecommendations.some(
+      cr => cr.milestoneId === milestoneId && cr.recommendationTitle === title
+    );
+  };
 
   const handleNavigation = (page: 'home' | 'milestones' | 'profile') => {
     setActiveNav(page);
@@ -239,21 +295,34 @@ export default function MilestoneDetail() {
                       </div>
                     ) : recommendations && recommendations.length > 0 ? (
                       <div className="space-y-4">
-                        {recommendations.map((guide, idx) => (
-                          <div key={idx} className="flex items-start gap-3">
-                            <Checkbox 
-                              id={`guide-${idx}`} 
-                              className="mt-0.5" 
-                              data-testid={`checkbox-guide-${idx}`} 
-                            />
-                            <div className="flex-1">
-                              <label htmlFor={`guide-${idx}`} className="text-sm font-semibold cursor-pointer block">
-                                {guide.title}
-                              </label>
-                              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{guide.description}</p>
+                        {recommendations.map((guide, idx) => {
+                          const isCompleted = milestone ? isRecommendationCompleted(milestone.id, guide.title) : false;
+                          return (
+                            <div key={idx} className="flex items-start gap-3">
+                              <Checkbox 
+                                id={`guide-${idx}`} 
+                                className="mt-0.5" 
+                                checked={isCompleted}
+                                onCheckedChange={(checked) => {
+                                  if (milestone) {
+                                    toggleRecommendation.mutate({
+                                      milestoneId: milestone.id,
+                                      title: guide.title,
+                                      isCompleted,
+                                    });
+                                  }
+                                }}
+                                data-testid={`checkbox-guide-${idx}`} 
+                              />
+                              <div className="flex-1">
+                                <label htmlFor={`guide-${idx}`} className="text-sm font-semibold cursor-pointer block">
+                                  {guide.title}
+                                </label>
+                                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{guide.description}</p>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     ) : (
                       <div className="text-center py-8 text-muted-foreground">
