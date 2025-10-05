@@ -99,11 +99,12 @@ export default function MilestoneDetail() {
   });
 
   const { data: recommendations, mutate: fetchRecommendations, isPending: loadingRecommendations } = useMutation<AIRecommendation[]>({
-    mutationFn: async () => {
+    mutationFn: async (excludeCompleted?: string[]) => {
       if (!selectedChild || !milestone) return [];
       const response = await apiRequest(
         'POST',
-        `/api/children/${selectedChild.id}/milestones/${milestone.id}/recommendations`
+        `/api/children/${selectedChild.id}/milestones/${milestone.id}/recommendations`,
+        excludeCompleted && excludeCompleted.length > 0 ? { excludeCompleted } : undefined
       );
       const data = await response.json();
       return data;
@@ -139,6 +140,27 @@ export default function MilestoneDetail() {
       fetchRecommendations();
     }
   }, [selectedChild, milestone, activeTab, activeActionTab, fetchRecommendations]);
+
+  // Check if all current recommendations are completed and fetch new ones
+  useEffect(() => {
+    if (!milestone || !recommendations || recommendations.length === 0) return;
+    
+    const allCompleted = recommendations.every(rec => 
+      isRecommendationCompleted(milestone.id, rec.title)
+    );
+    
+    if (allCompleted) {
+      // Get all completed recommendation titles for this milestone
+      const completedTitlesForMilestone = completedRecommendations
+        .filter(cr => cr.milestoneId === milestone.id)
+        .map(cr => cr.recommendationTitle);
+      
+      // Fetch new recommendations excluding the completed ones
+      if (completedTitlesForMilestone.length > 0) {
+        fetchRecommendations(completedTitlesForMilestone);
+      }
+    }
+  }, [recommendations, completedRecommendations, milestone, fetchRecommendations]);
 
   // Check if a recommendation is completed
   const isRecommendationCompleted = (milestoneId: string, title: string) => {
@@ -298,7 +320,16 @@ export default function MilestoneDetail() {
                       </div>
                     ) : recommendations && recommendations.length > 0 ? (
                       <div className="space-y-4">
-                        {recommendations.map((guide, idx) => {
+                        {recommendations
+                          .slice()
+                          .sort((a, b) => {
+                            if (!milestone) return 0;
+                            const aCompleted = isRecommendationCompleted(milestone.id, a.title);
+                            const bCompleted = isRecommendationCompleted(milestone.id, b.title);
+                            if (aCompleted === bCompleted) return 0;
+                            return aCompleted ? 1 : -1;
+                          })
+                          .map((guide, idx) => {
                           const isCompleted = milestone ? isRecommendationCompleted(milestone.id, guide.title) : false;
                           return (
                             <div key={idx} className="flex items-start gap-3">
@@ -318,10 +349,10 @@ export default function MilestoneDetail() {
                                 data-testid={`checkbox-guide-${idx}`} 
                               />
                               <div className="flex-1">
-                                <label htmlFor={`guide-${idx}`} className="text-sm font-semibold cursor-pointer block">
+                                <label htmlFor={`guide-${idx}`} className={`text-sm font-semibold cursor-pointer block ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>
                                   {guide.title}
                                 </label>
-                                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{guide.description}</p>
+                                <p className={`text-xs text-muted-foreground mt-1 leading-relaxed ${isCompleted ? 'line-through' : ''}`}>{guide.description}</p>
                               </div>
                             </div>
                           );

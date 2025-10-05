@@ -405,6 +405,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const { childId, milestoneId } = paramsSchema.parse(req.params);
 
+      // Get excluded recommendations from request body
+      const excludeCompletedTitles = req.body?.excludeCompleted || [];
+
       // Get child and verify ownership
       const child = await storage.getChild(childId);
       if (!child) return res.status(404).json({ error: "Child not found" });
@@ -426,12 +429,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const childDataVersion = child.medicalHistoryUpdatedAt || new Date(0);
       const parentDataVersion = parent.medicalHistoryUpdatedAt || new Date(0);
 
-      // Use cached if data hasn't changed
+      // Use cached if data hasn't changed AND we're not requesting new recommendations
       if (cached && 
           cached.childDataVersion >= childDataVersion &&
-          cached.parentDataVersion >= parentDataVersion) {
+          cached.parentDataVersion >= parentDataVersion &&
+          excludeCompletedTitles.length === 0) {
         return res.json(cached.recommendations);
       }
+
+      // Build exclusion text for prompt if there are completed recommendations
+      const exclusionText = excludeCompletedTitles.length > 0 
+        ? `\n\nIMPORTANT: The parents have already tried the following recommendations. Please provide NEW, DIFFERENT recommendations that build upon or complement these completed activities:\n${excludeCompletedTitles.map((title: string, idx: number) => `${idx + 1}. ${title}`).join('\n')}`
+        : '';
 
       // Generate new recommendations with Claude
       const prompt = `You are a pediatric development expert. Based on the following information, provide 3-4 practical, personalized recommendations for how parents can help their child achieve this milestone.
@@ -446,7 +455,7 @@ Parent Information:
 Milestone:
 - Title: ${milestone.title}
 - Category: ${milestone.category}
-- Description: ${milestone.description}
+- Description: ${milestone.description}${exclusionText}
 
 Provide your response as a JSON array with objects containing "title" and "description" fields. Each recommendation should be specific, actionable, and personalized based on the medical histories provided. Keep titles short (5-7 words) and descriptions concise but practical (2-3 sentences).`;
 
