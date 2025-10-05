@@ -102,7 +102,9 @@ export default function Home() {
     enabled: !!activeChild && activeChild !== '',
   });
 
-  const achievedMilestoneIds = new Set(childMilestones.map(cm => cm.milestoneId));
+  const achievedMilestoneIds = new Set(
+    childMilestones.filter(cm => cm.achieved).map(cm => cm.milestoneId)
+  );
 
   const { data: allMilestones = [] } = useQuery<Milestone[]>({
     queryKey: ['/api/milestones'],
