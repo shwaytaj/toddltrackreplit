@@ -72,6 +72,9 @@ export default function MilestoneDetail() {
       queryClient.invalidateQueries({ 
         queryKey: ['/api/children', selectedChild?.id, 'milestones', milestone?.id] 
       });
+      queryClient.invalidateQueries({ 
+        queryKey: ['/api/children', selectedChild?.id, 'milestones'] 
+      });
     },
   });
 

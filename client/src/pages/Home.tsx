@@ -157,7 +157,7 @@ export default function Home() {
   const firstName = selectedChild.name.split(' ')[0];
   const pronoun = selectedChild.gender === 'female' ? 'She' : selectedChild.gender === 'male' ? 'He' : 'They';
 
-  const achievedCount = childMilestones.length;
+  const achievedCount = childMilestones.filter(cm => cm.achieved).length;
   const totalInRange = milestones.length;
   const notAchievedMilestones = milestones.filter(m => !achievedMilestoneIds.has(m.id));
 
