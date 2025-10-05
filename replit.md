@@ -106,6 +106,18 @@ Preferred communication style: Simple, everyday language.
 - Age calculation verified working correctly: birthdate → months & days display
 - All data now fetched from backend: child name, age, milestones, growth metrics, achievements
 
+**Toy Recommendations Enhancements (Oct 2025):**
+- Enhanced toy recommendations with stock product images fetched via stock_image_tool
+- Replaced retailer button text with company logos (Amazon, Target, Walmart) using react-icons
+- Implemented dismissible recommendations system with database persistence per child
+- Created `dismissed_toy_recommendations` table to track user dismissals
+- Backend generates 10-15 toy recommendations, filters dismissed ones, returns up to 5 fresh recommendations
+- Added tooltip "Don't show this" on hover over close button for each recommendation
+- Implemented auto-refetch when recommendations are dismissed, with "No more recommendations" placeholder
+- Enhanced Amazon URLs with multiple parameters: category filtering, age-appropriate filtering, review-based sorting
+- Stock images fetched in parallel with graceful fallback when image fetch fails
+- Dismissed toys filtered using case-insensitive matching
+
 ### External Dependencies
 
 **AI Integration:**
