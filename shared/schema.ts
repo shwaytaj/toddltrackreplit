@@ -90,6 +90,14 @@ export const aiRecommendations = pgTable("ai_recommendations", {
   parentDataVersion: timestamp("parent_data_version").notNull(),
 });
 
+export const completedRecommendations = pgTable("completed_recommendations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  childId: varchar("child_id").notNull().references(() => children.id, { onDelete: "cascade" }),
+  milestoneId: varchar("milestone_id").notNull().references(() => milestones.id, { onDelete: "cascade" }),
+  recommendationTitle: text("recommendation_title").notNull(),
+  completedAt: timestamp("completed_at").defaultNow(),
+});
+
 // Insert schemas and types
 export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
@@ -123,6 +131,11 @@ export const insertAiRecommendationSchema = createInsertSchema(aiRecommendations
   generatedAt: true,
 });
 
+export const insertCompletedRecommendationSchema = createInsertSchema(completedRecommendations).omit({
+  id: true,
+  completedAt: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -144,3 +157,6 @@ export type Tooth = typeof teeth.$inferSelect;
 
 export type InsertAiRecommendation = z.infer<typeof insertAiRecommendationSchema>;
 export type AiRecommendation = typeof aiRecommendations.$inferSelect;
+
+export type InsertCompletedRecommendation = z.infer<typeof insertCompletedRecommendationSchema>;
+export type CompletedRecommendation = typeof completedRecommendations.$inferSelect;
