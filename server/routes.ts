@@ -108,6 +108,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/children/:id", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    
+    const child = await storage.getChild(req.params.id);
+    if (!child) return res.status(404).json({ error: "Child not found" });
+    
+    if (!child.parentIds.includes(req.user.id)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    
+    try {
+      const updateChildSchema = z.object({
+        name: z.string().optional(),
+        birthDate: z.string().optional(),
+        gender: z.enum(['male', 'female', 'other']).optional(),
+      });
+      
+      const validatedData = updateChildSchema.parse(req.body);
+      const updatedChild = await storage.updateChild(req.params.id, validatedData);
+      res.json(updatedChild);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid input" });
+    }
+  });
+
   app.patch("/api/children/:id/medical-history", async (req, res) => {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
     

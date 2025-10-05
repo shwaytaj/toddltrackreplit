@@ -48,6 +48,7 @@ export interface IStorage {
   getChild(id: string): Promise<Child | undefined>;
   getChildrenByParentId(parentId: string): Promise<Child[]>;
   createChild(child: InsertChild): Promise<Child>;
+  updateChild(childId: string, data: Partial<Child>): Promise<Child | undefined>;
   updateChildMedicalHistory(childId: string, medicalHistory: any): Promise<Child | undefined>;
 
   // Milestone operations
@@ -140,6 +141,15 @@ export class DbStorage implements IStorage {
 
   async createChild(child: InsertChild): Promise<Child> {
     const result = await this.db.insert(children).values(child as any).returning();
+    return result[0];
+  }
+
+  async updateChild(childId: string, data: Partial<Child>): Promise<Child | undefined> {
+    const result = await this.db
+      .update(children)
+      .set(data)
+      .where(eq(children.id, childId))
+      .returning();
     return result[0];
   }
 
