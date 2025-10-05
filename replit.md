@@ -103,8 +103,9 @@ Preferred communication style: Simple, everyday language.
 - Fixed production login redirect issue where users were redirected to signup page after successful login
 - Updated queryClient to properly read `meta.unauthorizedBehavior` from query options
 - This allows `useUser` hook to return null on 401 errors instead of throwing, preventing unwanted redirects
-- Enhanced session cookie configuration with `httpOnly: true` and environment-aware `sameSite` settings
-- Session cookies now use `sameSite: "none"` in production for cross-origin reliability
+- Enhanced session cookie configuration with `httpOnly: true` and `sameSite: "lax"`
+- Removed `secure` flag to ensure sessions work reliably in Replit's production environment
+- Session cookies persist across navigation (registration → onboarding → home)
 - Authentication flow verified end-to-end with Playwright testing
 
 **Recent Home Page Fixes (Oct 2025):**
