@@ -86,6 +86,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(sanitizedUser);
   });
 
+  app.patch("/api/user/profile", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      const updateSchema = z.object({
+        displayName: z.string().optional(),
+        firstName: z.string().optional(),
+        lastName: z.string().optional(),
+      });
+      
+      const validatedData = updateSchema.parse(req.body);
+      
+      // Map displayName to firstName if provided
+      const updateData: any = {};
+      if (validatedData.displayName) {
+        updateData.firstName = validatedData.displayName;
+      }
+      if (validatedData.firstName) {
+        updateData.firstName = validatedData.firstName;
+      }
+      if (validatedData.lastName) {
+        updateData.lastName = validatedData.lastName;
+      }
+      
+      const updatedUser = await storage.updateUser(req.user.id, updateData);
+      if (!updatedUser) return res.status(404).json({ error: "User not found" });
+      
+      const { password, ...sanitizedUser } = updatedUser;
+      res.json(sanitizedUser);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid input", details: error.errors });
+      }
+      res.status(400).json({ error: "Invalid input" });
+    }
+  });
+
   // Children routes
   app.get("/api/children", async (req, res) => {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });

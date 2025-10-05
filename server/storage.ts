@@ -43,6 +43,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserMedicalHistory(userId: string, medicalHistory: any): Promise<User | undefined>;
+  updateUser(userId: string, data: Partial<User>): Promise<User | undefined>;
 
   // Child operations
   getChild(id: string): Promise<Child | undefined>;
@@ -123,6 +124,15 @@ export class DbStorage implements IStorage {
         medicalHistory,
         medicalHistoryUpdatedAt: new Date(),
       })
+      .where(eq(users.id, userId))
+      .returning();
+    return result[0];
+  }
+
+  async updateUser(userId: string, data: Partial<User>): Promise<User | undefined> {
+    const result = await this.db
+      .update(users)
+      .set(data)
       .where(eq(users.id, userId))
       .returning();
     return result[0];
