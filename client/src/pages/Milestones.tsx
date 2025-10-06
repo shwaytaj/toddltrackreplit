@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select';
 import { useQuery } from '@tanstack/react-query';
 import type { Child, ChildMilestone, Milestone } from '@shared/schema';
+import { calculateCorrectedAge } from '@/lib/age-calculation';
 
 const AGE_RANGES = [
   { min: 0, max: 6, label: '0 - 6 months' },
@@ -54,12 +55,18 @@ export default function Milestones() {
 
   const selectedChild = children[0];
 
-  // Calculate child's current age in months and set initial range
+  // Calculate child's corrected age and store age info
+  const ageInfo = useMemo(() => {
+    if (!selectedChild) return null;
+    return calculateCorrectedAge(selectedChild.birthDate, selectedChild.dueDate);
+  }, [selectedChild]);
+
+  // Calculate child's current age in months (using corrected age) and set initial range
   useEffect(() => {
-    if (selectedChild) {
-      const birthDate = new Date(selectedChild.birthDate);
-      const now = new Date();
-      const ageInMonths = Math.floor((now.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44));
+    if (selectedChild && ageInfo) {
+      // Use corrected age if applicable, otherwise use chronological
+      const age = ageInfo.shouldUseCorrectedAge ? ageInfo.corrected : ageInfo.chronological;
+      const ageInMonths = age.years * 12 + age.months;
       
       // Find the age range that contains the child's current age
       const rangeIndex = AGE_RANGES.findIndex(range => 
@@ -70,7 +77,7 @@ export default function Milestones() {
         setSelectedRangeIndex(rangeIndex);
       }
     }
-  }, [selectedChild]);
+  }, [selectedChild, ageInfo]);
 
   const selectedRange = AGE_RANGES[selectedRangeIndex];
 
@@ -131,28 +138,35 @@ export default function Milestones() {
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="p-4 space-y-6 max-w-2xl mx-auto">
-        <div className="flex items-center justify-between">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            data-testid="button-previous-range"
-            onClick={handlePrevious}
-            disabled={selectedRangeIndex === 0}
-          >
-            <ChevronLeft className="w-4 h-4 mr-1" /> Previous
-          </Button>
-          <div className="bg-[#2C3E50] text-white px-6 py-2 rounded-full text-sm font-medium">
-            Current: {selectedRange.label}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              data-testid="button-previous-range"
+              onClick={handlePrevious}
+              disabled={selectedRangeIndex === 0}
+            >
+              <ChevronLeft className="w-4 h-4 mr-1" /> Previous
+            </Button>
+            <div className="bg-[#2C3E50] text-white px-6 py-2 rounded-full text-sm font-medium">
+              Current: {selectedRange.label}
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              data-testid="button-next-range"
+              onClick={handleNext}
+              disabled={selectedRangeIndex === AGE_RANGES.length - 1}
+            >
+              Next <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
           </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            data-testid="button-next-range"
-            onClick={handleNext}
-            disabled={selectedRangeIndex === AGE_RANGES.length - 1}
-          >
-            Next <ChevronRight className="w-4 h-4 ml-1" />
-          </Button>
+          {ageInfo?.shouldUseCorrectedAge && (
+            <p className="text-xs text-muted-foreground text-center" data-testid="text-adjusted-range-note">
+              Age range based on adjusted age
+            </p>
+          )}
         </div>
 
         {milestones.length === 0 ? (
