@@ -222,6 +222,15 @@ export default function MedicalHistory() {
                     data-testid="input-due-date"
                     required
                   />
+                  {dueDate && (
+                    <p className="text-xs font-medium text-primary">
+                      {new Date(dueDate + 'T00:00:00').toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}
+                    </p>
+                  )}
                   <p className="text-xs text-muted-foreground">
                     The expected delivery date from your doctor
                   </p>
@@ -236,6 +245,15 @@ export default function MedicalHistory() {
                     data-testid="input-birth-date"
                     required
                   />
+                  {birthDate && (
+                    <p className="text-xs font-medium text-primary">
+                      {new Date(birthDate + 'T00:00:00').toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}
+                    </p>
+                  )}
                   <p className="text-xs text-muted-foreground">
                     When your baby was actually born
                   </p>
