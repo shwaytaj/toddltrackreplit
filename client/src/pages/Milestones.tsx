@@ -155,7 +155,7 @@ export default function Milestones() {
               <ChevronLeft className="w-4 h-4 mr-1" /> Previous
             </Button>
             <div className="bg-[#2C3E50] text-white px-6 py-2 rounded-full text-sm font-medium">
-              Current: {selectedRange.label}
+              {selectedRangeIndex === childCorrectedAgeRangeIndex ? 'Current: ' : ''}{selectedRange.label}
             </div>
             <Button 
               variant="ghost" 
