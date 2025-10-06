@@ -13,6 +13,7 @@ import passport, { hashPassword } from "./auth";
 import "./types";
 import { z } from "zod";
 import { calculatePercentile } from "./whoPercentiles";
+import { getAgeInMonthsForAI } from "./age-utils";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -520,10 +521,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         : '';
 
       // Generate new recommendations with Claude
+      const childAgeInMonths = getAgeInMonthsForAI(child.birthDate, child.dueDate);
       const prompt = `You are a pediatric development expert. Based on the following information, provide 3-4 practical, personalized recommendations for how parents can help their child achieve this milestone.
 
 Child Information:
-- Age: ${Math.floor((new Date().getTime() - new Date(child.birthDate).getTime()) / (1000 * 60 * 60 * 24 * 30))} months
+- Age: ${childAgeInMonths} months (adjusted for prematurity/post-maturity if applicable)
 - Medical History: ${JSON.stringify(child.medicalHistory || {})}
 
 Parent Information:
@@ -630,11 +632,11 @@ Provide your response as a JSON array with objects containing "title" and "descr
       }
 
       // Generate new toy recommendations with Claude (more recommendations now)
-      const childAge = Math.floor((new Date().getTime() - new Date(child.birthDate).getTime()) / (1000 * 60 * 60 * 24 * 30));
+      const childAgeInMonths = getAgeInMonthsForAI(child.birthDate, child.dueDate);
       const prompt = `You are a pediatric development expert and toy specialist. Based on the following information, recommend 10-15 specific toys or tools that parents can use to help their child achieve this milestone.
 
 Child Information:
-- Age: ${childAge} months
+- Age: ${childAgeInMonths} months (adjusted for prematurity/post-maturity if applicable)
 - Medical History: ${JSON.stringify(child.medicalHistory || {})}
 
 Parent Information:
