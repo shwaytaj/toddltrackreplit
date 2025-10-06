@@ -16,13 +16,16 @@ import type { Child, ChildMilestone, Milestone } from '@shared/schema';
 import { calculateCorrectedAge } from '@/lib/age-calculation';
 
 const AGE_RANGES = [
-  { min: 0, max: 6, label: '0 - 6 months' },
-  { min: 6, max: 12, label: '6 - 12 months' },
-  { min: 12, max: 18, label: '12 - 18 months' },
-  { min: 18, max: 24, label: '18 - 24 months' },
-  { min: 24, max: 30, label: '24 - 30 months' },
-  { min: 30, max: 36, label: '30 - 36 months' },
-  { min: 36, max: 48, label: '36 - 48 months' },
+  { min: 0, max: 3, label: '0-3 months' },
+  { min: 4, max: 6, label: '4-6 months' },
+  { min: 7, max: 9, label: '7-9 months' },
+  { min: 10, max: 12, label: '10-12 months' },
+  { min: 13, max: 18, label: '13-18 months' },
+  { min: 19, max: 24, label: '19-24 months' },
+  { min: 25, max: 30, label: '25-30 months' },
+  { min: 31, max: 36, label: '31-36 months' },
+  { min: 37, max: 49, label: '37-49 months' },
+  { min: 49, max: 60, label: '49-60 months' },
 ];
 
 const getCategoryColor = (category: string) => {
@@ -48,6 +51,7 @@ export default function Milestones() {
   const [, setLocation] = useLocation();
   const [activeNav, setActiveNav] = useState<'home' | 'milestones' | 'profile'>('milestones');
   const [selectedRangeIndex, setSelectedRangeIndex] = useState(0);
+  const [childCorrectedAgeRangeIndex, setChildCorrectedAgeRangeIndex] = useState<number | null>(null);
 
   const { data: children = [] } = useQuery<Child[]>({
     queryKey: ['/api/children'],
@@ -70,11 +74,12 @@ export default function Milestones() {
       
       // Find the age range that contains the child's current age
       const rangeIndex = AGE_RANGES.findIndex(range => 
-        ageInMonths >= range.min && ageInMonths < range.max
+        ageInMonths >= range.min && ageInMonths <= range.max
       );
       
       if (rangeIndex !== -1) {
         setSelectedRangeIndex(rangeIndex);
+        setChildCorrectedAgeRangeIndex(rangeIndex); // Track the child's corrected age range
       }
     }
   }, [selectedChild, ageInfo]);
@@ -162,7 +167,7 @@ export default function Milestones() {
               Next <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
-          {ageInfo?.shouldUseCorrectedAge && (
+          {ageInfo?.shouldUseCorrectedAge && selectedRangeIndex === childCorrectedAgeRangeIndex && (
             <p className="text-xs text-muted-foreground text-center" data-testid="text-adjusted-range-note">
               Age range based on adjusted age
             </p>
