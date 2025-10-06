@@ -110,8 +110,15 @@ export default function MedicalHistory() {
       // Invalidate all children data
       queryClient.invalidateQueries({ queryKey: ['/api/children'] });
       // Invalidate all milestone-related queries (including toy recommendations and to-do recommendations)
-      children.forEach(child => {
-        queryClient.invalidateQueries({ queryKey: ['/api/children', child.id, 'milestones'] });
+      // Use predicate to catch all children, even if local children array is stale
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey;
+          return Array.isArray(key) && 
+                 key[0] === '/api/children' && 
+                 key.length >= 3 &&
+                 key[2] === 'milestones';
+        }
       });
     },
   });
