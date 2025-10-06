@@ -115,17 +115,17 @@ export function calculateCorrectedAge(
 /**
  * Get age range for milestone filtering based on corrected age
  */
-export function getAgeRange(months: number): { min: number; max: number } {
-  if (months <= 3) return { min: 0, max: 3 };
-  if (months <= 6) return { min: 4, max: 6 };
-  if (months <= 9) return { min: 7, max: 9 };
-  if (months <= 12) return { min: 10, max: 12 };
-  if (months <= 18) return { min: 13, max: 18 };
-  if (months <= 24) return { min: 19, max: 24 };
-  if (months <= 30) return { min: 25, max: 30 };
-  if (months <= 36) return { min: 31, max: 36 };
-  if (months <= 49) return { min: 37, max: 49 };
-  return { min: 49, max: 60 };
+export function getAgeRange(months: number): { min: number; max: number; label: string } {
+  if (months <= 3) return { min: 0, max: 3, label: '0-3 months' };
+  if (months <= 6) return { min: 4, max: 6, label: '4-6 months' };
+  if (months <= 9) return { min: 7, max: 9, label: '7-9 months' };
+  if (months <= 12) return { min: 10, max: 12, label: '10-12 months' };
+  if (months <= 18) return { min: 13, max: 18, label: '13-18 months' };
+  if (months <= 24) return { min: 19, max: 24, label: '19-24 months' };
+  if (months <= 30) return { min: 25, max: 30, label: '25-30 months' };
+  if (months <= 36) return { min: 31, max: 36, label: '31-36 months' };
+  if (months <= 49) return { min: 37, max: 49, label: '37-49 months' };
+  return { min: 49, max: 60, label: '49-60 months' };
 }
 
 /**

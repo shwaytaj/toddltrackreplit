@@ -9,46 +9,8 @@ import { Button } from '@/components/ui/button';
 import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { useUser } from '@/hooks/use-user';
+import { calculateCorrectedAge, getAgeRange, formatAge, formatAdjustment } from '@/lib/age-calculation';
 import type { Child, Milestone, ChildMilestone, GrowthMetric } from '@shared/schema';
-
-function calculateAge(birthDate: Date | string) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  const birth = new Date(birthDate);
-  birth.setHours(0, 0, 0, 0);
-  
-  let years = today.getFullYear() - birth.getFullYear();
-  let months = today.getMonth() - birth.getMonth();
-  let days = today.getDate() - birth.getDate();
-  
-  if (days < 0) {
-    months--;
-    const prevMonth = new Date(today.getFullYear(), today.getMonth(), 0);
-    days = prevMonth.getDate() + days;
-  }
-  
-  if (months < 0) {
-    years--;
-    months += 12;
-  }
-  
-  const totalMonths = years * 12 + months;
-  
-  return { months: totalMonths, days: Math.max(0, days) };
-}
-
-function getAgeRange(months: number): { min: number; max: number; label: string } {
-  if (months < 6) return { min: 0, max: 6, label: '0 - 6 month' };
-  if (months < 12) return { min: 6, max: 12, label: '6 - 12 month' };
-  if (months < 18) return { min: 12, max: 18, label: '12 - 18 month' };
-  if (months < 24) return { min: 18, max: 24, label: '18 - 24 month' };
-  if (months < 30) return { min: 24, max: 30, label: '24 - 30 month' };
-  if (months < 36) return { min: 30, max: 36, label: '30 - 36 month' };
-  if (months < 48) return { min: 36, max: 48, label: '36 - 48 month' };
-  if (months < 60) return { min: 48, max: 60, label: '48 - 60 month' };
-  return { min: 60, max: 72, label: '5+ years' };
-}
 
 const categoryColors: Record<string, string> = {
   'Gross motor': 'bg-purple-100 dark:bg-purple-900/20',
@@ -87,14 +49,22 @@ export default function Home() {
     [children, activeChild]
   );
 
-  const childAge = useMemo(() => 
-    selectedChild ? calculateAge(new Date(selectedChild.birthDate)) : null,
-    [selectedChild]
-  );
+  // Calculate corrected age (accounts for premature/post-mature birth)
+  const ageInfo = useMemo(() => {
+    if (!selectedChild) return null;
+    return calculateCorrectedAge(selectedChild.birthDate, selectedChild.dueDate);
+  }, [selectedChild]);
+
+  // Use corrected age for milestone filtering
+  const correctedMonths = useMemo(() => {
+    if (!ageInfo) return 0;
+    const age = ageInfo.shouldUseCorrectedAge ? ageInfo.corrected : ageInfo.chronological;
+    return age.years * 12 + age.months;
+  }, [ageInfo]);
 
   const ageRange = useMemo(() => 
-    childAge ? getAgeRange(childAge.months) : null,
-    [childAge]
+    correctedMonths >= 0 ? getAgeRange(correctedMonths) : null,
+    [correctedMonths]
   );
 
   const { data: milestones = [] } = useQuery<Milestone[]>({
@@ -149,7 +119,7 @@ export default function Home() {
     if (page === 'profile') setLocation('/profile');
   };
 
-  if (childrenLoading || !selectedChild || !childAge) {
+  if (childrenLoading || !selectedChild || !ageInfo) {
     return (
       <div className="min-h-screen bg-background pb-20">
         <div className="p-4 space-y-6 max-w-2xl mx-auto">
@@ -185,10 +155,20 @@ export default function Home() {
 
         <div>
           <h1 className="text-3xl font-bold mb-2" data-testid="heading-overview">Overview</h1>
-          <p className="text-muted-foreground" data-testid="text-child-age">
-            {firstName} is {childAge.months} {childAge.months === 1 ? 'month' : 'months'}
-            {childAge.days > 0 && ` & ${childAge.days} ${childAge.days === 1 ? 'day' : 'days'}`}!
-          </p>
+          <div className="space-y-1">
+            <p className="text-muted-foreground" data-testid="text-child-age">
+              {firstName} is {formatAge(ageInfo.chronological)}
+            </p>
+            {ageInfo.shouldUseCorrectedAge && ageInfo.adjustmentWeeks > 0 && (
+              <p className="text-sm text-muted-foreground" data-testid="text-adjusted-age">
+                Adjusted age: {formatAge(ageInfo.corrected)} ({formatAdjustment(
+                  ageInfo.adjustmentWeeks,
+                  ageInfo.isPremature,
+                  ageInfo.isPostMature
+                )})
+              </p>
+            )}
+          </div>
         </div>
 
         {achievedCount > 0 || notAchievedMilestones.length > 0 ? (
