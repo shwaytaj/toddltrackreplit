@@ -160,13 +160,18 @@ export default function Home() {
               {firstName} is {formatAge(ageInfo.chronological)}
             </p>
             {ageInfo.shouldUseCorrectedAge && ageInfo.adjustmentWeeks > 0 && (
-              <p className="text-sm text-muted-foreground" data-testid="text-adjusted-age">
-                Adjusted age: {formatAge(ageInfo.corrected)} ({formatAdjustment(
-                  ageInfo.adjustmentWeeks,
-                  ageInfo.isPremature,
-                  ageInfo.isPostMature
-                )})
-              </p>
+              <>
+                <p className="text-sm text-muted-foreground" data-testid="text-adjusted-age">
+                  Adjusted age: {formatAge(ageInfo.corrected)} ({formatAdjustment(
+                    ageInfo.adjustmentWeeks,
+                    ageInfo.isPremature,
+                    ageInfo.isPostMature
+                  )})
+                </p>
+                <p className="text-xs text-muted-foreground" data-testid="text-milestone-range">
+                  Showing milestones for: {ageRange?.label} range
+                </p>
+              </>
             )}
           </div>
         </div>
