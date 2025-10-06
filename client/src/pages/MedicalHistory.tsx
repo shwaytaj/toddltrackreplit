@@ -107,8 +107,12 @@ export default function MedicalHistory() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-      // Invalidate toy and to-do recommendations for all children since they depend on parent medical history
+      // Invalidate all children data
       queryClient.invalidateQueries({ queryKey: ['/api/children'] });
+      // Invalidate all milestone-related queries (including toy recommendations and to-do recommendations)
+      children.forEach(child => {
+        queryClient.invalidateQueries({ queryKey: ['/api/children', child.id, 'milestones'] });
+      });
     },
   });
 
