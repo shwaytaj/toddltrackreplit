@@ -66,7 +66,7 @@ Preferred communication style: Simple, everyday language.
 
 **Schema Design:**
 - `users` - Parent accounts with medical history (JSONB)
-- `children` - Child profiles with birth date, gender, medical history
+- `children` - Child profiles with birth date, due date (for corrected age), gender, medical history
 - `milestones` - Developmental milestone definitions with age ranges and categories
 - `childMilestones` - Tracking of achieved milestones per child
 - `growthMetrics` - Physical measurements (weight, height, head circumference) with WHO percentile calculations
@@ -136,6 +136,20 @@ Preferred communication style: Simple, everyday language.
 - Cached recommendations are reused until medical history is updated, significantly reducing load times
 - Cache invalidation based on child and parent medical history version timestamps
 - Similar caching pattern to to-do recommendations for consistent performance
+
+**Corrected Age Implementation (Oct 2025):**
+- Added `dueDate` field to children schema for tracking original due date
+- Created shared age calculation utility (`client/src/lib/age-calculation.ts`) for consistent corrected age logic across the app
+- **Calculation Logic**: Corrected Age = Chronological Age - (adjustment weeks / 4.345 weeks per month)
+- Supports both premature birth (born before due date) and post-mature birth (born after due date)
+- Automatically stops using corrected age after 36 months chronological age per pediatric guidelines
+- Falls back to chronological age if no due date is provided
+- **Onboarding Flow**: Updated to capture both original due date and actual birth date as mandatory fields
+- **Medical History Page**: Displays both dates with real-time adjustment calculation showing weeks premature/post-mature
+- **Home Page**: Shows both chronological and corrected ages when applicable, uses corrected age for milestone filtering
+- **Cache Invalidation**: Date changes in medical history trigger invalidation of all milestone-related queries
+- Backend PATCH route accepts `dueDate` parameter for updating child profiles
+- All milestone filtering throughout the app uses corrected age to ensure developmentally appropriate guidance
 
 ### External Dependencies
 
