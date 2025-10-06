@@ -24,8 +24,8 @@ export default function Onboarding() {
   const [childName, setChildName] = useState('');
   const [gender, setGender] = useState('');
   const [relationship, setRelationship] = useState('');
+  const [dueDate, setDueDate] = useState('');
   const [birthDate, setBirthDate] = useState('');
-  const [isPremature, setIsPremature] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -42,8 +42,8 @@ export default function Onboarding() {
         await apiRequest('POST', '/api/children', {
           name: childName,
           birthDate,
+          dueDate,
           gender: gender || undefined,
-          notes: isPremature ? 'Born prematurely' : undefined,
         });
         
         // Invalidate user and children queries
@@ -69,7 +69,7 @@ export default function Onboarding() {
       case 1: return childName.trim().length > 0;
       case 2: return gender.length > 0;
       case 3: return relationship.length > 0;
-      case 4: return birthDate.length > 0;
+      case 4: return dueDate.length > 0 && birthDate.length > 0;
       default: return true;
     }
   };
@@ -169,27 +169,32 @@ export default function Onboarding() {
         >
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Child's date of birth</Label>
+              <Label htmlFor="due-date">Original due date</Label>
               <Input
+                id="due-date"
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                data-testid="input-due-date"
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                The expected delivery date from your doctor
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="birth-date">Actual birth date</Label>
+              <Input
+                id="birth-date"
                 type="date"
                 value={birthDate}
                 onChange={(e) => setBirthDate(e.target.value)}
                 data-testid="input-birth-date"
+                required
               />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="premature"
-                checked={isPremature}
-                onCheckedChange={(checked) => setIsPremature(checked as boolean)}
-                data-testid="checkbox-premature"
-              />
-              <label
-                htmlFor="premature"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Was baby born prematurely
-              </label>
+              <p className="text-xs text-muted-foreground">
+                When your baby was actually born
+              </p>
             </div>
           </div>
         </OnboardingStep>

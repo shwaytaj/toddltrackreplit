@@ -4,11 +4,13 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import ChildSelector from '@/components/ChildSelector';
 import { useUser } from '@/hooks/use-user';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
+import { calculateCorrectedAge, formatAdjustment } from '@/lib/age-calculation';
 import type { Child, User } from '@shared/schema';
 
 export default function MedicalHistory() {
@@ -25,6 +27,8 @@ export default function MedicalHistory() {
   const [activeChild, setActiveChild] = useState(params.childId || '');
   const [childNotes, setChildNotes] = useState('');
   const [parentNotes, setParentNotes] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [birthDate, setBirthDate] = useState('');
 
   useEffect(() => {
     if (params.childId && params.childId !== activeChild) {
@@ -51,6 +55,8 @@ export default function MedicalHistory() {
   useEffect(() => {
     if (selectedChild) {
       setChildNotes(selectedChild.medicalHistory?.notes || '');
+      setBirthDate(selectedChild.birthDate || '');
+      setDueDate(selectedChild.dueDate || '');
     }
   }, [selectedChild]);
 
@@ -60,10 +66,17 @@ export default function MedicalHistory() {
     }
   }, [parentUser]);
 
+  // Calculate adjustment display
+  const adjustmentInfo = birthDate && dueDate 
+    ? calculateCorrectedAge(birthDate, dueDate)
+    : null;
+
   const updateChildMutation = useMutation({
-    mutationFn: async (notes: string) => {
+    mutationFn: async (data: { notes: string; dueDate: string; birthDate: string }) => {
       const currentHistory = selectedChild?.medicalHistory || {};
-      const response = await apiRequest(
+      
+      // Update medical history
+      const historyResponse = await apiRequest(
         'PATCH',
         `/api/children/${activeChild}/medical-history`,
         {
@@ -73,17 +86,36 @@ export default function MedicalHistory() {
             medications: currentHistory.medications || [],
             birthComplications: currentHistory.birthComplications || [],
             currentConcerns: currentHistory.currentConcerns || [],
-            notes,
+            notes: data.notes,
           },
         }
       );
-      return response.json();
+      
+      // Update dates
+      const datesResponse = await apiRequest(
+        'PATCH',
+        `/api/children/${activeChild}`,
+        {
+          dueDate: data.dueDate || null,
+          birthDate: data.birthDate,
+        }
+      );
+      
+      return datesResponse.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/children', activeChild] });
       queryClient.invalidateQueries({ queryKey: ['/api/children'] });
-      // Invalidate toy recommendations since they depend on medical history
-      queryClient.invalidateQueries({ queryKey: ['/api/children', activeChild, 'milestones'] });
+      // Invalidate milestone queries since corrected age may have changed
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey;
+          return Array.isArray(key) && 
+                 key[0] === '/api/children' && 
+                 key.length >= 3 &&
+                 key[2] === 'milestones';
+        }
+      });
     },
   });
 
@@ -126,7 +158,11 @@ export default function MedicalHistory() {
   const handleSave = async () => {
     try {
       await Promise.all([
-        updateChildMutation.mutateAsync(childNotes),
+        updateChildMutation.mutateAsync({ 
+          notes: childNotes, 
+          dueDate, 
+          birthDate 
+        }),
         updateParentMutation.mutateAsync(parentNotes),
       ]);
 
@@ -173,6 +209,56 @@ export default function MedicalHistory() {
           <div className="text-center text-muted-foreground py-8">Loading...</div>
         ) : (
           <div className="space-y-6">
+            <div className="space-y-4 p-4 bg-card rounded-lg border">
+              <h3 className="font-semibold">Birth Information</h3>
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="due-date">Original Due Date</Label>
+                  <Input
+                    id="due-date"
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    data-testid="input-due-date"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    The expected delivery date from your doctor
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="birth-date">Actual Birth Date</Label>
+                  <Input
+                    id="birth-date"
+                    type="date"
+                    value={birthDate}
+                    onChange={(e) => setBirthDate(e.target.value)}
+                    data-testid="input-birth-date"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    When your baby was actually born
+                  </p>
+                </div>
+                {adjustmentInfo && adjustmentInfo.adjustmentWeeks > 0 && (
+                  <div className="p-3 bg-muted rounded-md">
+                    <p className="text-sm font-medium">
+                      Birth Adjustment: {formatAdjustment(
+                        adjustmentInfo.adjustmentWeeks,
+                        adjustmentInfo.isPremature,
+                        adjustmentInfo.isPostMature
+                      )}
+                    </p>
+                    {adjustmentInfo.shouldUseCorrectedAge && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Developmental milestones will be adjusted accordingly until age 3
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="child-history">Child's Medical History</Label>
               <Textarea

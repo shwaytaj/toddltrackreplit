@@ -173,6 +173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updateChildSchema = z.object({
         name: z.string().optional(),
         birthDate: z.string().optional(),
+        dueDate: z.string().nullable().optional(),
         gender: z.enum(['male', 'female', 'other']).optional(),
       });
       

@@ -23,6 +23,7 @@ export const children = pgTable("children", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   birthDate: date("birth_date").notNull(),
+  dueDate: date("due_date"),
   gender: text("gender"),
   photoUrl: text("photo_url"),
   parentIds: text("parent_ids").array().notNull(),
