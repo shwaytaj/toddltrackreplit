@@ -196,8 +196,13 @@ export default function Home() {
         ) : null}
 
         <div>
-          <div className="flex items-center justify-between mb-3">
+          <div className="mb-3">
             <h2 className="font-semibold">{ageRange?.label} Milestones</h2>
+            {ageInfo?.shouldUseCorrectedAge && (
+              <p className="text-xs text-muted-foreground mt-1" data-testid="text-adjusted-milestone-note">
+                Milestone age range based on adjusted age
+              </p>
+            )}
           </div>
 
           {milestonesByCategory.developmental.length > 0 && (
