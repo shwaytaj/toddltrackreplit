@@ -85,6 +85,10 @@ export const aiRecommendations = pgTable("ai_recommendations", {
   recommendations: jsonb("recommendations").$type<Array<{
     title: string;
     description: string;
+    citations?: Array<{
+      source: string;
+      url?: string;
+    }>;
   }>>().notNull(),
   generatedAt: timestamp("generated_at").defaultNow(),
   childDataVersion: timestamp("child_data_version").notNull(),
@@ -117,6 +121,10 @@ export const aiToyRecommendations = pgTable("ai_toy_recommendations", {
     description: string;
     howToUse: string;
     searchQuery: string;
+    citations?: Array<{
+      source: string;
+      url?: string;
+    }>;
   }>>().notNull(),
   generatedAt: timestamp("generated_at").defaultNow(),
   childDataVersion: timestamp("child_data_version").notNull(),
