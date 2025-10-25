@@ -540,6 +540,7 @@ IMPORTANT: Base your recommendations on established pediatric guidelines from au
 - CDC (Centers for Disease Control and Prevention) developmental milestone guidelines
 - AAP (American Academy of Pediatrics) recommendations
 - WHO (World Health Organization) child development standards
+- HSE (Health Service Executive) developmental milestone guidelines
 - Evidence-based pediatric research and clinical guidelines
 
 Provide your response as a JSON array with objects containing:
@@ -662,6 +663,7 @@ Milestone:
 
 IMPORTANT: Base your toy recommendations on established pediatric development principles from authoritative sources such as:
 - CDC developmental milestone guidelines and age-appropriate play recommendations
+- HSE developmental milestone guidelines and age-appropriate play recommendations
 - AAP guidelines on healthy child development and play
 - Evidence-based research on developmental toys and learning tools
 - Occupational therapy and physical therapy recommendations for child development
