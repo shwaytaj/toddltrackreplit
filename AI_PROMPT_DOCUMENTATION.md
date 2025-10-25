@@ -43,8 +43,7 @@ Child Information:
 - Gender: [gender]
 - Birth Details: Born [premature/on time/post-mature] ([X] weeks [early/late])
 - Medical History: [child medical history or "None provided"]
-
-Parent Medical History: [parent medical history or "None provided"]
+- Parent Medical History: [parent medical history or "None provided"]
 
 Please provide 5 specific activity recommendations to help achieve this milestone, with each recommendation citing at least one authoritative pediatric source.
 ```
