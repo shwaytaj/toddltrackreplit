@@ -156,6 +156,7 @@ Preferred communication style: Simple, everyday language.
 - **Authoritative Sources**: CDC (USA), AAP (USA), WHO (International), HSE (Ireland), NHS (UK), CPS/Rourke Baby Record (Canada), NHMRC & Australian Dept of Health (Australia), UNICEF (International)
 - **Schema Updates**: Added `citations` JSONB field to `completedRecommendations`, `aiRecommendations`, and `aiToyRecommendations` tables
 - **AI Prompts**: Updated both Guide and Toy recommendation prompts to explicitly request citations from authoritative sources across multiple countries
+- **URL Accuracy**: Prompts include verified official base URLs for all major sources to prevent broken/hallucinated links (CDC, AAP, WHO, HSE, NHS, CPS, UNICEF, Australian Govt)
 - **Citation Format**: Each citation includes `source` (required) and `url` (optional) fields
 - **Frontend Display**: Citations appear as small badges using design tokens (bg-muted, text-muted-foreground, border-border) for proper dark mode support
 - **Persistence**: Citations are stored with completed recommendations so they remain visible even after new recommendations are fetched

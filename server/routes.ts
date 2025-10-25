@@ -556,6 +556,17 @@ Provide your response as a JSON array with objects containing:
   - "source": Name of the authoritative source (e.g., "CDC Developmental Milestones", "AAP Guidelines for [topic]")
   - "url": (optional) Direct link to the guideline if applicable
 
+IMPORTANT URL GUIDANCE: Only include URLs if you are certain they are correct. Use these official base URLs:
+- CDC: https://www.cdc.gov/act-early/milestones/ (e.g., https://www.cdc.gov/act-early/milestones/2-years.html)
+- AAP: https://publications.aap.org/pediatrics/article/149/3/e2021052138/184748
+- WHO: https://www.who.int/tools/child-growth-standards/standards/motor-development-milestones
+- HSE: https://www2.hse.ie/babies-children/checks-milestones/developmental-milestones/
+- NHS: https://www.nhs.uk/conditions/baby/babys-development/
+- CPS: https://cps.ca/en/tools-outils/rourke-baby-record or https://www.rourkebabyrecord.ca/
+- UNICEF: https://data.unicef.org/topic/early-childhood-development/
+- Australian Govt: https://www.healthdirect.gov.au/developmental-milestones
+If unsure about a specific URL, omit the url field and include only the source name.
+
 Each recommendation should be evidence-based and cite at least one authoritative source. Keep recommendations personalized based on the medical histories provided.`;
 
       const message = await anthropic.messages.create({
@@ -688,6 +699,17 @@ Provide your response as a JSON array with objects containing:
 - "citations": Array of sources that support why this toy type aids development, each containing:
   - "source": Name of the authoritative source (e.g., "AAP Guidelines on Play and Development", "CDC Age-Appropriate Activities")
   - "url": (optional) Direct link to the guideline if applicable
+
+IMPORTANT URL GUIDANCE: Only include URLs if you are certain they are correct. Use these official base URLs:
+- CDC: https://www.cdc.gov/act-early/milestones/ (e.g., https://www.cdc.gov/act-early/milestones/2-years.html)
+- AAP: https://publications.aap.org/pediatrics/article/149/3/e2021052138/184748
+- WHO: https://www.who.int/tools/child-growth-standards/standards/motor-development-milestones
+- HSE: https://www2.hse.ie/babies-children/checks-milestones/developmental-milestones/
+- NHS: https://www.nhs.uk/conditions/baby/babys-development/
+- CPS: https://cps.ca/en/tools-outils/rourke-baby-record or https://www.rourkebabyrecord.ca/
+- UNICEF: https://data.unicef.org/topic/early-childhood-development/
+- Australian Govt: https://www.healthdirect.gov.au/developmental-milestones
+If unsure about a specific URL, omit the url field and include only the source name.
 
 Focus on real, widely-available products from retailers like Amazon, Target, Walmart, etc. Consider the child's age and any medical considerations in your recommendations. Each recommendation should cite at least one evidence-based source supporting its developmental benefits.`;
 
