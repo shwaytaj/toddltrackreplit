@@ -15,6 +15,10 @@ import type { Milestone, Child, ChildMilestone, CompletedRecommendation } from '
 interface AIRecommendation {
   title: string;
   description: string;
+  citations?: Array<{
+    source: string;
+    url?: string;
+  }>;
 }
 
 interface ToyRecommendation {
@@ -23,6 +27,10 @@ interface ToyRecommendation {
   howToUse: string;
   searchQuery: string;
   imageUrl?: string | null;
+  citations?: Array<{
+    source: string;
+    url?: string;
+  }>;
 }
 
 interface MilestoneWithRecommendations extends Milestone {
@@ -435,6 +443,26 @@ export default function MilestoneDetail() {
                                   {guide.title}
                                 </label>
                                 <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{guide.description}</p>
+                                {guide.citations && guide.citations.length > 0 && (
+                                  <div className="mt-2 flex flex-wrap gap-1">
+                                    {guide.citations.map((citation, citIdx) => (
+                                      <span key={citIdx} className="inline-flex items-center text-[10px] bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">
+                                        {citation.url ? (
+                                          <a 
+                                            href={citation.url} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="hover:underline"
+                                          >
+                                            {citation.source}
+                                          </a>
+                                        ) : (
+                                          citation.source
+                                        )}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           );
@@ -615,6 +643,26 @@ export default function MilestoneDetail() {
                                   <span className="font-medium">How to use:</span> {toy.howToUse}
                                 </p>
                               </div>
+                              {toy.citations && toy.citations.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {toy.citations.map((citation, citIdx) => (
+                                    <span key={citIdx} className="inline-flex items-center text-[10px] bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full">
+                                      {citation.url ? (
+                                        <a 
+                                          href={citation.url} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer"
+                                          className="hover:underline"
+                                        >
+                                          {citation.source}
+                                        </a>
+                                      ) : (
+                                        citation.source
+                                      )}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
                               <div className="flex flex-wrap gap-2 pt-2">
                               <a
                                 href={milestone ? buildAmazonUrl(toy.searchQuery, milestone.ageRangeMonthsMin, milestone.ageRangeMonthsMax) : `https://www.amazon.com/s?k=${encodeURIComponent(toy.searchQuery)}`}
