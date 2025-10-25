@@ -536,11 +536,24 @@ Milestone:
 - Category: ${milestone.category}
 - Description: ${milestone.description}${exclusionText}
 
-Provide your response as a JSON array with objects containing "title" and "description" fields. Each recommendation should be specific, actionable, and personalized based on the medical histories provided. Keep titles short (5-7 words) and descriptions concise but practical (2-3 sentences).`;
+IMPORTANT: Base your recommendations on established pediatric guidelines from authoritative sources such as:
+- CDC (Centers for Disease Control and Prevention) developmental milestone guidelines
+- AAP (American Academy of Pediatrics) recommendations
+- WHO (World Health Organization) child development standards
+- Evidence-based pediatric research and clinical guidelines
+
+Provide your response as a JSON array with objects containing:
+- "title": Short recommendation title (5-7 words)
+- "description": Specific, actionable guidance (2-3 sentences)
+- "citations": Array of sources that informed this recommendation, each containing:
+  - "source": Name of the authoritative source (e.g., "CDC Developmental Milestones", "AAP Guidelines for [topic]")
+  - "url": (optional) Direct link to the guideline if applicable
+
+Each recommendation should be evidence-based and cite at least one authoritative source. Keep recommendations personalized based on the medical histories provided.`;
 
       const message = await anthropic.messages.create({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 1024,
+        max_tokens: 2048,
         messages: [
           {
             role: "user",
@@ -647,17 +660,26 @@ Milestone:
 - Category: ${milestone.category}
 - Description: ${milestone.description}
 
+IMPORTANT: Base your toy recommendations on established pediatric development principles from authoritative sources such as:
+- CDC developmental milestone guidelines and age-appropriate play recommendations
+- AAP guidelines on healthy child development and play
+- Evidence-based research on developmental toys and learning tools
+- Occupational therapy and physical therapy recommendations for child development
+
 Provide your response as a JSON array with objects containing:
 - "name": The specific product name (real toys that exist on the market)
 - "description": Why this toy/tool helps with this milestone (2-3 sentences)
 - "howToUse": Brief tips on how parents can use it with their child (1-2 sentences)
 - "searchQuery": A concise search query to find this product (e.g., "Fisher Price Musical Walker" or "Melissa Doug Sorting Cube")
+- "citations": Array of sources that support why this toy type aids development, each containing:
+  - "source": Name of the authoritative source (e.g., "AAP Guidelines on Play and Development", "CDC Age-Appropriate Activities")
+  - "url": (optional) Direct link to the guideline if applicable
 
-Focus on real, widely-available products from retailers like Amazon, Target, Walmart, etc. Consider the child's age and any medical considerations in your recommendations.`;
+Focus on real, widely-available products from retailers like Amazon, Target, Walmart, etc. Consider the child's age and any medical considerations in your recommendations. Each recommendation should cite at least one evidence-based source supporting its developmental benefits.`;
 
       const message = await anthropic.messages.create({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 2048,
+        max_tokens: 3072,
         messages: [
           {
             role: "user",
