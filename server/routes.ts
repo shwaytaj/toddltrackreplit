@@ -727,6 +727,8 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
             toyRecommendations = toyRecommendations.slice(0, 5);
           } catch (parseError) {
             console.error("Failed to parse toy recommendations:", parseError);
+            console.error("Raw JSON that failed to parse (first 500 chars):", jsonMatch[0].substring(0, 500));
+            console.error("Raw JSON that failed to parse (last 500 chars):", jsonMatch[0].substring(Math.max(0, jsonMatch[0].length - 500)));
             return res.status(500).json({ error: "Failed to parse recommendations" });
           }
         } else {
