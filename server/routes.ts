@@ -542,6 +542,12 @@ IMPORTANT: Base your recommendations on established pediatric guidelines from au
 - WHO (World Health Organization) child development standards
 - HSE (Health Service Executive) developmental milestone guidelines
 - Evidence-based pediatric research and clinical guidelines
+- WHO Motor development milestones and growth standards
+- UNICEF Early childhood development guidelines
+- NHS - Developmental reviews
+- CPS (Canadian Paediatric Society) - Rourke Baby Record developmental milestones
+- NHMRC - Child health surveillance guidelines
+- Australian Government Department of Health - Developmental milestones resources
 
 Provide your response as a JSON array with objects containing:
 - "title": Short recommendation title (5-7 words)
@@ -667,6 +673,12 @@ IMPORTANT: Base your toy recommendations on established pediatric development pr
 - AAP guidelines on healthy child development and play
 - Evidence-based research on developmental toys and learning tools
 - Occupational therapy and physical therapy recommendations for child development
+- WHO Motor development milestones and growth standards and age-appropriate play recommendations
+- UNICEF Early childhood development guidelines and age-appropriate play recommendations
+- NHS - Developmental reviews and age-appropriate play recommendations
+- CPS (Canadian Paediatric Society) - Rourke Baby Record developmental milestones and age-appropriate play recommendations
+- NHMRC - Child health surveillance guidelines and age-appropriate play recommendations
+- Australian Government Department of Health - Developmental milestones resources and age-appropriate play recommendations
 
 Provide your response as a JSON array with objects containing:
 - "name": The specific product name (real toys that exist on the market)

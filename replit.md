@@ -152,9 +152,10 @@ Preferred communication style: Simple, everyday language.
 - All milestone filtering throughout the app uses corrected age to ensure developmentally appropriate guidance
 
 **Evidence-Based Citations System (Oct 2025):**
-- Added citations to all AI recommendations to show evidence-based sources (CDC, AAP, WHO, HSE)
+- Added citations to all AI recommendations to show evidence-based sources from international pediatric authorities
+- **Authoritative Sources**: CDC (USA), AAP (USA), WHO (International), HSE (Ireland), NHS (UK), CPS/Rourke Baby Record (Canada), NHMRC & Australian Dept of Health (Australia), UNICEF (International)
 - **Schema Updates**: Added `citations` JSONB field to `completedRecommendations`, `aiRecommendations`, and `aiToyRecommendations` tables
-- **AI Prompts**: Updated both Guide and Toy recommendation prompts to explicitly request citations from authoritative sources (CDC, AAP, WHO, HSE)
+- **AI Prompts**: Updated both Guide and Toy recommendation prompts to explicitly request citations from authoritative sources across multiple countries
 - **Citation Format**: Each citation includes `source` (required) and `url` (optional) fields
 - **Frontend Display**: Citations appear as small badges using design tokens (bg-muted, text-muted-foreground, border-border) for proper dark mode support
 - **Persistence**: Citations are stored with completed recommendations so they remain visible even after new recommendations are fetched
