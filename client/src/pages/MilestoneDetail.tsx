@@ -206,7 +206,7 @@ export default function MilestoneDetail() {
 
   // Toggle recommendation completion
   const toggleRecommendation = useMutation({
-    mutationFn: async ({ milestoneId, title, description, isCompleted }: { milestoneId: string; title: string; description: string; isCompleted: boolean }) => {
+    mutationFn: async ({ milestoneId, title, description, citations, isCompleted }: { milestoneId: string; title: string; description: string; citations?: Array<{ source: string; url?: string }>; isCompleted: boolean }) => {
       if (!selectedChild) return;
       
       if (isCompleted) {
@@ -219,6 +219,7 @@ export default function MilestoneDetail() {
           milestoneId,
           recommendationTitle: title,
           recommendationDescription: description,
+          citations,
         });
       }
     },
@@ -432,6 +433,7 @@ export default function MilestoneDetail() {
                                       milestoneId: milestone.id,
                                       title: guide.title,
                                       description: guide.description,
+                                      citations: guide.citations,
                                       isCompleted,
                                     });
                                   }
@@ -444,15 +446,16 @@ export default function MilestoneDetail() {
                                 </label>
                                 <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{guide.description}</p>
                                 {guide.citations && guide.citations.length > 0 && (
-                                  <div className="mt-2 flex flex-wrap gap-1">
+                                  <div className="mt-2 flex flex-wrap gap-1" data-testid={`citations-guide-${idx}`}>
                                     {guide.citations.map((citation, citIdx) => (
-                                      <span key={citIdx} className="inline-flex items-center text-[10px] bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">
+                                      <span key={citIdx} className="inline-flex items-center text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full border border-border">
                                         {citation.url ? (
                                           <a 
                                             href={citation.url} 
                                             target="_blank" 
                                             rel="noopener noreferrer"
                                             className="hover:underline"
+                                            data-testid={`link-citation-${idx}-${citIdx}`}
                                           >
                                             {citation.source}
                                           </a>
@@ -483,6 +486,7 @@ export default function MilestoneDetail() {
                                         milestoneId: milestone.id,
                                         title: completed.recommendationTitle,
                                         description: completed.recommendationDescription || '',
+                                        citations: completed.citations,
                                         isCompleted: true,
                                       });
                                     }
@@ -494,6 +498,27 @@ export default function MilestoneDetail() {
                                     {completed.recommendationTitle}
                                   </label>
                                   <p className="text-xs text-muted-foreground mt-1 leading-relaxed line-through">{completed.recommendationDescription}</p>
+                                  {completed.citations && completed.citations.length > 0 && (
+                                    <div className="mt-2 flex flex-wrap gap-1" data-testid={`citations-completed-guide-${idx}`}>
+                                      {completed.citations.map((citation, citIdx) => (
+                                        <span key={citIdx} className="inline-flex items-center text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full border border-border line-through">
+                                          {citation.url ? (
+                                            <a 
+                                              href={citation.url} 
+                                              target="_blank" 
+                                              rel="noopener noreferrer"
+                                              className="hover:underline"
+                                              data-testid={`link-citation-completed-${idx}-${citIdx}`}
+                                            >
+                                              {citation.source}
+                                            </a>
+                                          ) : (
+                                            citation.source
+                                          )}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             );
@@ -644,15 +669,16 @@ export default function MilestoneDetail() {
                                 </p>
                               </div>
                               {toy.citations && toy.citations.length > 0 && (
-                                <div className="flex flex-wrap gap-1">
+                                <div className="flex flex-wrap gap-1" data-testid={`citations-toy-${idx}`}>
                                   {toy.citations.map((citation, citIdx) => (
-                                    <span key={citIdx} className="inline-flex items-center text-[10px] bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full">
+                                    <span key={citIdx} className="inline-flex items-center text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full border border-border">
                                       {citation.url ? (
                                         <a 
                                           href={citation.url} 
                                           target="_blank" 
                                           rel="noopener noreferrer"
                                           className="hover:underline"
+                                          data-testid={`link-citation-toy-${idx}-${citIdx}`}
                                         >
                                           {citation.source}
                                         </a>

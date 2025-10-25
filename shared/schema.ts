@@ -101,6 +101,10 @@ export const completedRecommendations = pgTable("completed_recommendations", {
   milestoneId: varchar("milestone_id").notNull().references(() => milestones.id, { onDelete: "cascade" }),
   recommendationTitle: text("recommendation_title").notNull(),
   recommendationDescription: text("recommendation_description"),
+  citations: jsonb("citations").$type<Array<{
+    source: string;
+    url?: string;
+  }>>(),
   completedAt: timestamp("completed_at").defaultNow(),
 });
 

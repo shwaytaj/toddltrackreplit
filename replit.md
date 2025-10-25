@@ -151,6 +151,17 @@ Preferred communication style: Simple, everyday language.
 - Backend PATCH route accepts `dueDate` parameter for updating child profiles
 - All milestone filtering throughout the app uses corrected age to ensure developmentally appropriate guidance
 
+**Evidence-Based Citations System (Oct 2025):**
+- Added citations to all AI recommendations to show evidence-based sources (CDC, AAP, WHO)
+- **Schema Updates**: Added `citations` JSONB field to `completedRecommendations`, `aiRecommendations`, and `aiToyRecommendations` tables
+- **AI Prompts**: Updated both Guide and Toy recommendation prompts to explicitly request citations from authoritative sources
+- **Citation Format**: Each citation includes `source` (required) and `url` (optional) fields
+- **Frontend Display**: Citations appear as small badges using design tokens (bg-muted, text-muted-foreground, border-border) for proper dark mode support
+- **Persistence**: Citations are stored with completed recommendations so they remain visible even after new recommendations are fetched
+- **Backend**: Routes updated to accept and store citations when marking recommendations as complete
+- **Testing**: All citation elements have data-testid attributes for accessibility and testing
+- **Documentation**: Created `AI_PROMPT_DOCUMENTATION.md` showing exact prompts sent to Claude for verification
+
 ### External Dependencies
 
 **AI Integration:**

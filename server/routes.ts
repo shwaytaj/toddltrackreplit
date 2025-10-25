@@ -806,13 +806,14 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
 
     try {
       const { childId } = req.params;
-      const { milestoneId, recommendationTitle, recommendationDescription } = req.body;
+      const { milestoneId, recommendationTitle, recommendationDescription, citations } = req.body;
 
       const completed = await storage.createCompletedRecommendation({
         childId,
         milestoneId,
         recommendationTitle,
         recommendationDescription,
+        citations,
       });
       res.json(completed);
     } catch (error) {
