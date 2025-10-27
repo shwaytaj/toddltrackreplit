@@ -208,6 +208,17 @@ All AI recommendations must include citations following these guidelines:
    - Guide recommendations: Blue badges
    - Toy recommendations: Green badges
    - Clickable links when URL is provided
+   
+5. IMPORTANT URL GUIDANCE: Only include URLs if you are certain they are correct. Use these official base URLs:
+- CDC: https://www.cdc.gov/act-early/milestones/ (e.g., https://www.cdc.gov/act-early/milestones/2-years.html)
+- AAP: https://publications.aap.org/pediatrics/article/149/3/e2021052138/184748
+- WHO: https://www.who.int/tools/child-growth-standards/standards/motor-development-milestones
+- HSE: https://www2.hse.ie/babies-children/checks-milestones/developmental-milestones/
+- NHS: https://www.nhs.uk/conditions/baby/babys-development/
+- CPS: https://cps.ca/en/tools-outils/rourke-baby-record or https://www.rourkebabyrecord.ca/
+- UNICEF: https://data.unicef.org/topic/early-childhood-development/
+- Australian Govt: https://www.healthdirect.gov.au/developmental-milestones
+If unsure about a specific URL, omit the url field and include only the source name.
 
 ---
 
