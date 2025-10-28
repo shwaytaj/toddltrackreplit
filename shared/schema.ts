@@ -43,6 +43,7 @@ export const milestones = pgTable("milestones", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   title: text("title").notNull(),
   category: text("category").notNull(),
+  subcategory: text("subcategory"),
   ageRangeMonthsMin: integer("age_range_months_min").notNull(),
   ageRangeMonthsMax: integer("age_range_months_max").notNull(),
   description: text("description").notNull(),

@@ -292,7 +292,9 @@ export default function MilestoneDetail() {
           <X className="w-5 h-5" />
         </button>
         <div className="max-w-2xl mx-auto">
-          <p className="text-sm text-muted-foreground">{milestone.category}</p>
+          <p className="text-sm text-muted-foreground">
+            {milestone.category}{milestone.subcategory && ` • ${milestone.subcategory}`}
+          </p>
           <h1 className="text-2xl font-bold mt-1 pr-12">{milestone.title}</h1>
         </div>
       </div>

@@ -12,13 +12,23 @@ import { useUser } from '@/hooks/use-user';
 import { calculateCorrectedAge, getAgeRange, formatAge, formatAdjustment } from '@/lib/age-calculation';
 import type { Child, Milestone, ChildMilestone, GrowthMetric } from '@shared/schema';
 
-const categoryColors: Record<string, string> = {
-  'Gross motor': 'bg-purple-100 dark:bg-purple-900/20',
-  'Fine motor': 'bg-indigo-100 dark:bg-indigo-900/20',
+// Map subcategories to colors for visual distinction
+const subcategoryColors: Record<string, string> = {
+  'Gross Motor Skills': 'bg-purple-100 dark:bg-purple-900/20',
   'Communication': 'bg-green-100 dark:bg-green-900/20',
   'Social & Emotional': 'bg-amber-100 dark:bg-amber-900/20',
   'Cognitive': 'bg-blue-100 dark:bg-blue-900/20',
+  'Physical': 'bg-rose-100 dark:bg-rose-900/20',
+  'Development': 'bg-cyan-100 dark:bg-cyan-900/20',
+  'Eruption': 'bg-pink-100 dark:bg-pink-900/20',
 };
+
+// Helper function to get color for a milestone
+function getMilestoneColor(milestone: Milestone): string {
+  // Use subcategory if available, otherwise fall back to category
+  const key = milestone.subcategory || milestone.category;
+  return subcategoryColors[key] || 'bg-gray-100 dark:bg-gray-900/20';
+}
 
 export default function Home() {
   const [, setLocation] = useLocation();
@@ -87,14 +97,14 @@ export default function Home() {
   );
 
   const milestonesByCategory = useMemo(() => {
-    const developmental = milestones.filter(m => 
-      ['Gross Motor', 'Fine motor', 'Communication', 'Social & Emotional', 'Cognitive'].includes(m.category)
-    );
+    // New comprehensive milestone structure uses main categories
+    const developmental = milestones.filter(m => m.category === 'Developmental');
+    const growth = milestones.filter(m => m.category === 'Growth');
     const teeth = milestones.filter(m => m.category === 'Teeth');
     const vision = milestones.filter(m => m.category === 'Vision');
     const hearing = milestones.filter(m => m.category === 'Hearing');
     
-    return { developmental, teeth, vision, hearing };
+    return { developmental, growth, teeth, vision, hearing };
   }, [milestones]);
 
   const latestMetrics = useMemo(() => {
@@ -228,8 +238,37 @@ export default function Home() {
                   <MilestoneCard
                     key={milestone.id}
                     title={milestone.title}
-                    category={milestone.category}
-                    categoryColor={categoryColors[milestone.category] || 'bg-gray-100 dark:bg-gray-900/20'}
+                    category={milestone.subcategory || milestone.category}
+                    categoryColor={getMilestoneColor(milestone)}
+                    achieved={achievedMilestoneIds.has(milestone.id)}
+                    onClick={() => setLocation(`/milestone/${milestone.id}`)}
+                    data-testid={`card-milestone-${milestone.id}`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {milestonesByCategory.growth.length > 0 && (
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium">Growth Benchmarks</h3>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  data-testid="button-view-all-growth"
+                  onClick={() => setLocation('/milestones')}
+                >
+                  View all →
+                </Button>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                {milestonesByCategory.growth.slice(0, 3).map(milestone => (
+                  <MilestoneCard
+                    key={milestone.id}
+                    title={milestone.title}
+                    category={milestone.subcategory || milestone.category}
+                    categoryColor={getMilestoneColor(milestone)}
                     achieved={achievedMilestoneIds.has(milestone.id)}
                     onClick={() => setLocation(`/milestone/${milestone.id}`)}
                     data-testid={`card-milestone-${milestone.id}`}
