@@ -1,0 +1,406 @@
+# Milestones Without Detailed Descriptions
+Generated: 2025-10-28T01:54:49.080Z
+Total unmatched: 125
+
+## Unmatched Milestones (in database but no description found):
+- Grasp reflex present
+- Birth Weight: Boys 7 lb 6 oz (3
+- Birth Length: Boys 19.7" (50 cm); Girls 19.3" (49 cm)
+- Weight gain: 5-7 oz/week
+- Blurry vision; focuses 8-12 inches away
+- Perceives light and dark
+- Eyes may appear uncoordinated (normal)
+- Prefers high-contrast patterns
+- Reacts to loud sounds
+- Turns head toward sounds
+- Boys 9 lb 15 oz; Girls 9 lb 4 oz
+- Boys 12 lb 6 oz; Girls 11 lb 5 oz
+- Boys 14 lb 2 oz; Girls 12 lb 14 oz
+- Gains 5-7 oz/week, length +1 inch/month
+- No teeth visible; developing beneath gums
+- Tracks moving objects, focuses on parent's face
+- Eyes work together better
+- Vocalizes pleasure/displeasure (laughs
+- Makes noise when talked to
+- Changes pitch in cooing
+- Boys 15 lb 7 oz; Girls 14 lb 2 oz
+- Boys 16 lb 9 oz; Girls 15 lb 3 oz
+- Boys 17 lb 8 oz; Girls 16 lb 2 oz
+- Weight gain slows to 4-5 oz/week
+- First teeth may begin (lower central incisors)
+- Teething symptoms: drooling, chewing, sore gums
+- Good color vision developed
+- Eyes work together consistently
+- Depth perception beginning
+- Can track moving objects, visual clarity improving
+- Follows sounds with eyes
+- Begins to understand "no-no"
+- Palmar grasp (holds objects with whole hand)
+- Developing pincer grasp
+- Boys 18 lb 5 oz; Girls 16 lb 14 oz
+- Boys 19 lb; Girls 17 lb 7 oz
+- Boys 19 lb 10 oz; Girls 18 lb 2 oz
+- Increased mobility as crawling begins
+- Upper central incisors erupt
+- Lateral incisors may begin
+- Most have 4-8 teeth by 9 months
+- Crawling helps develop eye-hand-foot-body coordination
+- Grasps object permanence
+- Eye color becomes more permanent
+- Vision sharpens, depth perception well-developed
+- Babbles, tries to communicate with gestures
+- Tries to repeat sounds
+- Imitates familiar sounds
+- Produces non-repetitive syllables
+- Points with index finger
+- Releases objects voluntarily
+- Boys 20 lb 3 oz; Girls 18 lb 11 oz
+- Boys 20 lb 12 oz; Girls 19 lb 4 oz
+- Boys 21 lb 4 oz; Girls 19 lb 12 oz
+- Most tripled birth weight by 12 months
+- Length increased 50% since birth
+- First molars may begin
+- Most have 6-12 teeth by 12 months
+- Sees across room, recognizes people from distance
+- Judges distances well, throws with precision
+- Eye-hand coordination well-developed
+- Pays attention to book/toy for 2 minutes
+- Follows simple directions with gestures
+- Answers questions nonverbally
+- Points to objects, pictures, family members
+- Walks independently, builds 2-cube towers
+- Takes few steps alone
+- Crawls upstairs
+- Walks without holding on
+- Boys 22 lb 11 oz; Girls 21 lb 3 oz
+- Boys 24 lb 1 oz; Girls 22 lb 8 oz
+- First molars erupt
+- Canines continue
+- Most have 12-16 teeth by 18 months
+- Recognizes/points to pictures in books
+- Visual memory developing
+- Vocabulary expanding rapidly
+- Understanding exceeds speaking ability
+- Follows simple one-step commands
+- Boys 25 lb; Girls 23 lb 7 oz
+- Boys 27 lb 8 oz; Girls 26 lb 7 oz
+- Height gain 4-5 inches/year
+- Head circumference growth slowing
+- Most have 16-20 teeth by 24 months
+- Complete set of 20 primary teeth by 2.5-3 years
+- Vision essentially mature
+- Can focus on near and far objects
+- Can follow 2-step commands
+- Understanding simple concepts (big/small, in/out)
+- Boys 29 lb 5 oz; Girls 28 lb 2 oz
+- Boys 31 lb 12 oz; Girls 30 lb 10 oz
+- Second molars complete
+- Complete set of 20 primary teeth (10 upper, 10 lower)
+- Identifies and matches colors
+- Visual memory well-established
+- Clear speech strangers understand most of time
+- Follows multi-step instructions
+- Understands most of what's said
+- Boys 36 lb; Girls 35 lb
+- Height 40-41 inches
+- Body continues to lengthen and slim
+- All 20 primary teeth present
+- Jaw/facial bones growing
+- Recognizes letters and numbers
+- Eye tracking and focus fully mature
+- Understands virtually all speech
+- Follows complex instructions
+- Speech clear to strangers
+- Boys 40 lb; Girls 39 lb
+- Height 43-44 inches
+- BMI important measurement
+- All 20 primary teeth present and stable
+- First permanent molars erupt (behind primary teeth)
+- Primary teeth loosen and fall out (starting with central incisors)
+- Spaces between primary teeth normal
+- Visual acuity typically 20/20
+- Recognizes all letters/numbers
+- Eye-hand coordination excellent
+- Tracks fast-moving objects
+- Visual perception supports reading
+- Should have vision screening before school
+- Understands all speech in various environments
+- Follows multi-step complex instructions
+- May struggle with very noisy environments (normal)
+- Should have hearing screening before school
+
+## Unmatched Descriptions (in file but no matching milestone):
+- Alert to sounds
+- Makes throaty noises (gurgling)
+- Recognizes your voice
+- Startled by loud noises
+- Cries to communicate needs
+- Getting to know you and beginning to bond
+- Cries 2-3 hours a day
+- Calms when spoken to or picked up
+- Looks at your face
+- Fixes on bright objects and follows with eyes
+- Likes to look at faces more than objects
+- Can search for and suck from breast or bottle
+- Birth weight and length
+- Blurry vision with close-range focus
+- Keeps head upright when held (2 months)
+- Opens hands briefly (2 months)
+- Rests on forearms on tummy (3 months)
+- Hands loose most of the time (3 months)
+- Uses eyes to follow objects in circular pattern (3 months)
+- Bats at objects (3 months)
+- Looks at people talking (2 months)
+- Responds to voice (2 months)
+- Makes cooing noises (2 months)
+- Chuckles (3 months)
+- Echoes sounds (3 months)
+- Copies sounds like 'ooh' and 'aah' (3 months)
+- Smiles back at you (2 months)
+- Calms when spoken to (2 months)
+- Seems happy to see you (2 months)
+- More alert and interested (2 months)
+- Cries vary by need (3 months)
+- Gives warm smiles/laughs (3 months)
+- Cries when upset (3 months)
+- Shows excitement with arms/legs (3 months)
+- Watches you move (2 months)
+- Looks at toys (2 months)
+- Follows objects up/down (2 months)
+- Holds rattle briefly (2 months)
+- Can look at 1-inch object held in front (3 months)
+- Rapid weight and length gain
+- Teeth developing beneath gums; teething may begin
+- Improving focus and color vision
+- Vocal and auditory development
+- May roll front to back (4 months)
+- Clutches objects (4 months)
+- Reaches out (4 months)
+- Sits with support (6 months)
+- Rolls back to front (6 months)
+- Moves things hand to hand (6 months)
+- Laughs out loud (4 months)
+- Moves toward voice (4 months)
+- Makes 'ah-goo' sounds (4 months)
+- Smiles at self in mirror (5 months)
+- Copies voice (5 months)
+- Babbles 'baba' 'gagaga' (6 months)
+- Turns to sounds/noises (6 months)
+- Enjoys back-and-forth talking (6 months)
+- Recognizes mother (4 months)
+- Smiles spontaneously (5 months)
+- Reacts to voice tones (5 months)
+- Shows preference for person (6 months)
+- Gets upset without caregiver (6 months)
+- Recognizes faces (6 months)
+- Tries to hold bottle (6 months)
+- Reaches for and looks at objects held (4 months)
+- Reaches/grasps dangling objects (5 months)
+- Interested in small objects (5 months)
+- Looks to floor when drops toy (6 months)
+- Continued growth with slowing pace
+- First teeth beginning to emerge
+- Good color vision and depth perception developing
+- Sound localization and vocal experimentation
+- Makes different sounds like "mamama" and "babababa" (9 months)
+- Lifts arms to be picked up (9 months)
+- Shy, clingy, or fearful around strangers (9 months)
+- Shows several facial expressions (happy, sad, angry, surprised) (9 months)
+- Looks when you call name (9 months)
+- Reacts when you leave (clingy) (9 months)
+- Smiles/laughs at peek-a-boo (9 months)
+- Bangs two things together (9 months)
+- Steady growth with increasing mobility
+- Upper and lateral incisors emerging
+- Crawling develops eye-hand-foot-body coordination
+- Language comprehension and babbling advancement
+- Waves "bye-bye" (12 months)
+- Calls parent "mama" or "dada" or special name (12 months)
+- Understands "no" (pauses or stops briefly) (12 months)
+- Plays games with you (pat-a-cake) (12 months)
+- Puts something in container (12 months)
+- Looks for things you hide (12 months)
+- Approaching tripled birth weight
+- Vision approaching adult level
+- Following directions and pointing communication
+- Walks independently (14-18 months)
+- Builds 2-3 cube towers (14-16 months)
+- Climbs on/off couch (18 months)
+- Scribbles (18 months)
+- Drinks from cup, feeds self with fingers, tries spoon (18 months)
+- Says 1-3 words at a time (14-18 months)
+- Uses loud babble with pointing (14 months)
+- Tries 1-2 words besides "mama/dada" (15 months)
+- Looks at familiar objects when named (15 months)
+- Follows directions with gesture + words (15 months)
+- Says 3+ words (18 months)
+- Parallel play (14 months)
+- Frightened by loud noises (14 months)
+- Wants attention/praise (14 months)
+- Reacts to routine changes (14 months)
+- Self-soothes (14 months)
+- Copies other children (15 months)
+- Shows affection (15 months)
+- Claps when excited (15 months)
+- Pretend play begins (16 months)
+- Enjoys praise (16 months)
+- Upset when doesn't get way (16 months)
+- Moves away but checks you're close (18 months)
+- Points to show interest (18 months)
+- Helps dress self (18 months)
+- Puts 2 cubes in 1 hand to hold 3rd (14 months)
+- Uses things right way (15 months)
+- Stacks 2+ objects (15 months)
+- Looks for hidden toys (16 months)
+- Enjoys textured books (16 months)
+- Knows what ordinary things are for (18 months)
+- First molars and canines erupting
+- Vocabulary expanding and following simple commands
+- Stacks 3-6 blocks (20 months)
+- Turns book pages (20 months)
+- Kicks ball (24 months)
+- Throws ball (24 months)
+- Makes "train" with cubes (24 months)
+- Copies vertical line (24 months)
+- Runs (24 months)
+- Points to body parts (20 months)
+- Uses 15-20 words (20 months)
+- Tries 2-word phrases (20 months)
+- Understands yes/no questions (20 months)
+- Says 2-3 word sentences (24 months)
+- Refers to self by name (24 months)
+- Has 50+ words (24 months)
+- Plays pretend (24 months)
+- Understands "big/small/in" (24 months)
+- Half of speech understandable (24 months)
+- Says words like "I/me/we" (24 months)
+- Says 2+ words with action word (24 months)
+- Feeds self (20 months)
+- Takes off clothes (20 months)
+- Matches objects to pictures (24 months)
+- Imitates others (24 months)
+- OK when separated (24 months)
+- Tests limits (24 months)
+- Has tantrums (24 months)
+- Less frightened (24 months)
+- Cries if you're upset (24 months)
+- Jealous (24 months)
+- Recognizes self in mirror (24 months)
+- Asks questions (24 months)
+- Interested in body/genitals (24 months)
+- Says "no" often (24 months)
+- Enjoys praise (24 months)
+- Interested in same-age children (24 months)
+- Notices when others hurt/upset (24 months)
+- Scribbles with crayon (20 months)
+- Pretend play (24 months)
+- Copies lines (24 months)
+- Enjoys repetition (24 months)
+- Matches objects to pictures (24 months)
+- Enjoys puzzles/textured books (24 months)
+- Holds container while taking off lid (24 months)
+- Uses switches/knobs (24 months)
+- Plays with multiple toys at once (24 months)
+- Continued steady growth with changing proportions
+- Takes off some clothes (30 months)
+- Jumps off ground with both feet (30 months)
+- Turns book pages one at a time (30 months)
+- Puts on some clothes (36 months)
+- Uses fork (36 months)
+- Walks, runs, climbs, jumps confidently (36 months)
+- Uses stairs (36 months)
+- Pedals tricycle (36 months)
+- Says 50 words (30 months)
+- Says 2+ words with action (30 months)
+- Names things in books (30 months)
+- Says "I/me/we" (30 months)
+- Conversation with 2+ back-and-forth exchanges (36 months)
+- Asks who/what/where/why questions (36 months)
+- Says action in pictures (36 months)
+- Says first name (36 months)
+- Talks well enough for others to understand most time (36 months)
+- Understands who/what/where questions (36 months)
+- Follows 2-3 part instructions when focused (36 months)
+- Uses sounds b,p,n,m,d,t,w,h (36 months)
+- Plays next to and sometimes with other children (30 months)
+- Shows what they can do (30 months)
+- Follows simple routines (30 months)
+- Calms within 10 minutes after drop-off (36 months)
+- Notices other children and joins play (36 months)
+- Interested in body parts/genitals (36 months)
+- Uses things to pretend (30 months)
+- Shows problem solving (30 months)
+- Follows 2-step instructions (30 months)
+- Names 2+ colors (30 months)
+- Draws circle when shown (36 months)
+- Avoids hot objects when warned (36 months)
+- Complete primary dentition established
+- Clear speech and following complex instructions
+- Serves self food/water with supervision (48 months)
+- Unbuttons some buttons (48 months)
+- Holds crayon between fingers/thumb (not fist) (48 months)
+- Throws ball overhand (48 months)
+- Climbs well (48 months)
+- Runs around obstacles (48 months)
+- Says 4+ word sentences (48 months)
+- Says words from songs/stories (48 months)
+- Talks about one thing from day (48 months)
+- Answers simple questions (48 months)
+- Speech easy to understand (48 months)
+- Loves stories (48 months)
+- Understands 3-part instructions when focused (48 months)
+- Listens without stopping activity (48 months)
+- Answers complicated questions when focused (48 months)
+- Uses most speech sounds but difficulty with s,z,l,sh,ch,j,th,r (48 months)
+- Pretends to be something else during play (48 months)
+- Asks to play with children (48 months)
+- Comforts hurt/sad others (48 months)
+- Avoids danger (48 months)
+- Likes to be helper (48 months)
+- Changes behavior based on location (48 months)
+- Names some colors (48 months)
+- Tells what comes next in story (48 months)
+- Draws person with 3+ body parts (48 months)
+- All primary teeth present; jaw and facial growth
+- Hops on one foot (60 months)
+- Uses toilet independently (60 months)
+- Swings and climbs at playground (60 months)
+- Stands on one foot 10+ seconds (60 months)
+- Does somersaults (60 months)
+- Uses fork/spoon competently (60 months)
+- Tells story with 2+ events (60 months)
+- Answers questions about books (60 months)
+- Keeps conversation with 3+ back-and-forth exchanges (60 months)
+- Uses/recognizes rhymes (60 months)
+- Tells full name (60 months)
+- Speech completely understandable (60 months)
+- Describes object uses (60 months)
+- Uses past/future tense correctly (60 months)
+- Follows rules/takes turns in games (60 months)
+- Sings/dances/acts for you (60 months)
+- Does simple chores (60 months)
+- Wants to please/be like friends (60 months)
+- Agrees with rules (60 months)
+- Likes to perform (60 months)
+- Shows independence (60 months)
+- Tells real from make-believe (60 months)
+- Shows affection (60 months)
+- Aware of gender (60 months)
+- Counts to 10 (60 months)
+- Names numbers 1-5 when pointed to (60 months)
+- Uses time words (60 months)
+- Pays attention 5-10 minutes (60 months)
+- Writes some letters of name (60 months)
+- Names some letters when pointed to (60 months)
+- Draws person with 6+ body parts (60 months)
+- Copies triangle/geometric shapes (60 months)
+- Knows about everyday things (60 months)
+- Understands counting concept (60 months)
+- Names 4+ colors (60 months)
+- Understands same/different (60 months)
+- Plays board/card games (60 months)
+- Identifies most letters (60 months)
+- Kindergarten-ready physique; individual variation wide
+- Primary teeth stable; permanent teeth preparing to emerge
+- Vision fully mature; school readiness established
+- Hearing fully mature; advanced language supporting school readiness
