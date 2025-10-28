@@ -30,14 +30,30 @@ const ageGroupMappings: Record<string, { min: number; max: number }> = {
   '48-60 MONTHS (4-5 YEARS)': { min: 48, max: 60 },
 };
 
-function parseMonthMarker(text: string): number | null {
-  const match = text.match(/\*\*(\d+)M:\*\*/);
-  return match ? parseInt(match[1], 10) : null;
+function parseMonthMarker(text: string): { single: number } | { range: { min: number; max: number } } | null {
+  // Match range markers like "**13-19M:**" or "**16-22M:**"
+  const rangeMatch = text.match(/\*\*(\d+)-(\d+)M:\*\*/);
+  if (rangeMatch) {
+    return {
+      range: {
+        min: parseInt(rangeMatch[1], 10),
+        max: parseInt(rangeMatch[2], 10)
+      }
+    };
+  }
+  
+  // Match single month markers like "**9M:**" or "**12M:**"
+  const singleMatch = text.match(/\*\*(\d+)M:\*\*/);
+  if (singleMatch) {
+    return { single: parseInt(singleMatch[1], 10) };
+  }
+  
+  return null;
 }
 
 function cleanMilestoneText(text: string): string {
-  // Remove month markers like "**9M:** " from the beginning
-  return text.replace(/^\*\*\d+M:\*\*\s*/, '').trim();
+  // Remove month markers like "**9M:** " or "**13-19M:** " from the beginning
+  return text.replace(/^\*\*\d+(-\d+)?M:\*\*\s*/, '').trim();
 }
 
 function extractMilestones(filePath: string): Milestone[] {
@@ -153,11 +169,18 @@ function parseMilestoneColumn(
     let typicalRange: string | null = null;
     
     if (monthMarker !== null) {
-      // Specific month marker (e.g., "**9M:**")
-      // Use the month as the minimum and add 2-3 months buffer
-      ageRangeMin = Math.max(baseAgeRange.min, monthMarker - 1);
-      ageRangeMax = Math.min(baseAgeRange.max, monthMarker + 2);
-      typicalRange = `${monthMarker} months`;
+      if ('range' in monthMarker) {
+        // Range marker (e.g., "**13-19M:**" or "**16-22M:**")
+        ageRangeMin = monthMarker.range.min;
+        ageRangeMax = monthMarker.range.max;
+        typicalRange = `${monthMarker.range.min}-${monthMarker.range.max} months`;
+      } else {
+        // Single month marker (e.g., "**9M:**")
+        // Use the month as the minimum and add 2-3 months buffer
+        ageRangeMin = Math.max(baseAgeRange.min, monthMarker.single - 1);
+        ageRangeMax = Math.min(baseAgeRange.max, monthMarker.single + 2);
+        typicalRange = `${monthMarker.single} months`;
+      }
     } else {
       // General milestone for the age range
       ageRangeMin = baseAgeRange.min;
