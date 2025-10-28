@@ -6,7 +6,8 @@ import ProductCard from '@/components/ProductCard';
 import BottomNav from '@/components/BottomNav';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { X, Check, Lightbulb, AlertTriangle, Loader2 } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { X, Check, Lightbulb, AlertTriangle, Loader2, ChevronDown } from 'lucide-react';
 import { SiAmazon, SiTarget, SiWalmart } from 'react-icons/si';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -81,8 +82,8 @@ function buildAmazonUrl(searchQuery: string, ageRangeMonthsMin: number, ageRange
 export default function MilestoneDetail() {
   const [, setLocation] = useLocation();
   const [, params] = useRoute('/milestone/:id');
-  const [activeTab, setActiveTab] = useState<'about' | 'action'>('action');
-  const [activeActionTab, setActiveActionTab] = useState<'todo' | 'tools'>('todo');
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [activeContentTab, setActiveContentTab] = useState<'todo' | 'tools'>('todo');
   const [activeNav, setActiveNav] = useState<'home' | 'milestones' | 'profile'>('milestones');
   const [loadedMilestoneIds, setLoadedMilestoneIds] = useState<string[]>([]);
 
@@ -184,7 +185,7 @@ export default function MilestoneDetail() {
       const data = await response.json();
       return data;
     },
-    enabled: !!selectedChild && !!milestone && activeTab === 'action' && activeActionTab === 'tools',
+    enabled: !!selectedChild && !!milestone && activeContentTab === 'tools',
     staleTime: 1000 * 60 * 60, // Cache for 1 hour
   });
 
@@ -231,10 +232,10 @@ export default function MilestoneDetail() {
   });
 
   useEffect(() => {
-    if (selectedChild && milestone && activeTab === 'action' && activeActionTab === 'todo') {
+    if (selectedChild && milestone && activeContentTab === 'todo') {
       fetchRecommendations(undefined);
     }
-  }, [selectedChild, milestone, activeTab, activeActionTab, fetchRecommendations]);
+  }, [selectedChild, milestone, activeContentTab, fetchRecommendations]);
 
 
   // Check if all current recommendations are completed and fetch new ones
@@ -297,104 +298,62 @@ export default function MilestoneDetail() {
       </div>
 
       <div className="p-4 space-y-6 max-w-2xl mx-auto">
-        <div className="flex gap-2">
-          <button
-            onClick={() => setActiveTab('action')}
-            className={`flex-1 px-6 py-2.5 rounded-full font-medium text-sm transition-colors ${
-              activeTab === 'action'
-                ? 'bg-[#2C3E50] text-white'
-                : 'bg-muted text-foreground'
-            }`}
-            data-testid="tab-action"
-          >
-            Action
-          </button>
-          <button
-            onClick={() => setActiveTab('about')}
-            className={`flex-1 px-6 py-2.5 rounded-full font-medium text-sm transition-colors ${
-              activeTab === 'about'
-                ? 'bg-[#2C3E50] text-white'
-                : 'bg-muted text-foreground'
-            }`}
-            data-testid="tab-about"
-          >
-            About
-          </button>
-        </div>
-
-        {activeTab === 'about' && milestone && (
-          <div className="bg-muted/30 rounded-lg px-4 py-5 space-y-4">
-            <div>
-              <h3 className="font-semibold mb-2">About the milestone</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{milestone.description}</p>
-            </div>
-
-            {milestone.typicalRange && (
-              <div>
-                <h3 className="font-semibold mb-2">Typical range</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {milestone.typicalRange}
-                </p>
-              </div>
-            )}
-
-            <ToggleGroup 
-              type="single" 
-              value={achievementStatus?.achieved ? 'achieved' : 'not-achieved'}
-              onValueChange={(value) => {
-                if (value) toggleAchievement.mutate(value as 'achieved' | 'not-achieved');
-              }}
-              className="w-full"
-              disabled={toggleAchievement.isPending}
-              data-testid="toggle-achievement-status"
+        <Collapsible open={isAboutOpen} onOpenChange={setIsAboutOpen}>
+          <CollapsibleTrigger asChild>
+            <button 
+              className="flex items-center justify-between w-full px-4 py-3 bg-muted/30 rounded-lg hover-elevate active-elevate-2"
+              data-testid="button-about-toggle"
             >
-              <ToggleGroupItem 
-                value="not-achieved" 
-                className="flex-1 rounded-l-full data-[state=on]:bg-red-100 data-[state=on]:text-red-800 dark:data-[state=on]:bg-red-950 dark:data-[state=on]:text-red-200"
-                data-testid="toggle-not-achieved"
-              >
-                Not Achieved
-              </ToggleGroupItem>
-              <ToggleGroupItem 
-                value="achieved" 
-                className="flex-1 rounded-r-full"
-                data-testid="toggle-achieved"
-              >
-                <Check className="w-4 h-4 mr-1" />
-                Achieved
-              </ToggleGroupItem>
-            </ToggleGroup>
-          </div>
-        )}
+              <span className="font-semibold text-sm">About this milestone</span>
+              <ChevronDown className={`w-4 h-4 transition-transform ${isAboutOpen ? 'rotate-180' : ''}`} />
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="bg-muted/30 rounded-lg px-4 py-5 space-y-4 mt-2">
+              <div>
+                <h3 className="font-semibold mb-2">Description</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{milestone.description}</p>
+              </div>
 
-        {activeTab === 'action' && (
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <button
-                onClick={() => setActiveActionTab('todo')}
-                className={`flex-1 px-6 py-2.5 rounded-full font-medium text-sm transition-colors ${
-                  activeActionTab === 'todo'
-                    ? 'bg-[#2C3E50] text-white'
-                    : 'bg-muted text-foreground'
-                }`}
-                data-testid="tab-todo"
-              >
-                Activities
-              </button>
-              <button
-                onClick={() => setActiveActionTab('tools')}
-                className={`flex-1 px-6 py-2.5 rounded-full font-medium text-sm transition-colors ${
-                  activeActionTab === 'tools'
-                    ? 'bg-[#2C3E50] text-white'
-                    : 'bg-muted text-foreground'
-                }`}
-                data-testid="tab-tools"
-              >
-                Toys & Tools
-              </button>
+              {milestone.typicalRange && (
+                <div>
+                  <h3 className="font-semibold mb-2">Typical range</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {milestone.typicalRange}
+                  </p>
+                </div>
+              )}
             </div>
+          </CollapsibleContent>
+        </Collapsible>
 
-            {activeActionTab === 'todo' && (
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setActiveContentTab('todo')}
+              className={`flex-1 px-6 py-2.5 rounded-full font-medium text-sm transition-colors ${
+                activeContentTab === 'todo'
+                  ? 'bg-[#2C3E50] text-white'
+                  : 'bg-muted text-foreground'
+              }`}
+              data-testid="tab-todo"
+            >
+              Activities
+            </button>
+            <button
+              onClick={() => setActiveContentTab('tools')}
+              className={`flex-1 px-6 py-2.5 rounded-full font-medium text-sm transition-colors ${
+                activeContentTab === 'tools'
+                  ? 'bg-[#2C3E50] text-white'
+                  : 'bg-muted text-foreground'
+              }`}
+              data-testid="tab-tools"
+            >
+              Toys & Tools
+            </button>
+          </div>
+
+          {activeContentTab === 'todo' && (
               <div className="bg-muted/30 rounded-lg px-4 py-5 space-y-4">
                 {achievementStatus?.achieved ? (
                   <div className="text-center py-12">
@@ -486,7 +445,7 @@ export default function MilestoneDetail() {
                                         milestoneId: milestone.id,
                                         title: completed.recommendationTitle,
                                         description: completed.recommendationDescription || '',
-                                        citations: completed.citations,
+                                        citations: completed.citations || undefined,
                                         isCompleted: true,
                                       });
                                     }
@@ -604,7 +563,7 @@ export default function MilestoneDetail() {
               </div>
             )}
 
-            {activeActionTab === 'tools' && (
+            {activeContentTab === 'tools' && (
               <div className="bg-muted/30 rounded-lg px-4 py-5 space-y-4">
                 {achievementStatus?.achieved ? (
                   <div className="text-center py-12">
@@ -748,10 +707,9 @@ export default function MilestoneDetail() {
               </div>
             )}
           </div>
-        )}
-      </div>
+        </div>
 
-      <BottomNav active={activeNav} onNavigate={handleNavigation} />
-    </div>
-  );
-}
+        <BottomNav active={activeNav} onNavigate={handleNavigation} />
+      </div>
+    );
+  }
