@@ -379,7 +379,7 @@ export default function MilestoneDetail() {
                 }`}
                 data-testid="tab-todo"
               >
-                To-do
+                Activities
               </button>
               <button
                 onClick={() => setActiveActionTab('tools')}
