@@ -42,18 +42,40 @@ function parseMonthMarker(text: string): { single: number } | { range: { min: nu
     };
   }
   
-  // Match single month markers like "**9M:**" or "**12M:**"
-  const singleMatch = text.match(/\*\*(\d+)M:\*\*/);
+  // Match single month markers like "**9M:**", "**12M:**", or "**By 5M:**"
+  let singleMatch = text.match(/\*\*(\d+)M:\*\*/);
+  if (!singleMatch) {
+    singleMatch = text.match(/\*\*By (\d+)M:\*\*/);
+  }
   if (singleMatch) {
     return { single: parseInt(singleMatch[1], 10) };
+  }
+  
+  // Match age markers like "**By age 3:**" or "**Around age 6:**"
+  const ageMatch = text.match(/\*\*(?:By age|Around age) (\d+):\*\*/);
+  if (ageMatch) {
+    const years = parseInt(ageMatch[1], 10);
+    return { single: years * 12 }; // Convert years to months
   }
   
   return null;
 }
 
 function cleanMilestoneText(text: string): string {
-  // Remove month markers like "**9M:** " or "**13-19M:** " from the beginning
-  return text.replace(/^\*\*\d+(-\d+)?M:\*\*\s*/, '').trim();
+  // Remove various month marker formats from the beginning:
+  // - "**9M:** " or "**13-19M:** " → Remove completely
+  // - "**By 5M:** " or "**By 24M:** " → Remove completely
+  // - "**By age 3:** " or "**Around age 6:** " → Remove completely
+  // - "**Should have...** " → Keep content but remove ** markers
+  let cleaned = text
+    .replace(/^\*\*(\d+(-\d+)?M):\*\*\s*/, '') // Remove "**9M:** " or "**13-19M:** "
+    .replace(/^\*\*By (\d+M):\*\*\s*/, '')      // Remove "**By 5M:** "
+    .replace(/^\*\*By age \d+:\*\*\s*/, '')   // Remove "**By age 3:** "
+    .replace(/^\*\*Around age \d+:\*\*\s*/, '') // Remove "**Around age 6:** "
+    .replace(/^\*\*(Should have [^*]+)\*\*\s*/, '$1') // Keep "Should have..." content, remove ** only
+    .trim();
+  
+  return cleaned;
 }
 
 function extractMilestones(filePath: string): Milestone[] {
