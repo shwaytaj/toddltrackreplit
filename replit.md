@@ -164,6 +164,18 @@ Preferred communication style: Simple, everyday language.
 - **Testing**: All citation elements have data-testid attributes for accessibility and testing
 - **Documentation**: Created `AI_PROMPT_DOCUMENTATION.md` showing exact prompts sent to Claude for verification
 
+**MilestoneDetail UI Restructuring (Oct 2025):**
+- **UI Simplification**: Removed top-level "Action" and "About" tabs for a cleaner, more focused interface
+- **Tab Promotion**: "Activities" (formerly "To-do") and "Toys & Tools" are now the primary tabs, no longer nested under "Action"
+- **Collapsible About**: Added Shadcn Collapsible component for "About this milestone" section at the top of the page
+- **Default Landing**: Users now land directly on the "Activities" tab, making the most useful content immediately visible
+- **State Management**: Simplified state from `activeTab` + `activeActionTab` to just `isAboutOpen` + `activeContentTab`
+- **Query Optimization**: Updated TanStack Query enabled conditions to use the renamed state variables
+- **UX Improvements**: About information is accessible via collapsible toggle (collapsed by default), reducing visual clutter
+- **Component Used**: Implemented with `@radix-ui/react-collapsible` via Shadcn UI, with ChevronDown icon that rotates when expanded
+- **Tab Naming**: Changed "To-do" to "Activities" for more parent-friendly, supportive language
+- **Testing**: End-to-end Playwright test verified collapsible functionality, default tab selection, and achievement toggle positioning
+
 ### External Dependencies
 
 **AI Integration:**
