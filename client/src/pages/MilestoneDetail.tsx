@@ -312,19 +312,109 @@ export default function MilestoneDetail() {
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="bg-muted/30 rounded-lg px-4 py-5 space-y-4 mt-2">
-              <div>
-                <h3 className="font-semibold mb-2">Description</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{milestone.description}</p>
-              </div>
-
-              {milestone.typicalRange && (
-                <div>
-                  <h3 className="font-semibold mb-2">Typical range</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {milestone.typicalRange}
-                  </p>
-                </div>
-              )}
+              {(() => {
+                // Parse the description into sections
+                const description = milestone.description || '';
+                const sections: { [key: string]: string } = {};
+                
+                // Check if description has structured format
+                if (description.includes('**About**')) {
+                  // Split by section headers
+                  const aboutMatch = description.match(/\*\*About\*\*([\s\S]*?)(?=\*\*What to look for\*\*|\*\*Why it matters\*\*|$)/);
+                  const whatToLookMatch = description.match(/\*\*What to look for\*\*([\s\S]*?)(?=\*\*Why it matters\*\*|$)/);
+                  const whyItMattersMatch = description.match(/\*\*Why it matters\*\*([\s\S]*?)$/);
+                  
+                  if (aboutMatch) sections.about = aboutMatch[1].trim();
+                  if (whatToLookMatch) sections.whatToLook = whatToLookMatch[1].trim();
+                  if (whyItMattersMatch) sections.whyItMatters = whyItMattersMatch[1].trim();
+                }
+                
+                // Helper function to render bullet points
+                const renderBullets = (text: string) => {
+                  const lines = text.split('\n').filter(line => line.trim());
+                  const bullets: string[] = [];
+                  let currentBullet = '';
+                  
+                  for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (trimmed.startsWith('•') || trimmed.startsWith('-') || trimmed.startsWith('*')) {
+                      if (currentBullet) bullets.push(currentBullet);
+                      currentBullet = trimmed.replace(/^[•\-*]\s*/, '');
+                    } else if (currentBullet) {
+                      currentBullet += ' ' + trimmed;
+                    }
+                  }
+                  if (currentBullet) bullets.push(currentBullet);
+                  
+                  return bullets.length > 0 ? (
+                    <ul className="space-y-2 ml-4">
+                      {bullets.map((bullet, idx) => (
+                        <li key={idx} className="text-sm text-muted-foreground leading-relaxed list-disc">
+                          {bullet}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground leading-relaxed">{text}</p>
+                  );
+                };
+                
+                if (Object.keys(sections).length > 0) {
+                  // Render structured description
+                  return (
+                    <>
+                      {sections.about && (
+                        <div>
+                          <h3 className="font-semibold mb-2">About</h3>
+                          <p className="text-sm text-muted-foreground leading-relaxed">{sections.about}</p>
+                        </div>
+                      )}
+                      
+                      {sections.whatToLook && (
+                        <div>
+                          <h3 className="font-semibold mb-2">What to look for</h3>
+                          {renderBullets(sections.whatToLook)}
+                        </div>
+                      )}
+                      
+                      {sections.whyItMatters && (
+                        <div>
+                          <h3 className="font-semibold mb-2">Why it matters</h3>
+                          <p className="text-sm text-muted-foreground leading-relaxed">{sections.whyItMatters}</p>
+                        </div>
+                      )}
+                      
+                      {milestone.typicalRange && (
+                        <div>
+                          <h3 className="font-semibold mb-2">Typical range</h3>
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            {milestone.typicalRange}
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  );
+                } else {
+                  // Render simple description
+                  return (
+                    <>
+                      <div>
+                        <h3 className="font-semibold mb-2">Description</h3>
+                        <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
+                      </div>
+                      
+                      {milestone.typicalRange && (
+                        <div>
+                          <h3 className="font-semibold mb-2">Typical range</h3>
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            {milestone.typicalRange}
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  );
+                }
+              })()}
             </div>
           </CollapsibleContent>
         </Collapsible>
