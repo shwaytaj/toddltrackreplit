@@ -3,7 +3,8 @@ import { useLocation } from 'wouter';
 import BottomNav from '@/components/BottomNav';
 import MilestoneCard from '@/components/MilestoneCard';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -52,6 +53,10 @@ export default function Milestones() {
   const [activeNav, setActiveNav] = useState<'home' | 'milestones' | 'profile'>('milestones');
   const [selectedRangeIndex, setSelectedRangeIndex] = useState(0);
   const [childCorrectedAgeRangeIndex, setChildCorrectedAgeRangeIndex] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Trim whitespace from search query
+  const trimmedSearchQuery = searchQuery.trim();
 
   const { data: children = [] } = useQuery<Child[]>({
     queryKey: ['/api/children'],
@@ -86,11 +91,29 @@ export default function Milestones() {
 
   const selectedRange = AGE_RANGES[selectedRangeIndex];
 
-  // Fetch milestones for the selected age range
-  const { data: milestones = [] } = useQuery<Milestone[]>({
-    queryKey: ['/api/milestones/age-range', selectedRange.min, selectedRange.max],
-    enabled: !!selectedRange,
+  // Fetch all milestones when searching, or age-range specific when not searching
+  const { data: allMilestones = [] } = useQuery<Milestone[]>({
+    queryKey: ['/api/milestones'],
+    enabled: trimmedSearchQuery.length > 0,
   });
+
+  const { data: ageRangeMilestones = [] } = useQuery<Milestone[]>({
+    queryKey: ['/api/milestones/age-range', selectedRange.min, selectedRange.max],
+    enabled: !!selectedRange && trimmedSearchQuery.length === 0,
+  });
+
+  // Use filtered all milestones when searching, otherwise use age range milestones
+  const milestones = useMemo(() => {
+    if (trimmedSearchQuery.length > 0) {
+      const query = trimmedSearchQuery.toLowerCase();
+      return allMilestones.filter(m => 
+        m.title.toLowerCase().includes(query) ||
+        m.description.toLowerCase().includes(query) ||
+        m.category.toLowerCase().includes(query)
+      );
+    }
+    return ageRangeMilestones;
+  }, [trimmedSearchQuery, allMilestones, ageRangeMilestones]);
 
   const { data: childMilestones = [] } = useQuery<ChildMilestone[]>({
     queryKey: ['/api/children', selectedChild?.id, 'milestones'],
@@ -150,7 +173,7 @@ export default function Milestones() {
               size="sm" 
               data-testid="button-previous-range"
               onClick={handlePrevious}
-              disabled={selectedRangeIndex === 0}
+              disabled={selectedRangeIndex === 0 || trimmedSearchQuery.length > 0}
             >
               <ChevronLeft className="w-4 h-4 mr-1" /> Previous
             </Button>
@@ -162,7 +185,7 @@ export default function Milestones() {
               size="sm" 
               data-testid="button-next-range"
               onClick={handleNext}
-              disabled={selectedRangeIndex === AGE_RANGES.length - 1}
+              disabled={selectedRangeIndex === AGE_RANGES.length - 1 || trimmedSearchQuery.length > 0}
             >
               Next <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
@@ -174,11 +197,50 @@ export default function Milestones() {
           )}
         </div>
 
-        {milestones.length === 0 ? (
+        {/* Search input */}
+        <div className="relative">
+          <label htmlFor="milestone-search" className="sr-only">
+            Search milestones
+          </label>
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
+          <Input
+            id="milestone-search"
+            type="text"
+            placeholder="Search milestones..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 pr-9"
+            data-testid="input-search-milestones"
+            aria-label="Search milestones by title, description, or category"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              data-testid="button-clear-search"
+              aria-label="Clear search"
+            >
+              <X className="w-4 h-4" aria-hidden="true" />
+            </button>
+          )}
+        </div>
+
+        {/* Search results indicator */}
+        {trimmedSearchQuery.length > 0 && (
+          <div className="text-sm text-muted-foreground" data-testid="text-search-results">
+            {milestones.length === 0 ? (
+              <span>No milestones found for "{trimmedSearchQuery}"</span>
+            ) : (
+              <span>Showing {milestones.length} result{milestones.length !== 1 ? 's' : ''} for "{trimmedSearchQuery}"</span>
+            )}
+          </div>
+        )}
+
+        {milestones.length === 0 && trimmedSearchQuery.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             No milestones available for this age range
           </div>
-        ) : (
+        ) : milestones.length > 0 ? (
           <>
             {Object.entries(milestonesByCategory).map(([category, categoryMilestones]) => (
               <div key={category}>
@@ -198,7 +260,7 @@ export default function Milestones() {
               </div>
             ))}
           </>
-        )}
+        ) : null}
       </div>
 
       <BottomNav active={activeNav} onNavigate={handleNavigation} />
