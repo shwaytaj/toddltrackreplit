@@ -31,17 +31,15 @@ const AGE_RANGES = [
 
 const getCategoryColor = (category: string) => {
   switch (category.toLowerCase()) {
-    case 'gross motor':
+    case 'developmental':
       return 'bg-purple-100 dark:bg-purple-900/20';
-    case 'fine motor':
+    case 'growth':
       return 'bg-blue-100 dark:bg-blue-900/20';
-    case 'communication':
-    case 'language':
+    case 'hearing':
       return 'bg-green-100 dark:bg-green-900/20';
-    case 'social & emotional':
-    case 'social-emotional':
+    case 'vision':
       return 'bg-amber-100 dark:bg-amber-900/20';
-    case 'cognitive':
+    case 'teeth':
       return 'bg-pink-100 dark:bg-pink-900/20';
     default:
       return 'bg-gray-100 dark:bg-gray-900/20';
