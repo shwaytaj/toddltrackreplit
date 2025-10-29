@@ -164,13 +164,14 @@ export function formatMilestoneDescription(milestone: ParsedMilestone): string {
 
 /**
  * Normalize a milestone title for matching
- * (removes special characters, lowercases, trims whitespace)
+ * (removes special characters, lowercases, trims whitespace, removes age prefixes)
  */
 export function normalizeMilestoneTitle(title: string): string {
   return title
     .toLowerCase()
-    .replace(/["""'']/g, '"')  // Normalize quote characters
-    .replace(/[–—]/g, '-')      // Normalize dashes
-    .replace(/\s+/g, ' ')        // Normalize whitespace
+    .replace(/^\d+m:\s*/i, '')   // Remove age prefixes like "2M:", "12M:", "24M:"
+    .replace(/["""'']/g, '"')    // Normalize quote characters
+    .replace(/[–—]/g, '-')        // Normalize dashes
+    .replace(/\s+/g, ' ')          // Normalize whitespace
     .trim();
 }
