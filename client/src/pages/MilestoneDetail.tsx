@@ -380,7 +380,7 @@ export default function MilestoneDetail() {
                       {sections.whyItMatters && (
                         <div>
                           <h3 className="font-semibold mb-2">Why it matters</h3>
-                          <p className="text-sm text-muted-foreground leading-relaxed">{sections.whyItMatters}</p>
+                          {renderBullets(sections.whyItMatters)}
                         </div>
                       )}
                       
