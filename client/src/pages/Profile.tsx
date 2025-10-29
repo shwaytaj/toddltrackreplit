@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'wouter';
 import BottomNav from '@/components/BottomNav';
-import ChildSelector from '@/components/ChildSelector';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -204,11 +203,6 @@ export default function Profile() {
       <div className="p-4 space-y-6 max-w-2xl mx-auto">
         <div>
           <h1 className="text-2xl font-bold mb-4">Profile</h1>
-          <ChildSelector
-            children={children}
-            activeId={activeChild}
-            onSelect={setActiveChild}
-          />
         </div>
 
         <div className="space-y-4">
