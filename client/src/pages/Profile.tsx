@@ -2,11 +2,9 @@ import { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'wouter';
 import BottomNav from '@/components/BottomNav';
 import ChildSelector from '@/components/ChildSelector';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Camera } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useUser } from '@/hooks/use-user';
 import { useToast } from '@/hooks/use-toast';
@@ -120,21 +118,6 @@ export default function Profile() {
             activeId={activeChild}
             onSelect={setActiveChild}
           />
-        </div>
-
-        <div className="flex flex-col items-center gap-4">
-          <div className="relative">
-            <Avatar className="w-24 h-24">
-              <AvatarImage src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop" />
-              <AvatarFallback>{selectedChild.name[0]}</AvatarFallback>
-            </Avatar>
-            <button 
-              className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-2 hover-elevate active-elevate-2"
-              data-testid="button-upload-photo"
-            >
-              <Camera className="w-4 h-4" />
-            </button>
-          </div>
         </div>
 
         <div className="space-y-4">
