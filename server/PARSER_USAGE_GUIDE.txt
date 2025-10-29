@@ -1,0 +1,151 @@
+================================================================================
+MILESTONE PARSER USAGE GUIDE
+================================================================================
+
+This guide explains how to use the milestone parsers and update scripts to
+maintain the milestone data in the Toddl application.
+
+================================================================================
+AVAILABLE PARSERS
+================================================================================
+
+1. server/parse-milestones.ts
+   - Parses core milestone data (title, category, age ranges)
+   - Input: Markdown file with milestone tables
+   - Output: Array of milestone objects
+   - Function: extractMilestones(filePath)
+
+2. server/parsers/milestone-description-parser.ts
+   - Parses detailed milestone descriptions
+   - Input: Markdown file with structured descriptions
+   - Output: Array of description objects with About/What to look for/Why it matters
+   - Function: parseMilestoneDescriptions(fileContent)
+
+================================================================================
+UPDATE SCRIPTS
+================================================================================
+
+1. UPDATE CORE MILESTONE DATA (age ranges, categories, etc.)
+   
+   Command:
+   $ tsx server/update-milestones-from-file.ts <path-to-milestone-file>
+
+   Example:
+   $ tsx server/update-milestones-from-file.ts ./attached_assets/dev-milestones-comprehensive.md
+
+   What it does:
+   - Parses milestone data from the file
+   - Matches milestones by title with database
+   - Updates age ranges, categories, and subcategories
+   - Shows detailed summary of changes before updating
+
+   When to use:
+   - New milestone data file with corrected age ranges
+   - Category/subcategory reorganization
+   - Any structural milestone data updates
+
+
+2. UPDATE MILESTONE DESCRIPTIONS
+
+   Command:
+   $ tsx server/update-milestone-descriptions-from-file.ts <path-to-description-file>
+
+   Example:
+   $ tsx server/update-milestone-descriptions-from-file.ts ./attached_assets/milestones-descriptions.md
+
+   What it does:
+   - Parses structured descriptions (About, What to look for, Why it matters)
+   - Matches descriptions to milestones by normalized title
+   - Updates description field in database
+   - Reports coverage statistics
+
+   When to use:
+   - New description content available
+   - Updating evidence-based citations
+   - Improving parent guidance text
+
+================================================================================
+FILE FORMAT REQUIREMENTS
+================================================================================
+
+MILESTONE DATA FILE FORMAT:
+- Markdown tables with columns: Milestone, Category, Age Range
+- Age range format: "X-Y months" or "X months"
+- Categories: Developmental, Growth, Vision, Hearing, Teeth
+- See: attached_assets/dev-milestones-comprehensive_*.md
+
+DESCRIPTION FILE FORMAT:
+- Markdown headings (##) for each milestone title
+- Three required sections:
+  **About** - Comprehensive explanation
+  **What to look for** - Bullet points of observable behaviors
+  **Why it matters** - Bullet points of developmental significance
+- See: attached_assets/milestones-descriptions_*.md
+
+================================================================================
+MATCHING LOGIC
+================================================================================
+
+Both scripts use title matching with normalization:
+- Convert to lowercase
+- Trim whitespace
+- Strip age prefixes (e.g., "0-1m: " removed)
+
+This allows descriptions to match milestones even if formatting differs.
+
+Known Limitations:
+- Titles truncated at 60 chars in database may not match
+- Combined titles (e.g., "Does X, Does Y") may not match granular descriptions
+- Generic numeric titles (e.g., "Boys 22 lb; Girls 20 lb") may not match
+
+================================================================================
+WORKFLOW
+================================================================================
+
+Typical update workflow:
+
+1. Obtain new milestone data file (markdown format)
+2. Obtain new descriptions file (markdown format)
+3. Update core milestone data:
+   $ tsx server/update-milestones-from-file.ts <milestone-file>
+4. Update descriptions:
+   $ tsx server/update-milestone-descriptions-from-file.ts <description-file>
+5. Verify coverage and check for unmatched milestones
+6. Document updates in MILESTONE_UPDATE_REPORT.md
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Q: Script shows "Unmatched in database" - what does this mean?
+A: The description file has entries that don't match any database milestone.
+   This is normal when the description file has more granular detail than
+   the core milestone set.
+
+Q: Script shows "Unmatched in file" - is this a problem?
+A: These are milestones in the database without matching descriptions.
+   Common causes: title truncation, combined titles, generic formats.
+   Review the list and consider manual description creation if needed.
+
+Q: How do I add descriptions for the unmatched milestones?
+A: Add entries to the description file using the exact title from the database,
+   then re-run the update script.
+
+Q: Parser shows warnings - should I be concerned?
+A: Check the warning message. File header warnings are normal and expected.
+   Other warnings may indicate formatting issues in the source file.
+
+================================================================================
+MAINTENANCE
+================================================================================
+
+The parsers are designed to be zero-maintenance and handle variations in
+input file formatting. If you need to:
+
+- Add new milestone categories: Update schema.ts first
+- Change title normalization: Modify milestone-description-parser.ts
+- Add new description sections: Update parser and schema accordingly
+
+Always test with sample data before processing production updates.
+
+================================================================================
