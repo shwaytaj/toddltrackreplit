@@ -158,7 +158,6 @@ export default function Home() {
             onSelect={setActiveChild}
           />
           <Avatar className="w-10 h-10">
-            <AvatarImage src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop" />
             <AvatarFallback>{user?.firstName?.[0] || user?.email?.[0] || 'U'}</AvatarFallback>
           </Avatar>
         </div>
