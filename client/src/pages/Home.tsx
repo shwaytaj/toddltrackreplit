@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ChildSelector from '@/components/ChildSelector';
 import HighlightCard from '@/components/HighlightCard';
 import MilestoneCard from '@/components/MilestoneCard';
@@ -151,15 +150,12 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="p-4 space-y-6 max-w-2xl mx-auto">
-        <div className="flex items-center justify-between">
+        <div>
           <ChildSelector
             children={children}
             activeId={activeChild}
             onSelect={setActiveChild}
           />
-          <Avatar className="w-10 h-10">
-            <AvatarFallback>{user?.firstName?.[0] || user?.email?.[0] || 'U'}</AvatarFallback>
-          </Avatar>
         </div>
 
         <div>
