@@ -15,6 +15,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import type { Child, ChildMilestone, Milestone } from '@shared/schema';
 import { calculateCorrectedAge } from '@/lib/age-calculation';
+import { getMonkeyIcon } from '@/components/MonkeyIcons';
 
 const AGE_RANGES = [
   { min: 0, max: 3, label: '0-3 months' },
@@ -29,21 +30,23 @@ const AGE_RANGES = [
   { min: 49, max: 60, label: '49-60 months' },
 ];
 
-const getCategoryColor = (category: string) => {
-  switch (category.toLowerCase()) {
-    case 'developmental':
-      return 'bg-purple-100 dark:bg-purple-900/20';
-    case 'growth':
-      return 'bg-blue-100 dark:bg-blue-900/20';
-    case 'hearing':
-      return 'bg-green-100 dark:bg-green-900/20';
-    case 'vision':
-      return 'bg-amber-100 dark:bg-amber-900/20';
-    case 'teeth':
-      return 'bg-pink-100 dark:bg-pink-900/20';
-    default:
-      return 'bg-gray-100 dark:bg-gray-900/20';
-  }
+// Map categories and subcategories to colors for visual distinction
+const subcategoryColors: Record<string, string> = {
+  'Gross Motor Skills': 'bg-purple-100 dark:bg-purple-900/20',
+  'Fine Motor Skills': 'bg-purple-100 dark:bg-purple-900/20',
+  'Communication': 'bg-green-100 dark:bg-green-900/20',
+  'Social & Emotional': 'bg-amber-100 dark:bg-amber-900/20',
+  'Cognitive': 'bg-blue-100 dark:bg-blue-900/20',
+  'Physical': 'bg-rose-100 dark:bg-rose-900/20',
+  'Development': 'bg-cyan-100 dark:bg-cyan-900/20',
+  'Eruption': 'bg-pink-100 dark:bg-pink-900/20',
+  'Vision': 'bg-amber-50 dark:bg-amber-950/20',
+  'Hearing': 'bg-teal-50 dark:bg-teal-950/20',
+};
+
+const getMilestoneColor = (milestone: Milestone): string => {
+  const key = milestone.subcategory || milestone.category;
+  return subcategoryColors[key] || 'bg-gray-100 dark:bg-gray-900/20';
 };
 
 export default function Milestones() {
@@ -248,10 +251,11 @@ export default function Milestones() {
                     <MilestoneCard
                       key={milestone.id}
                       title={milestone.title}
-                      category=""
-                      categoryColor={getCategoryColor(milestone.category)}
+                      category={milestone.subcategory || ''}
+                      categoryColor={getMilestoneColor(milestone)}
                       achieved={isMilestoneAchieved(milestone.id)}
                       onClick={() => setLocation(`/milestone/${milestone.id}`)}
+                      icon={getMonkeyIcon(milestone.subcategory || milestone.category)}
                     />
                   ))}
                 </div>
