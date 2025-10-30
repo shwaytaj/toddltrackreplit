@@ -7,6 +7,7 @@ interface MilestoneCardProps {
   categoryColor?: string;
   achieved?: boolean;
   onClick?: () => void;
+  icon?: React.ComponentType<{ className?: string }>;
 }
 
 export default function MilestoneCard({
@@ -14,7 +15,8 @@ export default function MilestoneCard({
   category,
   categoryColor = 'bg-primary/20',
   achieved = false,
-  onClick
+  onClick,
+  icon: Icon
 }: MilestoneCardProps) {
   return (
     <Card
@@ -26,6 +28,11 @@ export default function MilestoneCard({
       data-testid={`card-milestone-${title.toLowerCase().replace(/\s+/g, '-')}`}
     >
       <div className="flex flex-col items-center justify-center text-center min-h-[100px] gap-2">
+        {Icon && (
+          <div className="mb-1">
+            <Icon className="w-10 h-10" />
+          </div>
+        )}
         <p className="font-semibold text-sm leading-snug">{title}</p>
         <p className="text-xs text-muted-foreground">{category}</p>
         {achieved && (

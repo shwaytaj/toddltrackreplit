@@ -9,17 +9,21 @@ import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { useUser } from '@/hooks/use-user';
 import { calculateCorrectedAge, getAgeRange, formatAge, formatAdjustment } from '@/lib/age-calculation';
+import { getMonkeyIcon } from '@/components/MonkeyIcons';
 import type { Child, Milestone, ChildMilestone, GrowthMetric } from '@shared/schema';
 
 // Map subcategories to colors for visual distinction
 const subcategoryColors: Record<string, string> = {
   'Gross Motor Skills': 'bg-purple-100 dark:bg-purple-900/20',
+  'Fine Motor Skills': 'bg-purple-100 dark:bg-purple-900/20',
   'Communication': 'bg-green-100 dark:bg-green-900/20',
   'Social & Emotional': 'bg-amber-100 dark:bg-amber-900/20',
   'Cognitive': 'bg-blue-100 dark:bg-blue-900/20',
   'Physical': 'bg-rose-100 dark:bg-rose-900/20',
   'Development': 'bg-cyan-100 dark:bg-cyan-900/20',
   'Eruption': 'bg-pink-100 dark:bg-pink-900/20',
+  'Vision': 'bg-amber-50 dark:bg-amber-950/20',
+  'Hearing': 'bg-teal-50 dark:bg-teal-950/20',
 };
 
 // Helper function to get color for a milestone
@@ -237,6 +241,7 @@ export default function Home() {
                     categoryColor={getMilestoneColor(milestone)}
                     achieved={achievedMilestoneIds.has(milestone.id)}
                     onClick={() => setLocation(`/milestone/${milestone.id}`)}
+                    icon={getMonkeyIcon(milestone.subcategory || milestone.category)}
                     data-testid={`card-milestone-${milestone.id}`}
                   />
                 ))}
@@ -266,6 +271,7 @@ export default function Home() {
                     categoryColor={getMilestoneColor(milestone)}
                     achieved={achievedMilestoneIds.has(milestone.id)}
                     onClick={() => setLocation(`/milestone/${milestone.id}`)}
+                    icon={getMonkeyIcon(milestone.subcategory || milestone.category)}
                     data-testid={`card-milestone-${milestone.id}`}
                   />
                 ))}
@@ -340,14 +346,16 @@ export default function Home() {
             </div>
             <div className="grid grid-cols-3 gap-3">
               {milestonesByCategory.teeth.slice(0, 3).map(milestone => (
-                <div 
+                <MilestoneCard
                   key={milestone.id}
-                  className="bg-pink-50 dark:bg-pink-950/20 rounded-lg p-4 min-h-[120px] flex items-center justify-center cursor-pointer hover-elevate active-elevate-2"
+                  title={milestone.title}
+                  category={milestone.subcategory || milestone.category}
+                  categoryColor={getMilestoneColor(milestone)}
+                  achieved={achievedMilestoneIds.has(milestone.id)}
                   onClick={() => setLocation(`/milestone/${milestone.id}`)}
+                  icon={getMonkeyIcon(milestone.subcategory || milestone.category)}
                   data-testid={`card-teeth-${milestone.id}`}
-                >
-                  <p className="text-sm font-medium text-center">{milestone.title}</p>
-                </div>
+                />
               ))}
             </div>
           </div>
@@ -367,14 +375,16 @@ export default function Home() {
             </div>
             <div className="grid grid-cols-3 gap-3">
               {milestonesByCategory.vision.slice(0, 3).map(milestone => (
-                <div 
+                <MilestoneCard
                   key={milestone.id}
-                  className="bg-amber-50 dark:bg-amber-950/20 rounded-lg p-4 min-h-[120px] flex items-center justify-center cursor-pointer hover-elevate active-elevate-2"
+                  title={milestone.title}
+                  category={milestone.subcategory || milestone.category}
+                  categoryColor={getMilestoneColor(milestone)}
+                  achieved={achievedMilestoneIds.has(milestone.id)}
                   onClick={() => setLocation(`/milestone/${milestone.id}`)}
+                  icon={getMonkeyIcon(milestone.category)}
                   data-testid={`card-vision-${milestone.id}`}
-                >
-                  <p className="text-sm font-medium text-center">{milestone.title}</p>
-                </div>
+                />
               ))}
             </div>
           </div>
@@ -394,14 +404,16 @@ export default function Home() {
             </div>
             <div className="grid grid-cols-3 gap-3">
               {milestonesByCategory.hearing.slice(0, 3).map(milestone => (
-                <div 
+                <MilestoneCard
                   key={milestone.id}
-                  className="bg-teal-50 dark:bg-teal-950/20 rounded-lg p-4 min-h-[120px] flex items-center justify-center cursor-pointer hover-elevate active-elevate-2"
+                  title={milestone.title}
+                  category={milestone.subcategory || milestone.category}
+                  categoryColor={getMilestoneColor(milestone)}
+                  achieved={achievedMilestoneIds.has(milestone.id)}
                   onClick={() => setLocation(`/milestone/${milestone.id}`)}
+                  icon={getMonkeyIcon(milestone.category)}
                   data-testid={`card-hearing-${milestone.id}`}
-                >
-                  <p className="text-sm font-medium text-center">{milestone.title}</p>
-                </div>
+                />
               ))}
             </div>
           </div>
