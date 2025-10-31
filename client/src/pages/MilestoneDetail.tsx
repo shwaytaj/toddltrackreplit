@@ -11,6 +11,7 @@ import { X, Check, Lightbulb, AlertTriangle, Loader2, ChevronDown } from 'lucide
 import { SiAmazon, SiTarget, SiWalmart } from 'react-icons/si';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
+import { getToyIcon } from '@/components/ToyIcons';
 import type { Milestone, Child, ChildMilestone, CompletedRecommendation } from '@shared/schema';
 
 interface AIRecommendation {
@@ -691,56 +692,63 @@ export default function MilestoneDetail() {
                       </div>
                     ) : toyRecommendations && toyRecommendations.length > 0 ? (
                       <div className="space-y-4">
-                        {toyRecommendations.map((toy, idx) => (
-                          <div key={idx} className="border border-border rounded-lg overflow-hidden" data-testid={`toy-card-${idx}`}>
-                            <div className="p-4 space-y-3">
-                              <div className="flex items-start justify-between gap-2">
-                                <h4 className="font-semibold text-base flex-1">{toy.name}</h4>
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <button
-                                        onClick={() => dismissToy.mutate(toy.name)}
-                                        className="w-6 h-6 rounded-full flex items-center justify-center hover-elevate active-elevate-2 flex-shrink-0"
-                                        data-testid={`button-dismiss-toy-${idx}`}
-                                      >
-                                        <X className="w-4 h-4" />
-                                      </button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>Don't show this</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              </div>
-                              <p className="text-sm text-muted-foreground leading-relaxed">{toy.description}</p>
-                              <div className="bg-blue-50 dark:bg-blue-950/20 rounded-md p-2">
-                                <p className="text-xs text-muted-foreground">
-                                  <span className="font-medium">How to use:</span> {toy.howToUse}
-                                </p>
-                              </div>
-                              {toy.citations && toy.citations.length > 0 && (
-                                <div className="flex flex-wrap gap-1" data-testid={`citations-toy-${idx}`}>
-                                  {toy.citations.map((citation, citIdx) => (
-                                    <span key={citIdx} className="inline-flex items-center text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full border border-border">
-                                      {citation.url ? (
-                                        <a 
-                                          href={citation.url} 
-                                          target="_blank" 
-                                          rel="noopener noreferrer"
-                                          className="hover:underline"
-                                          data-testid={`link-citation-toy-${idx}-${citIdx}`}
-                                        >
-                                          {citation.source}
-                                        </a>
-                                      ) : (
-                                        citation.source
-                                      )}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-                              <div className="flex flex-wrap gap-2 pt-2">
+                        {toyRecommendations.map((toy, idx) => {
+                          const ToyIcon = getToyIcon(toy.name, toy.searchQuery);
+                          return (
+                            <div key={idx} className="border border-border rounded-lg overflow-hidden" data-testid={`toy-card-${idx}`}>
+                              <div className="p-4 space-y-3">
+                                <div className="flex items-start gap-3">
+                                  <div className="flex-shrink-0 mt-1">
+                                    <ToyIcon className="w-12 h-12" />
+                                  </div>
+                                  <div className="flex-1 min-w-0 space-y-3">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <h4 className="font-semibold text-base flex-1">{toy.name}</h4>
+                                      <TooltipProvider>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <button
+                                              onClick={() => dismissToy.mutate(toy.name)}
+                                              className="w-6 h-6 rounded-full flex items-center justify-center hover-elevate active-elevate-2 flex-shrink-0"
+                                              data-testid={`button-dismiss-toy-${idx}`}
+                                            >
+                                              <X className="w-4 h-4" />
+                                            </button>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <p>Don't show this</p>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">{toy.description}</p>
+                                    <div className="bg-blue-50 dark:bg-blue-950/20 rounded-md p-2">
+                                      <p className="text-xs text-muted-foreground">
+                                        <span className="font-medium">How to use:</span> {toy.howToUse}
+                                      </p>
+                                    </div>
+                                    {toy.citations && toy.citations.length > 0 && (
+                                      <div className="flex flex-wrap gap-1" data-testid={`citations-toy-${idx}`}>
+                                        {toy.citations.map((citation, citIdx) => (
+                                          <span key={citIdx} className="inline-flex items-center text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full border border-border">
+                                            {citation.url ? (
+                                              <a 
+                                                href={citation.url} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className="hover:underline"
+                                                data-testid={`link-citation-toy-${idx}-${citIdx}`}
+                                              >
+                                                {citation.source}
+                                              </a>
+                                            ) : (
+                                              citation.source
+                                            )}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
+                                    <div className="flex flex-wrap gap-2 pt-2">
                               <a
                                 href={milestone ? buildAmazonUrl(toy.searchQuery, milestone.ageRangeMonthsMin, milestone.ageRangeMonthsMax) : `https://www.amazon.com/s?k=${encodeURIComponent(toy.searchQuery)}`}
                                 target="_blank"
@@ -769,12 +777,15 @@ export default function MilestoneDetail() {
                                 data-testid={`link-walmart-${idx}`}
                                 title="Search on Walmart"
                               >
-                                <SiWalmart className="w-5 h-5" />
-                              </a>
+                                        <SiWalmart className="w-5 h-5" />
+                                    </a>
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     ) : !loadingToyRecommendations && (!toyRecommendations || toyRecommendations.length === 0) ? (
                       <div className="text-center py-8 text-muted-foreground">
