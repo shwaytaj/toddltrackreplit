@@ -6,7 +6,10 @@
 - `attached_assets/milestones-descriptions_1762035426996.md`
 
 **Updated Scripts:**
-- `server/parse-milestones.ts` (updated hardcoded file path)
+- `server/parsers/parse-milestones.ts` (updated hardcoded file path)
+
+**File Organization:**
+- All parser-related files moved to `server/parsers/` folder for better organization
 
 ---
 
@@ -22,7 +25,7 @@ Successfully updated the Toddl milestone database with the latest comprehensive 
 
 **Command:**
 ```bash
-tsx server/update-milestones-from-file.ts attached_assets/dev-milestones-comprehensive_1762035426996.md
+tsx server/parsers/update-milestones-from-file.ts attached_assets/dev-milestones-comprehensive_1762035426996.md
 ```
 
 **Results:**
@@ -45,7 +48,7 @@ tsx server/update-milestones-from-file.ts attached_assets/dev-milestones-compreh
 
 **Command:**
 ```bash
-tsx server/update-milestone-descriptions-from-file.ts attached_assets/milestones-descriptions_1762035426996.md
+tsx server/parsers/update-milestone-descriptions-from-file.ts attached_assets/milestones-descriptions_1762035426996.md
 ```
 
 **Results:**
@@ -150,21 +153,30 @@ milestones, when babies hear a sound, they not only turn their head but also act
 
 ### Files Modified
 
-1. **server/parse-milestones.ts**
+1. **server/parsers/parse-milestones.ts**
    - Updated hardcoded file path from `dev-milestones-comprehensive_1761612366476.md` to `dev-milestones-comprehensive_1762035426996.md`
    - No functional changes to parser logic
+
+### File Organization
+
+All parser-related files have been organized into the `server/parsers/` folder:
+- `server/parsers/parse-milestones.ts` - Core milestone data parser
+- `server/parsers/milestone-description-parser.ts` - Description parser
+- `server/parsers/update-milestones-from-file.ts` - Core data update script
+- `server/parsers/update-milestone-descriptions-from-file.ts` - Description update script
+- `server/parsers/PARSER_USAGE_GUIDE.txt` - Complete usage documentation
 
 ### Scripts Executed
 
 1. **Core Data Update:**
    ```bash
-   tsx server/update-milestones-from-file.ts \
+   tsx server/parsers/update-milestones-from-file.ts \
      attached_assets/dev-milestones-comprehensive_1762035426996.md
    ```
 
 2. **Description Update:**
    ```bash
-   tsx server/update-milestone-descriptions-from-file.ts \
+   tsx server/parsers/update-milestone-descriptions-from-file.ts \
      attached_assets/milestones-descriptions_1762035426996.md
    ```
 
@@ -239,8 +251,8 @@ The database is now ready for production use with comprehensive, evidence-based 
 ## Appendix: Parser Documentation
 
 For detailed information about using the parsers and update scripts, see:
-- **PARSER_USAGE_GUIDE.txt** - Complete guide for parser usage
-- **server/parse-milestones.ts** - Core milestone data parser
+- **server/parsers/PARSER_USAGE_GUIDE.txt** - Complete guide for parser usage
+- **server/parsers/parse-milestones.ts** - Core milestone data parser
 - **server/parsers/milestone-description-parser.ts** - Description parser
-- **server/update-milestones-from-file.ts** - Core data update script
-- **server/update-milestone-descriptions-from-file.ts** - Description update script
+- **server/parsers/update-milestones-from-file.ts** - Core data update script
+- **server/parsers/update-milestone-descriptions-from-file.ts** - Description update script

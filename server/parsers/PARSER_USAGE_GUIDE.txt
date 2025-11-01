@@ -9,13 +9,15 @@ maintain the milestone data in the Toddl application.
 AVAILABLE FILES (4 TOTAL)
 ================================================================================
 
+All parser-related files are organized in server/parsers/ folder:
+
 PARSERS (imported by update scripts):
-  1. server/parse-milestones.ts
+  1. server/parsers/parse-milestones.ts
   2. server/parsers/milestone-description-parser.ts
 
 UPDATE SCRIPTS (executable):
-  3. server/update-milestones-from-file.ts
-  4. server/update-milestone-descriptions-from-file.ts
+  3. server/parsers/update-milestones-from-file.ts
+  4. server/parsers/update-milestone-descriptions-from-file.ts
 
 All four files are reusable and documented. Old/redundant parser scripts have
 been removed to keep the codebase clean.
@@ -24,7 +26,7 @@ been removed to keep the codebase clean.
 PARSER DETAILS
 ================================================================================
 
-1. server/parse-milestones.ts
+1. server/parsers/parse-milestones.ts
    - Parses core milestone data (title, category, age ranges)
    - Input: Markdown file with milestone tables
    - Output: Array of milestone objects
@@ -44,13 +46,13 @@ UPDATE SCRIPTS
 
 1. UPDATE CORE MILESTONE DATA (age ranges, categories, etc.)
    
-   File: server/update-milestones-from-file.ts
+   File: server/parsers/update-milestones-from-file.ts
    
    Command:
-   $ tsx server/update-milestones-from-file.ts <path-to-milestone-file>
+   $ tsx server/parsers/update-milestones-from-file.ts <path-to-milestone-file>
 
    Example:
-   $ tsx server/update-milestones-from-file.ts ./attached_assets/dev-milestones-comprehensive.md
+   $ tsx server/parsers/update-milestones-from-file.ts ./attached_assets/dev-milestones-comprehensive.md
 
    What it does:
    - Uses parse-milestones.ts to parse milestone data from the file
@@ -66,13 +68,13 @@ UPDATE SCRIPTS
 
 2. UPDATE MILESTONE DESCRIPTIONS
 
-   File: server/update-milestone-descriptions-from-file.ts
+   File: server/parsers/update-milestone-descriptions-from-file.ts
 
    Command:
-   $ tsx server/update-milestone-descriptions-from-file.ts <path-to-description-file>
+   $ tsx server/parsers/update-milestone-descriptions-from-file.ts <path-to-description-file>
 
    Example:
-   $ tsx server/update-milestone-descriptions-from-file.ts ./attached_assets/milestones-descriptions.md
+   $ tsx server/parsers/update-milestone-descriptions-from-file.ts ./attached_assets/milestones-descriptions.md
 
    What it does:
    - Uses milestone-description-parser.ts to parse structured descriptions
@@ -128,11 +130,11 @@ Typical update workflow:
 1. Obtain new milestone data file (markdown format)
 2. Obtain new descriptions file (markdown format)
 3. Update core milestone data:
-   $ tsx server/update-milestones-from-file.ts <milestone-file>
+   $ tsx server/parsers/update-milestones-from-file.ts <milestone-file>
 4. Update descriptions:
-   $ tsx server/update-milestone-descriptions-from-file.ts <description-file>
+   $ tsx server/parsers/update-milestone-descriptions-from-file.ts <description-file>
 5. Verify coverage and check for unmatched milestones
-6. Document updates in MILESTONE_UPDATE_REPORT.md
+6. Document updates in server/MILESTONE_UPDATE_REPORT.md
 
 ================================================================================
 TROUBLESHOOTING

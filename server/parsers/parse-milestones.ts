@@ -553,7 +553,7 @@ function parseMilestoneColumn(
  */
 
 // Main execution
-const filePath = path.join(__dirname, '../attached_assets/dev-milestones-comprehensive_1762035426996.md');
+const filePath = path.join(__dirname, '../../attached_assets/dev-milestones-comprehensive_1762035426996.md');
 const milestones = extractMilestones(filePath);
 
 console.log(`Extracted ${milestones.length} milestones`);

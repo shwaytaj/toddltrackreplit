@@ -8,7 +8,7 @@
  */
 
 import { readFileSync } from 'fs';
-import { db } from './db';
+import { db } from '../db';
 import { milestones } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { 
@@ -16,7 +16,7 @@ import {
   formatMilestoneDescription,
   normalizeMilestoneTitle,
   type ParsedMilestone 
-} from './parsers/milestone-description-parser';
+} from './milestone-description-parser';
 
 interface MatchResult {
   matched: Array<{ dbTitle: string; fileTitle: string; dbId: string }>;
@@ -28,7 +28,7 @@ async function main() {
   const filePath = process.argv[2];
   
   if (!filePath) {
-    console.error('Usage: tsx server/update-milestone-descriptions-from-file.ts <filepath>');
+    console.error('Usage: tsx server/parsers/update-milestone-descriptions-from-file.ts <filepath>');
     process.exit(1);
   }
 
@@ -40,7 +40,7 @@ async function main() {
 
   if (errors.length > 0) {
     console.log('\n⚠️  Parser warnings:');
-    errors.forEach(err => console.log(`  - ${err}`));
+    errors.forEach((err: string) => console.log(`  - ${err}`));
   }
 
   console.log(`✅ Parsed ${parsedMilestones.length} milestone descriptions from file`);
@@ -82,7 +82,7 @@ async function main() {
   
   for (const match of matchResult.matched) {
     const parsedMilestone = parsedMilestones.find(
-      pm => normalizeMilestoneTitle(pm.title) === normalizeMilestoneTitle(match.fileTitle)
+      (pm: ParsedMilestone) => normalizeMilestoneTitle(pm.title) === normalizeMilestoneTitle(match.fileTitle)
     );
 
     if (!parsedMilestone) {

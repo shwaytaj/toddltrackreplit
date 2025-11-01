@@ -3,7 +3,7 @@
  */
 
 import { extractMilestones } from './parse-milestones.js';
-import { db } from './db.js';
+import { db } from '../db.js';
 import { milestones } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 
@@ -15,7 +15,7 @@ async function main() {
   const filePath = process.argv[2];
   
   if (!filePath) {
-    console.error('Usage: tsx server/update-milestones-from-file.ts <path-to-milestone-file>');
+    console.error('Usage: tsx server/parsers/update-milestones-from-file.ts <path-to-milestone-file>');
     process.exit(1);
   }
 
