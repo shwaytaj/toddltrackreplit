@@ -522,7 +522,7 @@ function parseMilestoneColumn(
  * 
  * USAGE:
  * ```bash
- * tsx server/parse-milestones.ts
+ * tsx server/parsers/parse-milestones.ts
  * ```
  * 
  * OUTPUT:

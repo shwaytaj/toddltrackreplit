@@ -4,7 +4,7 @@
  * This script reads a milestone descriptions file and updates the database
  * with structured, comprehensive descriptions.
  * 
- * Usage: tsx server/update-milestone-descriptions-from-file.ts <filepath>
+ * Usage: tsx server/parsers/update-milestone-descriptions-from-file.ts <filepath>
  */
 
 import { readFileSync } from 'fs';

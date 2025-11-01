@@ -193,12 +193,12 @@ Comprehensive explanation with evidence-based citations...
 ## Files Created During Update
 
 ### Reusable Update Scripts
-- `server/update-milestones-from-file.ts` - Updates core milestone data (age ranges, categories)
-- `server/update-milestone-descriptions-from-file.ts` - Updates milestone descriptions
+- `server/parsers/update-milestones-from-file.ts` - Updates core milestone data (age ranges, categories)
+- `server/parsers/update-milestone-descriptions-from-file.ts` - Updates milestone descriptions
 
 ### Documentation
 - `MILESTONE_UPDATE_REPORT.md` (this file)
-- `server/PARSER_USAGE_GUIDE.txt` - Instructions for using parsers
+- `server/parsers/PARSER_USAGE_GUIDE.txt` - Instructions for using parsers
 
 ---
 
