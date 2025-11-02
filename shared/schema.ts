@@ -9,6 +9,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   firstName: text("first_name"),
   lastName: text("last_name"),
+  preferredMilestoneSources: text("preferred_milestone_sources").array(),
   medicalHistory: jsonb("medical_history").$type<{
     conditions?: string[];
     allergies?: string[];
@@ -48,6 +49,7 @@ export const milestones = pgTable("milestones", {
   ageRangeMonthsMax: integer("age_range_months_max").notNull(),
   description: text("description").notNull(),
   typicalRange: text("typical_range"),
+  sources: text("sources").array(),
 });
 
 export const childMilestones = pgTable("child_milestones", {
