@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/neon-serverless";
 import { Pool, neonConfig } from "@neondatabase/serverless";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, or, desc, isNull } from "drizzle-orm";
 import ws from "ws";
 
 neonConfig.webSocketConstructor = ws;
@@ -182,11 +182,18 @@ export class DbStorage implements IStorage {
   }
 
   async getAllMilestones(): Promise<Milestone[]> {
-    return await this.db.select().from(milestones);
+    // Filter out legacy milestones - only show canonical milestones
+    // Treat NULL as false for backward compatibility
+    return await this.db.select().from(milestones).where(
+      or(eq(milestones.isLegacy, false), isNull(milestones.isLegacy))
+    );
   }
 
   async getMilestonesByAgeRange(minMonths: number, maxMonths: number, sources?: string[]): Promise<Milestone[]> {
-    const result = await this.db.select().from(milestones);
+    // Treat NULL as false for backward compatibility
+    const result = await this.db.select().from(milestones).where(
+      or(eq(milestones.isLegacy, false), isNull(milestones.isLegacy))
+    );
     return result.filter((m) => {
       // Age range filter
       const ageMatch = m.ageRangeMonthsMin <= maxMonths && m.ageRangeMonthsMax >= minMonths;

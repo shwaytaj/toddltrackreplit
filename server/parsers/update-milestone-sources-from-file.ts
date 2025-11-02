@@ -12,6 +12,7 @@ import { db } from '../db.js';
 import { milestones } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { fileURLToPath } from 'url';
+import { titlesMatch } from './title-normalizer.js';
 
 interface UpdateStats {
   totalMappings: number;
@@ -20,31 +21,8 @@ interface UpdateStats {
   sourcesAdded: number;
 }
 
-// Normalize title for matching
-function normalizeForMatching(title: string): string {
-  return title
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s]/g, '') // Remove punctuation
-    .replace(/\s+/g, ' '); // Normalize whitespace
-}
-
-// Check if two titles are similar enough to be considered a match
-function titlesMatch(title1: string, title2: string): boolean {
-  const norm1 = normalizeForMatching(title1);
-  const norm2 = normalizeForMatching(title2);
-  
-  // Exact match
-  if (norm1 === norm2) return true;
-  
-  // One contains the other (for shortened versions)
-  if (norm1.includes(norm2) || norm2.includes(norm1)) {
-    const lengthRatio = Math.min(norm1.length, norm2.length) / Math.max(norm1.length, norm2.length);
-    return lengthRatio > 0.7; // At least 70% similar in length
-  }
-  
-  return false;
-}
+// Note: Using shared titlesMatch from title-normalizer.js for consistency
+// This ensures all parsers use the same title matching logic
 
 async function updateMilestoneSources(filepath: string): Promise<UpdateStats> {
   console.log('Parsing milestone sources from file...');

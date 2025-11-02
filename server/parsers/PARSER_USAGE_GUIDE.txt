@@ -5,27 +5,39 @@ MILESTONE PARSER USAGE GUIDE
 This guide explains how to use the milestone parsers and update scripts to
 maintain the milestone data in the Toddl application.
 
+⭐ CANONICAL SOURCE APPROACH (Nov 2025):
+   dev-milestones-comprehensive.md is the SINGLE SOURCE OF TRUTH for milestone
+   titles. All parsers use shared normalization for consistency. Database
+   migration preserves child progress while adopting canonical titles.
+
 ================================================================================
-AVAILABLE FILES (7 TOTAL)
+AVAILABLE FILES (11 TOTAL)
 ================================================================================
 
 All parser-related files are organized in server/parsers/ folder:
 
-PARSERS (imported by update/seed scripts):
-  1. server/parsers/parse-milestones.ts
-  2. server/parsers/milestone-description-parser.ts
-  3. server/parsers/parse-milestone-sources.ts
+CANONICAL PARSERS ⭐:
+  1. server/parsers/parse-comprehensive-milestones.ts - Canonical title parser
+  2. server/parsers/title-normalizer.ts - Shared normalization (used by all)
+
+MIGRATION & VALIDATION ⭐:
+  3. server/parsers/migrate-to-canonical-titles.ts - Database migration tool
+  4. server/parsers/validate-title-consistency.ts - Cross-file validation
+
+LEGACY PARSERS (for reference/backward compatibility):
+  5. server/parsers/parse-milestones.ts
+  6. server/parsers/milestone-description-parser.ts
+  7. server/parsers/parse-milestone-sources.ts
 
 UPDATE SCRIPTS (executable - modify existing milestones):
-  4. server/parsers/update-milestones-from-file.ts
-  5. server/parsers/update-milestone-descriptions-from-file.ts
-  6. server/parsers/update-milestone-sources-from-file.ts
+  8. server/parsers/update-milestones-from-file.ts
+  9. server/parsers/update-milestone-descriptions-from-file.ts
+  10. server/parsers/update-milestone-sources-from-file.ts
 
 SEED SCRIPTS (executable - create new milestones):
-  7. server/parsers/seed-all-milestones-from-categorised-source.ts
+  11. server/parsers/seed-all-milestones-from-categorised-source.ts
 
-All seven files are reusable and documented. Old/redundant parser scripts have
-been removed to keep the codebase clean.
+All parsers use shared title normalization for consistency.
 
 ================================================================================
 PARSER DETAILS

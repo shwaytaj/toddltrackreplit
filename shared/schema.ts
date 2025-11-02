@@ -50,6 +50,7 @@ export const milestones = pgTable("milestones", {
   description: text("description").notNull(),
   typicalRange: text("typical_range"),
   sources: text("sources").array(),
+  isLegacy: boolean("is_legacy").default(false),
 });
 
 export const childMilestones = pgTable("child_milestones", {

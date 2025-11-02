@@ -17,6 +17,7 @@
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { normalizeTitleForMatch } from './title-normalizer.js';
 
 interface MilestoneSourceMapping {
   title: string;
@@ -46,7 +47,7 @@ function parseAgeRange(heading: string): { min: number; max: number } | null {
   return null;
 }
 
-function normalizeTitle(title: string): string {
+function cleanTitle(title: string): string {
   // Remove age markers like "**2M:**", "**13-19M:**"
   title = title.replace(/\*\*\d+M:\*\*\s*/g, '');
   title = title.replace(/\*\*\d+-\d+M:\*\*\s*/g, '');
@@ -56,6 +57,11 @@ function normalizeTitle(title: string): string {
   
   // Trim and normalize whitespace
   return title.trim().replace(/\s+/g, ' ');
+}
+
+function normalizeTitle(title: string): string {
+  // Clean title first, then apply shared normalization
+  return normalizeTitleForMatch(cleanTitle(title));
 }
 
 function splitByCommasRespectingParentheses(text: string): string[] {
