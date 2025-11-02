@@ -321,7 +321,7 @@ export class DbStorage implements IStorage {
   }
 
   async createCompletedRecommendation(completed: InsertCompletedRecommendation): Promise<CompletedRecommendation> {
-    const result = await this.db.insert(completedRecommendations).values(completed).returning();
+    const result = await this.db.insert(completedRecommendations).values(completed as any).returning();
     return result[0];
   }
 

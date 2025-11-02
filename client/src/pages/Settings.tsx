@@ -70,8 +70,15 @@ export default function Settings() {
     });
   };
 
-  const handleSelectAll = () => {
-    setSelectedSources([]);
+  const handleToggleAll = (checked: boolean | string) => {
+    if (checked === true) {
+      // User is selecting "All Sources" - clear individual selections
+      setSelectedSources([]);
+    } else {
+      // User is unchecking "All Sources" - select all sources by default
+      // so they can then deselect the ones they don't want
+      setSelectedSources(MILESTONE_SOURCES.map(s => s.id));
+    }
   };
 
   const handleSave = () => {
@@ -111,7 +118,7 @@ export default function Settings() {
               <Checkbox
                 id="source-all"
                 checked={isAllSelected}
-                onCheckedChange={handleSelectAll}
+                onCheckedChange={handleToggleAll}
                 data-testid="checkbox-source-all"
               />
               <div className="flex-1">
@@ -147,7 +154,7 @@ export default function Settings() {
               >
                 <Checkbox
                   id={`source-${source.id}`}
-                  checked={!isAllSelected && selectedSources.includes(source.id)}
+                  checked={isAllSelected || selectedSources.includes(source.id)}
                   disabled={isAllSelected}
                   onCheckedChange={() => handleToggleSource(source.id)}
                   data-testid={`checkbox-source-${source.id.toLowerCase().replace(/\//g, '-')}`}

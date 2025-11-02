@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useLocation } from 'wouter';
+import { useLocation, Link } from 'wouter';
 import BottomNav from '@/components/BottomNav';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

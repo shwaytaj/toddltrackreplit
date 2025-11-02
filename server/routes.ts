@@ -129,7 +129,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       const preferencesSchema = z.object({
-        preferredMilestoneSources: z.array(z.string()).optional(),
+        preferredMilestoneSources: z.array(z.string()).nullable().optional(),
       });
       
       const validatedData = preferencesSchema.parse(req.body);
