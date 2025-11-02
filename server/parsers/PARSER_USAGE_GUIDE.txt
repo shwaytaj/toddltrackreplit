@@ -6,7 +6,7 @@ This guide explains how to use the milestone parsers and update scripts to
 maintain the milestone data in the Toddl application.
 
 ================================================================================
-AVAILABLE FILES (4 TOTAL)
+AVAILABLE FILES (6 TOTAL)
 ================================================================================
 
 All parser-related files are organized in server/parsers/ folder:
@@ -14,12 +14,14 @@ All parser-related files are organized in server/parsers/ folder:
 PARSERS (imported by update scripts):
   1. server/parsers/parse-milestones.ts
   2. server/parsers/milestone-description-parser.ts
+  3. server/parsers/parse-milestone-sources.ts
 
 UPDATE SCRIPTS (executable):
-  3. server/parsers/update-milestones-from-file.ts
-  4. server/parsers/update-milestone-descriptions-from-file.ts
+  4. server/parsers/update-milestones-from-file.ts
+  5. server/parsers/update-milestone-descriptions-from-file.ts
+  6. server/parsers/update-milestone-sources-from-file.ts
 
-All four files are reusable and documented. Old/redundant parser scripts have
+All six files are reusable and documented. Old/redundant parser scripts have
 been removed to keep the codebase clean.
 
 ================================================================================
@@ -39,6 +41,13 @@ PARSER DETAILS
    - Output: Array of description objects with About/What to look for/Why it matters
    - Function: parseMilestoneDescriptions(fileContent)
    - Used by: update-milestone-descriptions-from-file.ts
+
+3. server/parsers/parse-milestone-sources.ts
+   - Parses milestone source attribution (CDC/AAP, HSE, WHO, NHS, CPS, NHMRC, UNICEF)
+   - Input: Markdown file with milestones organized by authoritative source
+   - Output: Array of milestone-source mapping objects
+   - Function: parseMilestoneSourcesFromFile(filePath)
+   - Used by: update-milestone-sources-from-file.ts
 
 ================================================================================
 UPDATE SCRIPTS
@@ -87,6 +96,38 @@ UPDATE SCRIPTS
    - Updating evidence-based citations
    - Improving parent guidance text
 
+
+3. UPDATE MILESTONE SOURCES
+
+   File: server/parsers/update-milestone-sources-from-file.ts
+
+   Command:
+   $ tsx server/parsers/update-milestone-sources-from-file.ts <path-to-source-file>
+
+   Example:
+   $ tsx server/parsers/update-milestone-sources-from-file.ts ./attached_assets/milestones-categorised-by-source.md
+
+   What it does:
+   - Uses parse-milestone-sources.ts to parse source attribution data
+   - Matches milestones by title, category, and age range
+   - Updates sources field (array) in database
+   - Supports multiple sources per milestone (e.g., CDC/AAP + HSE + WHO)
+   - Reports coverage statistics and unmatched entries
+
+   When to use:
+   - New source attribution data available
+   - Adding or updating which organizations publish each milestone
+   - Enabling user preference filtering by source
+
+   Available Sources:
+   - CDC/AAP (USA - Centers for Disease Control / American Academy of Pediatrics)
+   - HSE (Ireland - Health Service Executive)
+   - WHO (International - World Health Organization)
+   - NHS (UK - National Health Service)
+   - CPS (Canada - Canadian Paediatric Society)
+   - NHMRC (Australia - National Health and Medical Research Council)
+   - UNICEF (International - United Nations Children's Fund)
+
 ================================================================================
 FILE FORMAT REQUIREMENTS
 ================================================================================
@@ -104,6 +145,15 @@ DESCRIPTION FILE FORMAT:
   **What to look for** - Bullet points of observable behaviors
   **Why it matters** - Bullet points of developmental significance
 - See: attached_assets/milestones-descriptions_*.md
+
+SOURCE FILE FORMAT:
+- Markdown with source organization headings (##)
+- Age range subsections (###)
+- Tables with columns: Category, Subcategory, Milestones
+- Milestones can have age markers like "**2M:**" for specific months
+- Bullet points (•) separate individual milestones
+- Multiple sources can contain the same milestone
+- See: attached_assets/milestones-categorised-by-source_*.md
 
 ================================================================================
 MATCHING LOGIC
@@ -129,12 +179,15 @@ Typical update workflow:
 
 1. Obtain new milestone data file (markdown format)
 2. Obtain new descriptions file (markdown format)
-3. Update core milestone data:
+3. Obtain new source attribution file (markdown format) - optional
+4. Update core milestone data:
    $ tsx server/parsers/update-milestones-from-file.ts <milestone-file>
-4. Update descriptions:
+5. Update descriptions:
    $ tsx server/parsers/update-milestone-descriptions-from-file.ts <description-file>
-5. Verify coverage and check for unmatched milestones
-6. Document updates in server/MILESTONE_UPDATE_REPORT.md
+6. Update source attributions (optional):
+   $ tsx server/parsers/update-milestone-sources-from-file.ts <source-file>
+7. Verify coverage and check for unmatched milestones
+8. Document updates in server/MILESTONE_UPDATE_REPORT.md
 
 ================================================================================
 TROUBLESHOOTING
