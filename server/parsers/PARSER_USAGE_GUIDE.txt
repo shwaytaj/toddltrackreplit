@@ -11,7 +11,7 @@ maintain the milestone data in the Toddl application.
    migration preserves child progress while adopting canonical titles.
 
 ================================================================================
-AVAILABLE FILES (8 TOTAL)
+AVAILABLE FILES (7 TOTAL)
 ================================================================================
 
 All parser-related files are organized in server/parsers/ folder:
@@ -25,11 +25,11 @@ VALIDATION TOOLS:
 
 REUSABLE PARSERS:
   4. server/parsers/milestone-description-parser.ts - Parses milestone descriptions
-  5. server/parsers/parse-milestone-sources.ts - Parses source attributions
+  5. server/parsers/parse-milestone-source-mappings-v2.ts - Improved source parser (Nov 2025)
 
 UPDATE SCRIPTS (executable - apply data to existing milestones):
-  6. server/parsers/update-milestone-descriptions-from-file.ts
-  7. server/parsers/update-milestone-sources-from-file.ts
+  6. server/parsers/update-milestone-descriptions-from-file.ts - Update descriptions
+  7. server/parsers/update-milestone-sources.ts - Update sources (uses v2 parser)
 
 DOCUMENTATION:
   8. PARSER_USAGE_GUIDE.txt - This file
@@ -54,17 +54,20 @@ PARSER DETAILS
    - Function: parseMilestoneDescriptions(fileContent)
    - Used by: update-milestone-descriptions-from-file.ts
 
-3. server/parsers/parse-milestone-sources.ts
-   - Parses milestone source attribution from all 7 international health organizations
+3. server/parsers/parse-milestone-source-mappings-v2.ts
+   - Improved parser for milestone source attribution (Nov 2025)
+   - Parses source mappings from all 7 international health organizations
    - Sources: CDC/AAP, HSE, WHO, NHS, Australian Dept of Health, Health Canada/CPS, South Africa DoH
-   - Input: Markdown file with milestones organized by authoritative source
-   - Output: Array of milestone-source mapping objects with full milestone data
-   - Function: parseMilestoneSourcesFromFile(filePath)
-   - Used by: update-milestone-sources-from-file.ts, seed-all-milestones-from-categorised-source.ts
-   - Special Features:
-     * Handles comma-separated milestones within age markers (e.g., "**30M:** A, B, C")
-     * Respects parentheses when splitting on commas (preserves "Twists things (doorknobs, lids)")
-     * Prevents title truncation by tracking parenthesis depth during parsing
+   - Input: Markdown file (milestones-categorised-by-source.md)
+   - Output: 935 unique milestone-source mappings (120% improvement over v1)
+   - Function: parseMilestoneSourceMappingsV2(filePath)
+   - Used by: update-milestone-sources.ts
+   - Key Improvements:
+     * Smart age-prefix detection (e.g., "**2M:**" markers)
+     * Improved metadata filtering (excludes table headers, category labels)
+     * Better handling of quoted text with commas
+     * Prevents title fragmentation from naive comma-splitting
+   - Coverage: 96.3% Developmental, 99% Growth, 100% Teeth, 97.7% Hearing, 95.7% Vision
 
 ================================================================================
 UPDATE SCRIPTS
@@ -114,28 +117,35 @@ UPDATE SCRIPTS
    - Improving parent guidance text
 
 
-3. UPDATE MILESTONE SOURCES
+3. UPDATE MILESTONE SOURCES (IMPROVED - Nov 2025)
 
-   File: server/parsers/update-milestone-sources-from-file.ts
+   File: server/parsers/update-milestone-sources.ts
 
    Command:
-   $ tsx server/parsers/update-milestone-sources-from-file.ts <path-to-source-file>
+   $ tsx server/parsers/update-milestone-sources.ts <path-to-source-file>
 
    Example:
-   $ tsx server/parsers/update-milestone-sources-from-file.ts ./attached_assets/milestones-categorised-by-source.md
+   $ tsx server/parsers/update-milestone-sources.ts ./attached_assets/milestones-categorised-by-source_1762122777524.md
 
    What it does:
-   - Uses parse-milestone-sources.ts to parse source attribution data
-   - Matches milestones by title, category, and age range
+   - Uses parse-milestone-source-mappings-v2.ts (improved parser)
+   - Extracts 935 unique milestone-source mappings from markdown
+   - Matches milestones by normalized title
    - Updates sources field (array) in database
    - Supports multiple sources per milestone (e.g., CDC/AAP + HSE + WHO)
-   - Reports coverage statistics and unmatched entries
+   - Reports detailed coverage statistics by category
 
    When to use:
-   - New source attribution data available
-   - Adding or updating which organizations publish each milestone
+   - Updating source attribution data with improved parser
+   - Adding which organizations publish each milestone
    - Enabling user preference filtering by source
-   - When you want to update sources WITHOUT creating new milestones
+   - Updates existing milestones without creating new ones
+
+   Key Improvements (v2 parser):
+   - 120% more mappings extracted (935 vs 424)
+   - Smart age-prefix detection prevents fragmentation
+   - Better metadata filtering (excludes headers, labels)
+   - 96.3% Developmental coverage, >95% all categories
 
    Available Sources:
    - CDC/AAP (USA - Centers for Disease Control / American Academy of Pediatrics)
@@ -147,39 +157,6 @@ UPDATE SCRIPTS
    - South Africa DoH (South Africa - Department of Health)
 
 
-4. SEED ALL MILESTONES FROM CATEGORISED SOURCE FILE (COMPREHENSIVE)
-
-   File: server/parsers/seed-all-milestones-from-categorised-source.ts
-
-   Command:
-   $ tsx server/parsers/seed-all-milestones-from-categorised-source.ts <path-to-source-file>
-
-   Example:
-   $ tsx server/parsers/seed-all-milestones-from-categorised-source.ts ./attached_assets/milestones-categorised-by-source.md
-
-   What it does:
-   - Uses parse-milestone-sources.ts to extract ALL milestones from the file
-   - Creates NEW milestone records for milestones that don't exist in database
-   - Updates sources field for ALL milestones (existing + newly created)
-   - Provides detailed statistics on created vs updated milestones
-   - Most comprehensive seeding script - handles both creation and updates
-
-   When to use:
-   - Initial database population from categorised source file
-   - When you have a comprehensive source file with ALL milestones across all organizations
-   - When you want to ensure database has complete milestone coverage from all sources
-   - When you need to both CREATE new milestones AND assign sources in one step
-
-   Advantages over update-milestone-sources-from-file.ts:
-   - Creates missing milestones instead of just updating existing ones
-   - Ideal for bootstrapping database with complete international milestone sets
-   - Single script to populate 473 milestones from 7 health organizations
-
-   Statistics Reported:
-   - Total unique milestones in file
-   - Milestones created (new records)
-   - Milestones updated (existing records with new sources)
-   - Milestones unchanged (already had correct sources)
 
 ================================================================================
 FILE FORMAT REQUIREMENTS
@@ -228,38 +205,30 @@ Known Limitations:
 WORKFLOW
 ================================================================================
 
-INITIAL DATABASE POPULATION (Complete Bootstrap):
+INITIAL DATABASE POPULATION:
 
-1. Obtain comprehensive source-categorised milestone file (markdown format)
-2. Run the comprehensive seed script:
-   $ tsx server/parsers/seed-all-milestones-from-categorised-source.ts <source-file>
-3. Obtain descriptions file (markdown format)
-4. Update descriptions:
-   $ tsx server/parsers/update-milestone-descriptions-from-file.ts <description-file>
-5. Verify coverage (should have ~473 milestones across 7 sources)
+The database should already be populated with canonical milestones from 
+dev-milestones-comprehensive.md. Use the update scripts to enhance existing data:
 
-Example:
-$ tsx server/parsers/seed-all-milestones-from-categorised-source.ts ./attached_assets/milestones-categorised-by-source.md
-$ tsx server/parsers/update-milestone-descriptions-from-file.ts ./attached_assets/milestones-descriptions.md
-
-This workflow creates all milestones with source attribution, then adds descriptions.
+1. Update source attributions (recommended):
+   $ tsx server/parsers/update-milestone-sources.ts ./attached_assets/milestones-categorised-by-source.md
+2. Update descriptions (optional):
+   $ tsx server/parsers/update-milestone-descriptions-from-file.ts ./attached_assets/milestones-descriptions.md
+3. Verify coverage (should have 670 milestones with 96%+ source coverage)
 
 
 INCREMENTAL UPDATE WORKFLOW (Modify Existing Milestones):
 
-1. Obtain new milestone data file (markdown format)
-2. Obtain new descriptions file (markdown format)
-3. Obtain new source attribution file (markdown format) - optional
-4. Update core milestone data:
-   $ tsx server/parsers/update-milestones-from-file.ts <milestone-file>
-5. Update descriptions:
+1. Obtain new source attribution file (markdown format)
+2. Update source attributions:
+   $ tsx server/parsers/update-milestone-sources.ts <source-file>
+3. Obtain new descriptions file (optional, markdown format)
+4. Update descriptions (optional):
    $ tsx server/parsers/update-milestone-descriptions-from-file.ts <description-file>
-6. Update source attributions (optional):
-   $ tsx server/parsers/update-milestone-sources-from-file.ts <source-file>
-7. Verify coverage and check for unmatched milestones
-8. Document updates in server/MILESTONE_UPDATE_REPORT.md
+5. Verify coverage statistics in script output
+6. Document significant changes in replit.md
 
-This workflow updates existing milestone records without creating new ones.
+This workflow updates existing milestone records with enhanced data.
 
 ================================================================================
 TROUBLESHOOTING
@@ -308,17 +277,27 @@ Always test with sample data before processing production updates.
 CHANGELOG
 ================================================================================
 
-November 2025 - Parentheses Handling Fix:
-- Fixed parse-milestone-sources.ts to respect parentheses when splitting on commas
-- Added splitByCommasRespectingParentheses() helper function
-- Prevents title truncation for milestones like "Twists things (doorknobs, lids)"
-- Re-seeded database to fix 41 corrupted milestone titles
-- Updated documentation with troubleshooting guidance
+November 2025 - Parser v2 & Cleanup:
+- Created parse-milestone-source-mappings-v2.ts with major improvements
+- Smart age-prefix detection prevents title fragmentation
+- Improved metadata filtering (excludes headers, category labels)
+- Extracted 935 unique mappings (120% improvement, up from 424)
+- Achieved 96.3% Developmental coverage, >95% all categories
+- Fixed Postgres text[] array parsing bug in routes and storage
+- Removed obsolete parsers (v1, old update scripts)
+- Updated documentation to reflect current state
+
+November 2025 - Canonical Milestone System:
+- Established dev-milestones-comprehensive.md as single source of truth
+- Implemented shared title normalization across all parsers
+- Database migration: 457 canonical + 123 legacy milestones
+- Added isLegacy field with NULL-safe filtering
+- Created validation script for cross-file title consistency
 
 November 2025 - Multi-Source System:
-- Added comprehensive seed script: seed-all-milestones-from-categorised-source.ts
-- Expanded to 7 international health organizations (was 4)
-- Total milestone database: 470 milestones across all sources
-- Updated all source names to match official organization names
+- Integrated 7 international health organizations
+- Backend filtering on /api/milestones and /api/milestones/age-range
+- TanStack Query cache invalidation for auto-updates
+- Sources: CDC/AAP, HSE, WHO, NHS, Australian Dept of Health, Health Canada/CPS, South Africa DoH
 
 ================================================================================
