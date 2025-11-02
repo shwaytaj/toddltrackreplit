@@ -33,8 +33,8 @@ const AGE_GROUP_MAPPINGS: Record<string, { min: number; max: number }> = {
   '48-60 MONTHS (4-5 YEARS)': { min: 48, max: 60 },
 };
 
-// Categories to process (excludes Growth, Teeth, Vision, Hearing)
-const MILESTONE_CATEGORIES = ['Developmental'];
+// Categories to process - ALL categories from comprehensive file
+const MILESTONE_CATEGORIES = ['Developmental', 'Growth', 'Teeth', 'Vision', 'Hearing'];
 
 /**
  * Splits a milestone line by commas, respecting parentheses.

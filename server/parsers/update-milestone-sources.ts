@@ -18,8 +18,8 @@ async function updateMilestoneSources() {
   console.log('Starting milestone source update...\n');
   
   // Step 1: Parse source mappings from file
-  // Use the file with WHO section included (more complete than 1762122777524)
-  const filePath = path.join(process.cwd(), 'attached_assets', 'milestones-categorised-by-source_1762109866434.md');
+  // Use the latest authoritative source file
+  const filePath = path.join(process.cwd(), 'attached_assets', 'milestones-categorised-by-source_1762125221739.md');
   console.log(`Parsing source mappings from: ${filePath}`);
   const sourceMappings = parseMilestoneSourceMappings(filePath);
   console.log(`Loaded ${sourceMappings.size} source mappings\n`);
