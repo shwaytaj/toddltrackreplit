@@ -2,7 +2,7 @@
 
 ## Overview
 
-Toddl is a comprehensive child development tracking application that helps parents monitor their children's growth milestones, physical development metrics, and receive AI-powered guidance. The application provides a nurturing, data-confident interface that balances emotional warmth with professional health tracking, designed specifically for parents tracking developmental progress from birth through early childhood.
+Toddl is a comprehensive child development tracking application designed to help parents monitor their children's growth milestones and physical development. It provides AI-powered guidance within a nurturing, data-confident interface, balancing emotional warmth with professional health tracking for children from birth through early childhood. The project aims to provide evidence-based guidance by integrating milestone data from multiple international health organizations.
 
 ## User Preferences
 
@@ -12,199 +12,40 @@ Preferred communication style: Simple, everyday language.
 
 ### Frontend Architecture
 
-**Technology Stack:**
-- React 18 with TypeScript for type-safe component development
-- Vite as the build tool and development server
-- Wouter for client-side routing (lightweight alternative to React Router)
-- TanStack Query (React Query) for server state management and caching
-- Tailwind CSS for utility-first styling with custom design system
-
-**UI Component System:**
-- Radix UI primitives for accessible, unstyled components
-- shadcn/ui component library (New York style variant)
-- Custom theme system with light/dark mode support via CSS variables
-- Design philosophy based on health/parenting app leaders (Headspace, Flo, BabyCenter)
-
-**Design System:**
-- Primary fonts: DM Sans (body), Fredoka (accent/headers)
-- Color palette: Soft lavender (primary), mint green (achievements), soft pink (alerts), navy blue (text)
-- Custom CSS variables for theming with HSL color values
-- Elevation system using opacity-based overlays (--elevate-1, --elevate-2)
-
-**State Management:**
-- Server state: TanStack Query with React hooks
-- Authentication state: Session-based with query invalidation
-- Form state: React Hook Form with Zod validation
+**Technology Stack:** React 18 with TypeScript, Vite, Wouter (routing), TanStack Query (server state), Tailwind CSS.
+**UI Component System:** Radix UI primitives, shadcn/ui (New York style), custom theme with light/dark mode, inspired by leading health/parenting apps.
+**Design System:** DM Sans (body), Fredoka (accent), soft lavender palette, custom CSS variables, elevation system.
+**State Management:** TanStack Query for server state, session-based for authentication, React Hook Form with Zod for forms.
 
 ### Backend Architecture
 
-**Server Framework:**
-- Express.js with TypeScript
-- Session-based authentication using express-session
-- Passport.js with Local Strategy for username/password auth
-- BCrypt for password hashing
-
-**API Design:**
-- RESTful endpoints organized by resource
-- Session cookies for authentication (30-day expiry)
-- JSON request/response format
-- Credential-based fetch for API requests from frontend
-
-**Key API Routes:**
-- `/api/auth/*` - Authentication (register, login, logout)
-- `/api/children/*` - Child profile management
-- `/api/milestones/*` - Milestone data and tracking
-- `/api/children/:id/growth-metrics` - Growth tracking (weight, height, head circumference)
-- `/api/children/:childId/milestones/:milestoneId/recommendations` - AI-powered guidance
+**Server Framework:** Express.js with TypeScript, session-based authentication using `express-session` and Passport.js (Local Strategy), BCrypt for hashing.
+**API Design:** RESTful endpoints, JSON format, session cookies for authentication.
+**Key API Routes:** `/api/auth/*`, `/api/children/*`, `/api/milestones/*`, `/api/children/:id/growth-metrics`, `/api/children/:childId/milestones/:milestoneId/recommendations`.
 
 ### Data Storage
 
-**Database:**
-- PostgreSQL via Neon serverless
-- Drizzle ORM for type-safe database queries
-- WebSocket connection pooling for serverless environment
-
-**Schema Design:**
-- `users` - Parent accounts with medical history (JSONB)
-- `children` - Child profiles with birth date, due date (for corrected age), gender, medical history
-- `milestones` - Developmental milestone definitions with age ranges and categories
-- `childMilestones` - Tracking of achieved milestones per child
-- `growthMetrics` - Physical measurements (weight, height, head circumference) with WHO percentile calculations
-- `teeth` - Dental development tracking
-- `aiRecommendations` - Cached AI-generated guidance
-
-**Data Patterns:**
-- JSONB fields for flexible medical history storage
-- UUID primary keys (gen_random_uuid)
-- Array fields for parent-child relationships (supports multiple parents)
-- Timestamp tracking for medical history updates
+**Database:** PostgreSQL via Neon serverless, Drizzle ORM.
+**Schema Design:** `users`, `children`, `milestones`, `childMilestones`, `growthMetrics`, `teeth`, `aiRecommendations` and `aiToyRecommendations`. Uses JSONB for flexible medical history and UUIDs for primary keys.
+**Data Patterns:** JSONB fields, UUIDs, array fields for parent-child relationships, timestamp tracking.
 
 ### Authentication & Authorization
 
-**Authentication Flow:**
-- Email-based authentication (migrated from username-based)
-- Passport Local Strategy with bcrypt password hashing (10 rounds)
-- LocalStrategy configured with usernameField: 'email'
-- Session serialization/deserialization by user ID
-- Session stored server-side with configurable secret
-- Secure cookies in production environment
+**Authentication Flow:** Email-based authentication using Passport Local Strategy with bcrypt. Session serialization/deserialization by user ID, server-side session storage. Secure cookies (`httpOnly: true`, `sameSite: "lax"`) for production.
+**Authorization:** Parent-child relationship verification, session-based user context, query-level access control.
 
-**Authorization:**
-- Parent-child relationship verification via parentIds array
-- Session-based user context available on all authenticated routes
-- Query-level access control in storage layer
+### Key Features and Implementations
 
-**Recent Auth Migration (Oct 2025):**
-- Database column renamed: users.username → users.email
-- insertUserSchema updated to use email field
-- All auth routes (register/login) now use email instead of username
+**Corrected Age Calculation:** Implemented for premature/post-mature births, automatically stops after 36 months chronological age. Affects milestone filtering and data display.
+**Multi-Source Milestone Filtering:** Integrates milestone data from 7 international health organizations (CDC/AAP, HSE, WHO, NHS, Australian Dept of Health, Health Canada/CPS, South Africa DoH). Users can select preferred sources in settings.
+**AI Recommendations & Caching:** Personalized developmental and toy recommendations generated by Anthropic Claude API, cached in the database (`aiToyRecommendations`) to reduce API calls and improve performance. Cache invalidation based on medical history updates.
+**Evidence-Based Citations:** AI recommendations include citations from authoritative pediatric sources (CDC, AAP, WHO, etc.) with URL validation, stored with recommendations, and displayed in the frontend.
+**UI/UX Improvements:** Streamlined `MilestoneDetail` page with collapsible "About" section and direct access to "Activities" and "Toys & Tools" tabs.
 
-**Production Authentication Fix (Oct 2025):**
-- Fixed production login redirect issue where users were redirected to signup page after successful login
-- Updated queryClient to properly read `meta.unauthorizedBehavior` from query options
-- This allows `useUser` hook to return null on 401 errors instead of throwing, preventing unwanted redirects
-- Enhanced session cookie configuration with `httpOnly: true` and `sameSite: "lax"`
-- Removed `secure` flag to ensure sessions work reliably in Replit's production environment
-- Session cookies persist across navigation (registration → onboarding → home)
-- Authentication flow verified end-to-end with Playwright testing
+## External Dependencies
 
-**Recent Home Page Fixes (Oct 2025):**
-- Fixed Home page to display real child data instead of hardcoded mock data
-- Implemented accurate age calculation handling all edge cases (month-end birthdays, 0-month children)
-- Added proper React Query guards to prevent erroneous API calls before prerequisites ready
-- Age calculation verified working correctly: birthdate → months & days display
-- All data now fetched from backend: child name, age, milestones, growth metrics, achievements
-
-**Toy Recommendations Enhancements (Oct 2025):**
-- Replaced retailer button text with company logos (Amazon, Target, Walmart) using react-icons
-- Implemented dismissible recommendations system with database persistence per child
-- Created `dismissed_toy_recommendations` table to track user dismissals
-- Backend generates 10-15 toy recommendations, filters dismissed ones, returns up to 5 fresh recommendations
-- Added tooltip "Don't show this" on hover over close button for each recommendation (inline with toy title)
-- Implemented auto-refetch when recommendations are dismissed, with "No more recommendations" placeholder
-- Enhanced Amazon URLs with multiple parameters: category filtering, age-appropriate filtering, review-based sorting
-
-**Milestone Data Seeding (Oct 2025):**
-- Comprehensive developmental milestone data added for all age ranges (0-60 months)
-- Age ranges: 0-3, 4-6, 7-9, 10-12, 13-18, 19-24, 25-30, 31-36, 37-49, 49-60 months
-- Categories: Gross Motor (23 milestones), Fine Motor (16), Communication (18), Social & Emotional (15), Cognitive (12), Vision (4), Hearing (4)
-- Total: 92 developmental milestones based on CDC and AAP guidelines
-- Frontend age-range logic updated to properly handle children 48-60+ months
-- Milestones use overlapping ranges to ensure all child ages have appropriate guidance
-- Dismissed toys filtered using case-insensitive matching
-- **Caching Implementation**: Created `aiToyRecommendations` table to cache AI-generated toy recommendations
-- Cached recommendations are reused until medical history is updated, significantly reducing load times
-- Cache invalidation based on child and parent medical history version timestamps
-- Similar caching pattern to to-do recommendations for consistent performance
-
-**Corrected Age Implementation (Oct 2025):**
-- Added `dueDate` field to children schema for tracking original due date
-- Created shared age calculation utility (`client/src/lib/age-calculation.ts`) for consistent corrected age logic across the app
-- **Calculation Logic**: Corrected Age = Chronological Age - (adjustment weeks / 4.345 weeks per month)
-- Supports both premature birth (born before due date) and post-mature birth (born after due date)
-- Automatically stops using corrected age after 36 months chronological age per pediatric guidelines
-- Falls back to chronological age if no due date is provided
-- **Onboarding Flow**: Updated to capture both original due date and actual birth date as mandatory fields
-- **Medical History Page**: Displays both dates with real-time adjustment calculation showing weeks premature/post-mature
-- **Home Page**: Shows both chronological and corrected ages when applicable, uses corrected age for milestone filtering
-- **Cache Invalidation**: Date changes in medical history trigger invalidation of all milestone-related queries
-- Backend PATCH route accepts `dueDate` parameter for updating child profiles
-- All milestone filtering throughout the app uses corrected age to ensure developmentally appropriate guidance
-
-**Evidence-Based Citations System (Oct 2025):**
-- Added citations to all AI recommendations to show evidence-based sources from international pediatric authorities
-- **Authoritative Sources**: CDC (USA), AAP (USA), WHO (International), HSE (Ireland), NHS (UK), CPS/Rourke Baby Record (Canada), NHMRC & Australian Dept of Health (Australia), UNICEF (International)
-- **Schema Updates**: Added `citations` JSONB field to `completedRecommendations`, `aiRecommendations`, and `aiToyRecommendations` tables
-- **AI Prompts**: Updated both Guide and Toy recommendation prompts to explicitly request citations from authoritative sources across multiple countries
-- **URL Accuracy**: Prompts include verified official base URLs for all major sources to prevent broken/hallucinated links (CDC, AAP, WHO, HSE, NHS, CPS, UNICEF, Australian Govt)
-- **Citation Format**: Each citation includes `source` (required) and `url` (optional) fields
-- **Frontend Display**: Citations appear as small badges using design tokens (bg-muted, text-muted-foreground, border-border) for proper dark mode support
-- **Persistence**: Citations are stored with completed recommendations so they remain visible even after new recommendations are fetched
-- **Backend**: Routes updated to accept and store citations when marking recommendations as complete
-- **Testing**: All citation elements have data-testid attributes for accessibility and testing
-- **Documentation**: Created `AI_PROMPT_DOCUMENTATION.md` showing exact prompts sent to Claude for verification
-
-**MilestoneDetail UI Restructuring (Oct 2025):**
-- **UI Simplification**: Removed top-level "Action" and "About" tabs for a cleaner, more focused interface
-- **Tab Promotion**: "Activities" (formerly "To-do") and "Toys & Tools" are now the primary tabs, no longer nested under "Action"
-- **Collapsible About**: Added Shadcn Collapsible component for "About this milestone" section at the top of the page
-- **Default Landing**: Users now land directly on the "Activities" tab, making the most useful content immediately visible
-- **State Management**: Simplified state from `activeTab` + `activeActionTab` to just `isAboutOpen` + `activeContentTab`
-- **Query Optimization**: Updated TanStack Query enabled conditions to use the renamed state variables
-- **UX Improvements**: About information is accessible via collapsible toggle (collapsed by default), reducing visual clutter
-- **Component Used**: Implemented with `@radix-ui/react-collapsible` via Shadcn UI, with ChevronDown icon that rotates when expanded
-- **Tab Naming**: Changed "To-do" to "Activities" for more parent-friendly, supportive language
-- **Testing**: End-to-end Playwright test verified collapsible functionality, default tab selection, and achievement toggle positioning
-
-### External Dependencies
-
-**AI Integration:**
-- Anthropic Claude API for generating personalized developmental recommendations
-- Used for milestone-specific guidance based on child's age and progress
-- Recommendations cached in database to reduce API calls
-
-**WHO Growth Standards:**
-- WHO Child Growth Standards LMS method for percentile calculations
-- Embedded growth chart data for boys and girls (0-60 months)
-- Box-Cox transformation for accurate percentile computation
-- Supports weight, height, and head circumference metrics
-
-**Development Tools:**
-- Replit-specific plugins for development environment
-- Runtime error overlay for debugging
-- Cartographer for code mapping
-- Development banner for environment indication
-
-**Third-Party UI Libraries:**
-- Google Fonts: DM Sans and Fredoka typefaces
-- React Icons for social login buttons
-- Lucide React for general iconography
-- Vaul for drawer components
-- CMDK for command palette functionality
-- Recharts for growth chart visualizations
-
-**Build & Deployment:**
-- ESBuild for server bundling
-- PostCSS with Autoprefixer for CSS processing
-- TypeScript compilation with path aliases (@/, @shared/, @assets/)
-- Environment-specific configurations (NODE_ENV, DATABASE_URL, SESSION_SECRET, ANTHROPIC_API_KEY)
+**AI Integration:** Anthropic Claude API (for recommendations).
+**WHO Growth Standards:** Used for accurate percentile calculations for growth metrics (weight, height, head circumference).
+**Development Tools:** Replit-specific plugins (Cartographer, runtime error overlay).
+**Third-Party UI Libraries:** Google Fonts (DM Sans, Fredoka), React Icons, Lucide React, Vaul (drawers), CMDK (command palette), Recharts (charts).
+**Build & Deployment:** ESBuild (server bundling), PostCSS with Autoprefixer, TypeScript compilation.

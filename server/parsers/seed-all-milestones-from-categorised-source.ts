@@ -7,10 +7,11 @@
  * Usage: tsx server/parsers/seed-all-milestones-from-categorised-source.ts <filepath>
  */
 
-import { parseMilestoneSourcesFromFile } from './parse-milestone-sources';
-import { db } from '../db';
+import { parseMilestoneSourcesFromFile } from './parse-milestone-sources.js';
+import { db } from '../db.js';
 import { milestones } from '@shared/schema';
 import { eq } from 'drizzle-orm';
+import { fileURLToPath } from 'url';
 
 interface MilestoneData {
   title: string;
@@ -151,8 +152,6 @@ async function seedAllMilestones(filepath: string): Promise<void> {
 }
 
 // Run if called directly
-import { fileURLToPath } from 'url';
-
 if (import.meta.url === `file://${process.argv[1]}`) {
   const filepath = process.argv[2];
   

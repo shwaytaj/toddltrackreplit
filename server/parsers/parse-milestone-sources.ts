@@ -15,6 +15,8 @@
  */
 
 import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
 interface MilestoneSourceMapping {
   title: string;
@@ -171,9 +173,6 @@ export function parseMilestoneSourcesFromFile(filepath: string): MilestoneSource
 }
 
 // Run if called directly
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
