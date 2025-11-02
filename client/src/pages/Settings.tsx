@@ -48,7 +48,10 @@ export default function Settings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      // Invalidate all milestone queries so they refetch with new source filter
       queryClient.invalidateQueries({ queryKey: ["/api/milestones"] });
+      // This invalidates ALL age-range queries regardless of specific parameters
+      queryClient.invalidateQueries({ queryKey: ["/api/milestones/age-range"] });
       queryClient.invalidateQueries({ queryKey: ["/api/children"] });
       toast({
         title: "Settings saved",

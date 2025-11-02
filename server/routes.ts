@@ -243,8 +243,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Milestone routes
-  app.get("/api/milestones", async (_req, res) => {
-    const milestones = await storage.getAllMilestones();
+  app.get("/api/milestones", async (req, res) => {
+    // Get user's preferred sources if authenticated
+    let preferredSources: string[] | undefined;
+    if (req.user) {
+      const user = await storage.getUser(req.user.id);
+      preferredSources = user?.preferredMilestoneSources || undefined;
+    }
+    
+    let milestones = await storage.getAllMilestones();
+    
+    // Apply source filtering if user has preferences
+    if (preferredSources && preferredSources.length > 0) {
+      milestones = milestones.filter(m => {
+        // If milestone has sources, check if any match user preferences
+        if (m.sources && m.sources.length > 0) {
+          return m.sources.some(source => preferredSources.includes(source));
+        }
+        // Include milestones without sources (fallback)
+        return true;
+      });
+    }
+    
     res.json(milestones);
   });
 
