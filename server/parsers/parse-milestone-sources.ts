@@ -58,6 +58,40 @@ function normalizeTitle(title: string): string {
   return title.trim().replace(/\s+/g, ' ');
 }
 
+function splitByCommasRespectingParentheses(text: string): string[] {
+  // Split by commas, but not commas inside parentheses
+  const items: string[] = [];
+  let current = '';
+  let parenDepth = 0;
+  
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    
+    if (char === '(') {
+      parenDepth++;
+      current += char;
+    } else if (char === ')') {
+      parenDepth--;
+      current += char;
+    } else if (char === ',' && parenDepth === 0) {
+      // Comma outside parentheses - split here
+      if (current.trim()) {
+        items.push(current.trim());
+      }
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  
+  // Add remaining text
+  if (current.trim()) {
+    items.push(current.trim());
+  }
+  
+  return items;
+}
+
 function extractMilestones(line: string): string[] {
   // Extract individual milestone titles from table cells
   // Format: "• Milestone 1<br>• Milestone 2<br>• Milestone 3"
@@ -72,8 +106,8 @@ function extractMilestones(line: string): string[] {
     // Check if this part has age markers and comma-separated items
     const ageMarkerMatch = part.match(/\*\*\d+(-\d+)?M:\*\*\s*(.+)/);
     if (ageMarkerMatch) {
-      // Has age marker, split by commas
-      const items = ageMarkerMatch[2].split(',').map(s => s.trim());
+      // Has age marker, split by commas RESPECTING PARENTHESES
+      const items = splitByCommasRespectingParentheses(ageMarkerMatch[2]);
       milestones.push(...items);
     } else {
       // No age marker, split by <br> or just add as is
