@@ -30,9 +30,9 @@ const SOURCE_NAMES = {
   'HSE (Health Service Executive) - Ireland': 'HSE',
   'WHO (World Health Organization) - International': 'WHO',
   'NHS (National Health Service) - UK': 'NHS',
-  'CPS (Canadian Paediatric Society) / Rourke Baby Record - Canada': 'CPS',
-  'NHMRC (National Health and Medical Research Council) / Australian Government Department of Health - Australia': 'NHMRC',
-  'UNICEF (United Nations Children\'s Fund) - International': 'UNICEF',
+  'Australian Department of Health - Australia': 'Australian Dept of Health',
+  'Health Canada / Canadian Paediatric Society - Canada': 'Health Canada/CPS',
+  'South Africa Department of Health - South Africa': 'South Africa DoH',
 };
 
 function parseAgeRange(heading: string): { min: number; max: number } | null {

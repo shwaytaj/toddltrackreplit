@@ -16,9 +16,9 @@ const MILESTONE_SOURCES = [
   { id: "HSE", name: "HSE (Ireland)", description: "Health Service Executive" },
   { id: "WHO", name: "WHO (International)", description: "World Health Organization" },
   { id: "NHS", name: "NHS (UK)", description: "National Health Service" },
-  { id: "CPS", name: "CPS (Canada)", description: "Canadian Paediatric Society" },
-  { id: "NHMRC", name: "NHMRC (Australia)", description: "National Health and Medical Research Council" },
-  { id: "UNICEF", name: "UNICEF (International)", description: "United Nations Children's Fund" },
+  { id: "Australian Dept of Health", name: "Australian Dept of Health", description: "Pregnancy Birth and Baby, Queensland Health, healthdirect" },
+  { id: "Health Canada/CPS", name: "Health Canada/CPS", description: "Health Canada / Canadian Paediatric Society" },
+  { id: "South Africa DoH", name: "South Africa DoH", description: "Department of Health, South Africa" },
 ];
 
 export default function Settings() {
