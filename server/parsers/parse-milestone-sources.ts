@@ -28,11 +28,11 @@ interface MilestoneSourceMapping {
 const SOURCE_NAMES = {
   'CDC (Centers for Disease Control and Prevention) / AAP (American Academy of Pediatrics) - USA': 'CDC/AAP',
   'HSE (Health Service Executive) - Ireland': 'HSE',
-  'WHO (World Health Organization) - International': 'WHO',
-  'NHS (National Health Service) - UK': 'NHS',
-  'Australian Department of Health - Australia': 'Australian Dept of Health',
-  'Health Canada / Canadian Paediatric Society - Canada': 'Health Canada/CPS',
-  'South Africa Department of Health - South Africa': 'South Africa DoH',
+  'WHO (World Health Organization)': 'WHO',
+  'NHS (National Health Service) - United Kingdom': 'NHS',
+  'Australian Department of Health (Pregnancy Birth and Baby, Queensland Health, healthdirect)': 'Australian Dept of Health',
+  'Health Canada / Canadian Paediatric Society (HealthLink BC, Caring for Kids)': 'Health Canada/CPS',
+  'South Africa Department of Health (Road to Health Booklet)': 'South Africa DoH',
 };
 
 function parseAgeRange(heading: string): { min: number; max: number } | null {
