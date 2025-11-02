@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -7,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import BottomNav from "@/components/BottomNav";
 import type { User } from "@shared/schema";
 
 const MILESTONE_SOURCES = [
@@ -21,6 +23,8 @@ const MILESTONE_SOURCES = [
 
 export default function Settings() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
+  const [activeNav, setActiveNav] = useState<'home' | 'milestones' | 'profile'>('profile');
   
   const { data: user, isLoading } = useQuery<User>({
     queryKey: ["/api/user"],
@@ -85,26 +89,37 @@ export default function Settings() {
     updatePreferencesMutation.mutate(selectedSources);
   };
 
+  const handleNavigation = (page: 'home' | 'milestones' | 'profile') => {
+    setActiveNav(page);
+    if (page === 'home') setLocation('/home');
+    if (page === 'milestones') setLocation('/milestones');
+    if (page === 'profile') setLocation('/profile');
+  };
+
   const isAllSelected = selectedSources.length === 0;
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-background pb-20">
+        <div className="flex items-center justify-center min-h-screen">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+        <BottomNav active={activeNav} onNavigate={handleNavigation} />
       </div>
     );
   }
 
   return (
-    <div className="container max-w-3xl mx-auto py-8 px-4">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold font-fredoka text-foreground">Settings</h1>
-        <p className="text-muted-foreground mt-2">
-          Customize your Toddl experience
-        </p>
-      </div>
+    <div className="min-h-screen bg-background pb-20">
+      <div className="container max-w-3xl mx-auto py-8 px-4">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold font-fredoka text-foreground">Settings</h1>
+          <p className="text-muted-foreground mt-2">
+            Customize your Toddl experience
+          </p>
+        </div>
 
-      <Card>
+        <Card>
         <CardHeader>
           <CardTitle>Milestone Sources</CardTitle>
           <CardDescription>
@@ -193,7 +208,10 @@ export default function Settings() {
             </Button>
           </div>
         </CardContent>
-      </Card>
+        </Card>
+      </div>
+
+      <BottomNav active={activeNav} onNavigate={handleNavigation} />
     </div>
   );
 }
