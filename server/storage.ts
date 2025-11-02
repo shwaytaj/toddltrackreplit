@@ -198,8 +198,13 @@ export class DbStorage implements IStorage {
       // Age range filter
       const ageMatch = m.ageRangeMonthsMin <= maxMonths && m.ageRangeMonthsMax >= minMonths;
       
-      // Source filter - if sources are specified and milestone has sources
-      if (sources && sources.length > 0 && m.sources && m.sources.length > 0) {
+      // If no source filter specified, just use age filter
+      if (!sources || sources.length === 0) {
+        return ageMatch;
+      }
+      
+      // Source filter is specified - only show milestones that have matching sources
+      if (m.sources && m.sources.length > 0) {
         // Parse sources if it's a string (Postgres text[] returns as string without arrayMode)
         const milestoneSources = Array.isArray(m.sources) 
           ? m.sources 
@@ -210,8 +215,8 @@ export class DbStorage implements IStorage {
         return ageMatch && sourceMatch;
       }
       
-      // If no source filter or milestone has no sources, just use age filter
-      return ageMatch;
+      // Milestone has no sources - don't show it when user has source preferences
+      return false;
     });
   }
 

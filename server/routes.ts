@@ -257,7 +257,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     let preferredSources: string[] | undefined;
     if (req.user) {
       const user = await storage.getUser(req.user.id);
-      preferredSources = user?.preferredMilestoneSources || undefined;
+      const rawSources = user?.preferredMilestoneSources;
+      // Parse if it's a Postgres array string
+      if (rawSources && Array.isArray(rawSources)) {
+        preferredSources = rawSources;
+      } else if (rawSources && typeof rawSources === 'string') {
+        preferredSources = parsePostgresArray(rawSources);
+      }
     }
     
     let milestones = await storage.getAllMilestones();
@@ -273,8 +279,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             : parsePostgresArray(m.sources as unknown as string);
           return milestoneSources.some(source => preferredSources.includes(source));
         }
-        // Include milestones without sources (fallback)
-        return true;
+        // Don't include milestones without sources when user has source preferences
+        return false;
       });
     }
     
@@ -293,7 +299,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     let preferredSources: string[] | undefined;
     if (req.user) {
       const user = await storage.getUser(req.user.id);
-      preferredSources = user?.preferredMilestoneSources || undefined;
+      const rawSources = user?.preferredMilestoneSources;
+      // Parse if it's a Postgres array string
+      if (rawSources && Array.isArray(rawSources)) {
+        preferredSources = rawSources;
+      } else if (rawSources && typeof rawSources === 'string') {
+        preferredSources = parsePostgresArray(rawSources);
+      }
     }
     
     const milestones = await storage.getMilestonesByAgeRange(minMonths, maxMonths, preferredSources);
