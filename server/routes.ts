@@ -19,6 +19,15 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+// Helper to parse Postgres array strings like "{HSE,NHS}" into ["HSE", "NHS"]
+function parsePostgresArray(value: string): string[] {
+  if (!value || typeof value !== 'string') return [];
+  // Remove curly braces and split by comma
+  const cleaned = value.replace(/^\{/, '').replace(/\}$/, '');
+  if (!cleaned) return [];
+  return cleaned.split(',').map(s => s.trim().replace(/^"/, '').replace(/"$/, ''));
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.post("/api/auth/register", async (req, res) => {
@@ -258,7 +267,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       milestones = milestones.filter(m => {
         // If milestone has sources, check if any match user preferences
         if (m.sources && m.sources.length > 0) {
-          return m.sources.some(source => preferredSources.includes(source));
+          // Parse sources if it's a string (Postgres text[] returns as string without arrayMode)
+          const milestoneSources = Array.isArray(m.sources) 
+            ? m.sources 
+            : parsePostgresArray(m.sources as unknown as string);
+          return milestoneSources.some(source => preferredSources.includes(source));
         }
         // Include milestones without sources (fallback)
         return true;

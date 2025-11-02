@@ -200,14 +200,28 @@ export class DbStorage implements IStorage {
       
       // Source filter - if sources are specified and milestone has sources
       if (sources && sources.length > 0 && m.sources && m.sources.length > 0) {
+        // Parse sources if it's a string (Postgres text[] returns as string without arrayMode)
+        const milestoneSources = Array.isArray(m.sources) 
+          ? m.sources 
+          : this.parsePostgresArray(m.sources as unknown as string);
+        
         // Show milestone if it appears in ANY of the selected sources
-        const sourceMatch = m.sources.some(source => sources.includes(source));
+        const sourceMatch = milestoneSources.some(source => sources.includes(source));
         return ageMatch && sourceMatch;
       }
       
       // If no source filter or milestone has no sources, just use age filter
       return ageMatch;
     });
+  }
+
+  // Helper to parse Postgres array strings like "{HSE,NHS}" into ["HSE", "NHS"]
+  private parsePostgresArray(value: string): string[] {
+    if (!value || typeof value !== 'string') return [];
+    // Remove curly braces and split by comma
+    const cleaned = value.replace(/^\{/, '').replace(/\}$/, '');
+    if (!cleaned) return [];
+    return cleaned.split(',').map(s => s.trim().replace(/^"/, '').replace(/"$/, ''));
   }
 
   async createMilestone(milestone: InsertMilestone): Promise<Milestone> {
