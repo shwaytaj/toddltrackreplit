@@ -52,6 +52,10 @@ PARSER DETAILS
    - Output: Array of milestone-source mapping objects with full milestone data
    - Function: parseMilestoneSourcesFromFile(filePath)
    - Used by: update-milestone-sources-from-file.ts, seed-all-milestones-from-categorised-source.ts
+   - Special Features:
+     * Handles comma-separated milestones within age markers (e.g., "**30M:** A, B, C")
+     * Respects parentheses when splitting on commas (preserves "Twists things (doorknobs, lids)")
+     * Prevents title truncation by tracking parenthesis depth during parsing
 
 ================================================================================
 UPDATE SCRIPTS
@@ -270,6 +274,14 @@ Q: Parser shows warnings - should I be concerned?
 A: Check the warning message. File header warnings are normal and expected.
    Other warnings may indicate formatting issues in the source file.
 
+Q: I see truncated milestone titles like "lids)" or "lower)" - what happened?
+A: This was a parsing bug fixed in Nov 2025. The parser now correctly handles
+   commas inside parentheses. If you see truncated titles:
+   1. Delete the corrupted milestones from the database
+   2. Re-run seed-all-milestones-from-categorised-source.ts
+   3. The parser will create correctly formatted titles
+   Example: "Twists things (doorknobs, lids)" instead of just "lids)"
+
 ================================================================================
 MAINTENANCE
 ================================================================================
@@ -282,5 +294,22 @@ input file formatting. If you need to:
 - Add new description sections: Update parser and schema accordingly
 
 Always test with sample data before processing production updates.
+
+================================================================================
+CHANGELOG
+================================================================================
+
+November 2025 - Parentheses Handling Fix:
+- Fixed parse-milestone-sources.ts to respect parentheses when splitting on commas
+- Added splitByCommasRespectingParentheses() helper function
+- Prevents title truncation for milestones like "Twists things (doorknobs, lids)"
+- Re-seeded database to fix 41 corrupted milestone titles
+- Updated documentation with troubleshooting guidance
+
+November 2025 - Multi-Source System:
+- Added comprehensive seed script: seed-all-milestones-from-categorised-source.ts
+- Expanded to 7 international health organizations (was 4)
+- Total milestone database: 470 milestones across all sources
+- Updated all source names to match official organization names
 
 ================================================================================
