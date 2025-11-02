@@ -6,22 +6,25 @@ This guide explains how to use the milestone parsers and update scripts to
 maintain the milestone data in the Toddl application.
 
 ================================================================================
-AVAILABLE FILES (6 TOTAL)
+AVAILABLE FILES (7 TOTAL)
 ================================================================================
 
 All parser-related files are organized in server/parsers/ folder:
 
-PARSERS (imported by update scripts):
+PARSERS (imported by update/seed scripts):
   1. server/parsers/parse-milestones.ts
   2. server/parsers/milestone-description-parser.ts
   3. server/parsers/parse-milestone-sources.ts
 
-UPDATE SCRIPTS (executable):
+UPDATE SCRIPTS (executable - modify existing milestones):
   4. server/parsers/update-milestones-from-file.ts
   5. server/parsers/update-milestone-descriptions-from-file.ts
   6. server/parsers/update-milestone-sources-from-file.ts
 
-All six files are reusable and documented. Old/redundant parser scripts have
+SEED SCRIPTS (executable - create new milestones):
+  7. server/parsers/seed-all-milestones-from-categorised-source.ts
+
+All seven files are reusable and documented. Old/redundant parser scripts have
 been removed to keep the codebase clean.
 
 ================================================================================
@@ -43,11 +46,12 @@ PARSER DETAILS
    - Used by: update-milestone-descriptions-from-file.ts
 
 3. server/parsers/parse-milestone-sources.ts
-   - Parses milestone source attribution (CDC/AAP, HSE, WHO, NHS, CPS, NHMRC, UNICEF)
+   - Parses milestone source attribution from all 7 international health organizations
+   - Sources: CDC/AAP, HSE, WHO, NHS, Australian Dept of Health, Health Canada/CPS, South Africa DoH
    - Input: Markdown file with milestones organized by authoritative source
-   - Output: Array of milestone-source mapping objects
+   - Output: Array of milestone-source mapping objects with full milestone data
    - Function: parseMilestoneSourcesFromFile(filePath)
-   - Used by: update-milestone-sources-from-file.ts
+   - Used by: update-milestone-sources-from-file.ts, seed-all-milestones-from-categorised-source.ts
 
 ================================================================================
 UPDATE SCRIPTS
@@ -118,15 +122,51 @@ UPDATE SCRIPTS
    - New source attribution data available
    - Adding or updating which organizations publish each milestone
    - Enabling user preference filtering by source
+   - When you want to update sources WITHOUT creating new milestones
 
    Available Sources:
    - CDC/AAP (USA - Centers for Disease Control / American Academy of Pediatrics)
    - HSE (Ireland - Health Service Executive)
    - WHO (International - World Health Organization)
    - NHS (UK - National Health Service)
-   - CPS (Canada - Canadian Paediatric Society)
-   - NHMRC (Australia - National Health and Medical Research Council)
-   - UNICEF (International - United Nations Children's Fund)
+   - Health Canada/CPS (Canada - Health Canada / Canadian Paediatric Society)
+   - Australian Dept of Health (Australia - Pregnancy Birth and Baby, Queensland Health)
+   - South Africa DoH (South Africa - Department of Health)
+
+
+4. SEED ALL MILESTONES FROM CATEGORISED SOURCE FILE (COMPREHENSIVE)
+
+   File: server/parsers/seed-all-milestones-from-categorised-source.ts
+
+   Command:
+   $ tsx server/parsers/seed-all-milestones-from-categorised-source.ts <path-to-source-file>
+
+   Example:
+   $ tsx server/parsers/seed-all-milestones-from-categorised-source.ts ./attached_assets/milestones-categorised-by-source.md
+
+   What it does:
+   - Uses parse-milestone-sources.ts to extract ALL milestones from the file
+   - Creates NEW milestone records for milestones that don't exist in database
+   - Updates sources field for ALL milestones (existing + newly created)
+   - Provides detailed statistics on created vs updated milestones
+   - Most comprehensive seeding script - handles both creation and updates
+
+   When to use:
+   - Initial database population from categorised source file
+   - When you have a comprehensive source file with ALL milestones across all organizations
+   - When you want to ensure database has complete milestone coverage from all sources
+   - When you need to both CREATE new milestones AND assign sources in one step
+
+   Advantages over update-milestone-sources-from-file.ts:
+   - Creates missing milestones instead of just updating existing ones
+   - Ideal for bootstrapping database with complete international milestone sets
+   - Single script to populate 473 milestones from 7 health organizations
+
+   Statistics Reported:
+   - Total unique milestones in file
+   - Milestones created (new records)
+   - Milestones updated (existing records with new sources)
+   - Milestones unchanged (already had correct sources)
 
 ================================================================================
 FILE FORMAT REQUIREMENTS
@@ -175,7 +215,24 @@ Known Limitations:
 WORKFLOW
 ================================================================================
 
-Typical update workflow:
+INITIAL DATABASE POPULATION (Complete Bootstrap):
+
+1. Obtain comprehensive source-categorised milestone file (markdown format)
+2. Run the comprehensive seed script:
+   $ tsx server/parsers/seed-all-milestones-from-categorised-source.ts <source-file>
+3. Obtain descriptions file (markdown format)
+4. Update descriptions:
+   $ tsx server/parsers/update-milestone-descriptions-from-file.ts <description-file>
+5. Verify coverage (should have ~473 milestones across 7 sources)
+
+Example:
+$ tsx server/parsers/seed-all-milestones-from-categorised-source.ts ./attached_assets/milestones-categorised-by-source.md
+$ tsx server/parsers/update-milestone-descriptions-from-file.ts ./attached_assets/milestones-descriptions.md
+
+This workflow creates all milestones with source attribution, then adds descriptions.
+
+
+INCREMENTAL UPDATE WORKFLOW (Modify Existing Milestones):
 
 1. Obtain new milestone data file (markdown format)
 2. Obtain new descriptions file (markdown format)
@@ -188,6 +245,8 @@ Typical update workflow:
    $ tsx server/parsers/update-milestone-sources-from-file.ts <source-file>
 7. Verify coverage and check for unmatched milestones
 8. Document updates in server/MILESTONE_UPDATE_REPORT.md
+
+This workflow updates existing milestone records without creating new ones.
 
 ================================================================================
 TROUBLESHOOTING
