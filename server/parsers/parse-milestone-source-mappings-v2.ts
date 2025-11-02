@@ -18,6 +18,7 @@ import { normalizeTitleForMatch } from './title-normalizer.js';
 const SOURCE_NAME_MAPPING: Record<string, string> = {
   'CDC (Centers for Disease Control and Prevention) / AAP (American Academy of Pediatrics) - USA': 'CDC/AAP',
   'HSE (Health Service Executive) - Ireland': 'HSE',
+  'WHO (World Health Organization)': 'WHO',
   'NHS (National Health Service) - United Kingdom': 'NHS',
   'Australian Department of Health (Pregnancy Birth and Baby, Queensland Health, healthdirect)': 'Australian Dept of Health',
   'Health Canada / Canadian Paediatric Society (HealthLink BC, Caring for Kids)': 'Health Canada/CPS',
