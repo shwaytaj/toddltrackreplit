@@ -11,7 +11,7 @@ maintain the milestone data in the Toddl application.
    migration preserves child progress while adopting canonical titles.
 
 ================================================================================
-AVAILABLE FILES (11 TOTAL)
+AVAILABLE FILES (8 TOTAL)
 ================================================================================
 
 All parser-related files are organized in server/parsers/ folder:
@@ -20,22 +20,19 @@ CANONICAL PARSERS ⭐:
   1. server/parsers/parse-comprehensive-milestones.ts - Canonical title parser
   2. server/parsers/title-normalizer.ts - Shared normalization (used by all)
 
-MIGRATION & VALIDATION ⭐:
-  3. server/parsers/migrate-to-canonical-titles.ts - Database migration tool
-  4. server/parsers/validate-title-consistency.ts - Cross-file validation
+VALIDATION TOOLS:
+  3. server/parsers/validate-title-consistency.ts - Cross-file title validation
 
-LEGACY PARSERS (for reference/backward compatibility):
-  5. server/parsers/parse-milestones.ts
-  6. server/parsers/milestone-description-parser.ts
-  7. server/parsers/parse-milestone-sources.ts
+REUSABLE PARSERS:
+  4. server/parsers/milestone-description-parser.ts - Parses milestone descriptions
+  5. server/parsers/parse-milestone-sources.ts - Parses source attributions
 
-UPDATE SCRIPTS (executable - modify existing milestones):
-  8. server/parsers/update-milestones-from-file.ts
-  9. server/parsers/update-milestone-descriptions-from-file.ts
-  10. server/parsers/update-milestone-sources-from-file.ts
+UPDATE SCRIPTS (executable - apply data to existing milestones):
+  6. server/parsers/update-milestone-descriptions-from-file.ts
+  7. server/parsers/update-milestone-sources-from-file.ts
 
-SEED SCRIPTS (executable - create new milestones):
-  11. server/parsers/seed-all-milestones-from-categorised-source.ts
+DOCUMENTATION:
+  8. PARSER_USAGE_GUIDE.txt - This file
 
 All parsers use shared title normalization for consistency.
 
