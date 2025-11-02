@@ -201,8 +201,13 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="p-4 space-y-6 max-w-2xl mx-auto">
-        <div>
-          <h1 className="text-2xl font-bold mb-4">Profile</h1>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-bold">Profile</h1>
+          <Link href="/settings">
+            <Button variant="outline" size="sm" data-testid="button-settings">
+              Settings
+            </Button>
+          </Link>
         </div>
 
         <div className="space-y-4">

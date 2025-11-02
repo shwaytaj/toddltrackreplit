@@ -55,7 +55,7 @@ export interface IStorage {
   // Milestone operations
   getMilestone(id: string): Promise<Milestone | undefined>;
   getAllMilestones(): Promise<Milestone[]>;
-  getMilestonesByAgeRange(minMonths: number, maxMonths: number): Promise<Milestone[]>;
+  getMilestonesByAgeRange(minMonths: number, maxMonths: number, sources?: string[]): Promise<Milestone[]>;
   createMilestone(milestone: InsertMilestone): Promise<Milestone>;
 
   // Child milestone operations
@@ -185,11 +185,22 @@ export class DbStorage implements IStorage {
     return await this.db.select().from(milestones);
   }
 
-  async getMilestonesByAgeRange(minMonths: number, maxMonths: number): Promise<Milestone[]> {
+  async getMilestonesByAgeRange(minMonths: number, maxMonths: number, sources?: string[]): Promise<Milestone[]> {
     const result = await this.db.select().from(milestones);
-    return result.filter(
-      (m) => m.ageRangeMonthsMin <= maxMonths && m.ageRangeMonthsMax >= minMonths
-    );
+    return result.filter((m) => {
+      // Age range filter
+      const ageMatch = m.ageRangeMonthsMin <= maxMonths && m.ageRangeMonthsMax >= minMonths;
+      
+      // Source filter - if sources are specified and milestone has sources
+      if (sources && sources.length > 0 && m.sources && m.sources.length > 0) {
+        // Show milestone if it appears in ANY of the selected sources
+        const sourceMatch = m.sources.some(source => sources.includes(source));
+        return ageMatch && sourceMatch;
+      }
+      
+      // If no source filter or milestone has no sources, just use age filter
+      return ageMatch;
+    });
   }
 
   async createMilestone(milestone: InsertMilestone): Promise<Milestone> {

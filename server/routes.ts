@@ -124,6 +124,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/user/preferences", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      const preferencesSchema = z.object({
+        preferredMilestoneSources: z.array(z.string()).optional(),
+      });
+      
+      const validatedData = preferencesSchema.parse(req.body);
+      const updatedUser = await storage.updateUser(req.user.id, validatedData);
+      
+      if (!updatedUser) return res.status(404).json({ error: "User not found" });
+      
+      const { password, ...sanitizedUser } = updatedUser;
+      res.json(sanitizedUser);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid input", details: error.errors });
+      }
+      res.status(400).json({ error: "Invalid input" });
+    }
+  });
+
   // Children routes
   app.get("/api/children", async (req, res) => {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
@@ -233,7 +256,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: "Invalid age range parameters" });
     }
     
-    const milestones = await storage.getMilestonesByAgeRange(minMonths, maxMonths);
+    // Get user's preferred sources if authenticated
+    let preferredSources: string[] | undefined;
+    if (req.user) {
+      const user = await storage.getUser(req.user.id);
+      preferredSources = user?.preferredMilestoneSources || undefined;
+    }
+    
+    const milestones = await storage.getMilestonesByAgeRange(minMonths, maxMonths, preferredSources);
     res.json(milestones);
   });
 
