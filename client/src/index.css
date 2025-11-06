@@ -14,51 +14,51 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  --background: 0 0% 100%;
+  --background: 30 15% 91%;
 
-  --foreground: 210 15% 20%;
+  --foreground: 220 50% 25%;
 
-  --border: 210 10% 90%;
+  --border: 30 10% 80%;
 
   --card: 0 0% 100%;
 
-  --card-foreground: 210 15% 20%;
+  --card-foreground: 220 50% 25%;
 
-  --card-border: 210 8% 93%;
+  --card-border: 30 8% 85%;
 
-  --sidebar: 0 0% 98%;
+  --sidebar: 30 12% 88%;
 
-  --sidebar-foreground: 210 15% 20%;
+  --sidebar-foreground: 220 50% 25%;
 
-  --sidebar-border: 210 10% 88%;
+  --sidebar-border: 30 10% 78%;
 
-  --sidebar-primary: 210 50% 45%;
+  --sidebar-primary: 220 50% 25%;
 
   --sidebar-primary-foreground: 0 0% 100%;
 
-  --sidebar-accent: 210 10% 95%;
+  --sidebar-accent: 30 10% 85%;
 
-  --sidebar-accent-foreground: 210 15% 25%;
+  --sidebar-accent-foreground: 220 50% 30%;
 
-  --sidebar-ring: 210 50% 45%;
+  --sidebar-ring: 220 50% 25%;
 
   --popover: 0 0% 100%;
 
-  --popover-foreground: 210 15% 20%;
+  --popover-foreground: 220 50% 25%;
 
-  --popover-border: 210 10% 88%;
+  --popover-border: 30 10% 80%;
 
-  --primary: 210 50% 45%;
+  --primary: 220 50% 25%;
 
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 210 10% 94%;
+  --secondary: 30 10% 88%;
 
-  --secondary-foreground: 210 15% 25%;
+  --secondary-foreground: 220 50% 30%;
 
-  --muted: 210 12% 95%;
+  --muted: 30 12% 88%;
 
-  --muted-foreground: 210 10% 50%;
+  --muted-foreground: 220 20% 45%;
 
   --accent: 150 40% 92%;
 
@@ -99,6 +99,24 @@
   --warning-foreground: 35 75% 15%;
   --info: 200 60% 60%;
   --info-foreground: 200 60% 98%;
+
+  /* Milestone Category Colors */
+  --category-gross-motor: 270 35% 85%;
+  --category-gross-motor-foreground: 270 50% 25%;
+  --category-communication: 125 30% 82%;
+  --category-communication-foreground: 125 50% 20%;
+  --category-social-emotional: 35 25% 85%;
+  --category-social-emotional-foreground: 35 50% 25%;
+  --category-cognitive: 180 30% 85%;
+  --category-cognitive-foreground: 180 50% 20%;
+  --category-hearing: 30 25% 85%;
+  --category-hearing-foreground: 30 50% 25%;
+  --category-vision: 200 30% 85%;
+  --category-vision-foreground: 200 50% 25%;
+  --category-teeth: 35 25% 85%;
+  --category-teeth-foreground: 35 50% 25%;
+  --category-growth: 180 25% 85%;
+  --category-growth-foreground: 180 50% 25%;
 
   /* Automatically computed borders - intensity can be controlled by the user by the --opaque-button-border-intensity setting */
 

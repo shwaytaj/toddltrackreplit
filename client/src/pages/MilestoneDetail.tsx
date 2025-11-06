@@ -80,6 +80,38 @@ function buildAmazonUrl(searchQuery: string, ageRangeMonthsMin: number, ageRange
   return `${baseUrl}?${params.toString()}`;
 }
 
+// Map milestone categories to their Figma design colors
+function getCategoryHeaderColor(category?: string, subcategory?: string): string {
+  const cat = category?.toLowerCase() || '';
+  const subcat = subcategory?.toLowerCase() || '';
+  const compositeKey = cat && subcat ? `${cat} ${subcat}` : '';
+  
+  const categoryColors: Record<string, string> = {
+    'gross motor milestones': '[background:hsl(var(--category-gross-motor))]',
+    'gross motor skills': '[background:hsl(var(--category-gross-motor))]',
+    'communication': '[background:hsl(var(--category-communication))]',
+    'social & emotional': '[background:hsl(var(--category-social-emotional))]',
+    'cognitive': '[background:hsl(var(--category-cognitive))]',
+    'developmental gross motor milestones': '[background:hsl(var(--category-gross-motor))]',
+    'developmental gross motor skills': '[background:hsl(var(--category-gross-motor))]',
+    'developmental communication': '[background:hsl(var(--category-communication))]',
+    'developmental social & emotional': '[background:hsl(var(--category-social-emotional))]',
+    'developmental cognitive': '[background:hsl(var(--category-cognitive))]',
+    'hearing development': '[background:hsl(var(--category-hearing))]',
+    'hearing timing': '[background:hsl(var(--category-hearing))]',
+    'vision development': '[background:hsl(var(--category-vision))]',
+    'teeth eruption': '[background:hsl(var(--category-teeth))]',
+    'growth physical': '[background:hsl(var(--category-growth))]',
+    'developmental': '[background:hsl(var(--category-gross-motor))]',
+    'hearing': '[background:hsl(var(--category-hearing))]',
+    'vision': '[background:hsl(var(--category-vision))]',
+    'teeth': '[background:hsl(var(--category-teeth))]',
+    'growth': '[background:hsl(var(--category-growth))]',
+  };
+  
+  return categoryColors[compositeKey] || categoryColors[subcat] || categoryColors[cat] || 'bg-accent/30';
+}
+
 export default function MilestoneDetail() {
   const [, setLocation] = useLocation();
   const [, params] = useRoute('/milestone/:id');
@@ -284,7 +316,7 @@ export default function MilestoneDetail() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <div className="bg-accent/30 px-4 py-6 relative">
+      <div className={`${getCategoryHeaderColor(milestone.category, milestone.subcategory || undefined)} px-4 py-6 relative`}>
         <button
           onClick={() => setLocation('/home')}
           className="absolute top-4 right-4 p-2 hover-elevate active-elevate-2 rounded-lg"

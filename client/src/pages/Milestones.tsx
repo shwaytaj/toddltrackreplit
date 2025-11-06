@@ -30,9 +30,36 @@ const AGE_RANGES = [
   { min: 49, max: 60, label: '49-60 months' },
 ];
 
-// Use semantic theme colors for all milestone cards - clean, neutral aesthetic
+// Map milestone categories to their Figma design colors
 const getMilestoneColor = (milestone: Milestone): string => {
-  return 'bg-card';
+  const subcategory = milestone.subcategory?.toLowerCase() || '';
+  const category = milestone.category?.toLowerCase() || '';
+  const compositeKey = category && subcategory ? `${category} ${subcategory}` : '';
+  
+  const categoryColors: Record<string, string> = {
+    'gross motor milestones': '[background:hsl(var(--category-gross-motor))] [color:hsl(var(--category-gross-motor-foreground))]',
+    'gross motor skills': '[background:hsl(var(--category-gross-motor))] [color:hsl(var(--category-gross-motor-foreground))]',
+    'communication': '[background:hsl(var(--category-communication))] [color:hsl(var(--category-communication-foreground))]',
+    'social & emotional': '[background:hsl(var(--category-social-emotional))] [color:hsl(var(--category-social-emotional-foreground))]',
+    'cognitive': '[background:hsl(var(--category-cognitive))] [color:hsl(var(--category-cognitive-foreground))]',
+    'developmental gross motor milestones': '[background:hsl(var(--category-gross-motor))] [color:hsl(var(--category-gross-motor-foreground))]',
+    'developmental gross motor skills': '[background:hsl(var(--category-gross-motor))] [color:hsl(var(--category-gross-motor-foreground))]',
+    'developmental communication': '[background:hsl(var(--category-communication))] [color:hsl(var(--category-communication-foreground))]',
+    'developmental social & emotional': '[background:hsl(var(--category-social-emotional))] [color:hsl(var(--category-social-emotional-foreground))]',
+    'developmental cognitive': '[background:hsl(var(--category-cognitive))] [color:hsl(var(--category-cognitive-foreground))]',
+    'hearing development': '[background:hsl(var(--category-hearing))] [color:hsl(var(--category-hearing-foreground))]',
+    'hearing timing': '[background:hsl(var(--category-hearing))] [color:hsl(var(--category-hearing-foreground))]',
+    'vision development': '[background:hsl(var(--category-vision))] [color:hsl(var(--category-vision-foreground))]',
+    'teeth eruption': '[background:hsl(var(--category-teeth))] [color:hsl(var(--category-teeth-foreground))]',
+    'growth physical': '[background:hsl(var(--category-growth))] [color:hsl(var(--category-growth-foreground))]',
+    'developmental': '[background:hsl(var(--category-gross-motor))] [color:hsl(var(--category-gross-motor-foreground))]',
+    'hearing': '[background:hsl(var(--category-hearing))] [color:hsl(var(--category-hearing-foreground))]',
+    'vision': '[background:hsl(var(--category-vision))] [color:hsl(var(--category-vision-foreground))]',
+    'teeth': '[background:hsl(var(--category-teeth))] [color:hsl(var(--category-teeth-foreground))]',
+    'growth': '[background:hsl(var(--category-growth))] [color:hsl(var(--category-growth-foreground))]',
+  };
+  
+  return categoryColors[compositeKey] || categoryColors[subcategory] || categoryColors[category] || 'bg-card';
 };
 
 export default function Milestones() {
