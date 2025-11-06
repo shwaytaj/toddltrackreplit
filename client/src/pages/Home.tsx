@@ -12,25 +12,9 @@ import { calculateCorrectedAge, getAgeRange, formatAge, formatAdjustment } from 
 import { getMonkeyIcon } from '@/components/MonkeyIcons';
 import type { Child, Milestone, ChildMilestone, GrowthMetric } from '@shared/schema';
 
-// Map subcategories to colors for visual distinction
-const subcategoryColors: Record<string, string> = {
-  'Gross Motor Skills': 'bg-purple-100 dark:bg-purple-900/20',
-  'Fine Motor Skills': 'bg-purple-100 dark:bg-purple-900/20',
-  'Communication': 'bg-green-100 dark:bg-green-900/20',
-  'Social & Emotional': 'bg-amber-100 dark:bg-amber-900/20',
-  'Cognitive': 'bg-blue-100 dark:bg-blue-900/20',
-  'Physical': 'bg-rose-100 dark:bg-rose-900/20',
-  'Development': 'bg-cyan-100 dark:bg-cyan-900/20',
-  'Eruption': 'bg-pink-100 dark:bg-pink-900/20',
-  'Vision': 'bg-amber-50 dark:bg-amber-950/20',
-  'Hearing': 'bg-teal-50 dark:bg-teal-950/20',
-};
-
-// Helper function to get color for a milestone
+// Use semantic theme colors for all milestone cards - clean, neutral aesthetic
 function getMilestoneColor(milestone: Milestone): string {
-  // Use subcategory if available, otherwise fall back to category
-  const key = milestone.subcategory || milestone.category;
-  return subcategoryColors[key] || 'bg-gray-100 dark:bg-gray-900/20';
+  return 'bg-card';
 }
 
 export default function Home() {
@@ -300,7 +284,6 @@ export default function Home() {
                   value={latestMetrics.weight.value.toString()}
                   unit="kg"
                   percentile={latestMetrics.weight.percentile || 0}
-                  color="bg-blue-50 dark:bg-blue-950/20"
                   onClick={() => setLocation('/growth/weight')}
                   data-testid="card-growth-weight"
                 />
@@ -311,7 +294,6 @@ export default function Home() {
                   value={latestMetrics.height.value.toString()}
                   unit="cm"
                   percentile={latestMetrics.height.percentile || 0}
-                  color="bg-amber-50 dark:bg-amber-950/20"
                   onClick={() => setLocation('/growth/height')}
                   data-testid="card-growth-height"
                 />
@@ -322,7 +304,6 @@ export default function Home() {
                   value={latestMetrics.head.value.toString()}
                   unit="cm"
                   percentile={latestMetrics.head.percentile || 0}
-                  color="bg-teal-50 dark:bg-teal-950/20"
                   onClick={() => setLocation('/growth/head')}
                   data-testid="card-growth-head"
                 />

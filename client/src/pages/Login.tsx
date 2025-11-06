@@ -102,7 +102,7 @@ export default function Login() {
             </div>
 
             <Button
-              className="w-full rounded-full bg-[#2C3E50] hover:bg-[#2C3E50]/90"
+              className="w-full rounded-full"
               size="lg"
               onClick={handleEmailAuth}
               disabled={isLoading}
@@ -137,7 +137,7 @@ export default function Login() {
 
         <div className="space-y-4">
           <Button
-            className="w-full rounded-full bg-[#2C3E50] hover:bg-[#2C3E50]/90"
+            className="w-full rounded-full"
             size="lg"
             onClick={() => setShowEmailForm(true)}
             data-testid="button-signup-email"

@@ -284,7 +284,7 @@ export default function MilestoneDetail() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <div className="bg-green-100 dark:bg-green-900/20 px-4 py-6 relative">
+      <div className="bg-accent/30 px-4 py-6 relative">
         <button
           onClick={() => setLocation('/home')}
           className="absolute top-4 right-4 p-2 hover-elevate active-elevate-2 rounded-lg"
@@ -426,7 +426,7 @@ export default function MilestoneDetail() {
               onClick={() => setActiveContentTab('todo')}
               className={`flex-1 px-6 py-2.5 rounded-full font-medium text-sm transition-colors ${
                 activeContentTab === 'todo'
-                  ? 'bg-[#2C3E50] text-white'
+                  ? 'bg-primary text-primary-foreground'
                   : 'bg-muted text-foreground'
               }`}
               data-testid="tab-todo"
@@ -437,7 +437,7 @@ export default function MilestoneDetail() {
               onClick={() => setActiveContentTab('tools')}
               className={`flex-1 px-6 py-2.5 rounded-full font-medium text-sm transition-colors ${
                 activeContentTab === 'tools'
-                  ? 'bg-[#2C3E50] text-white'
+                  ? 'bg-primary text-primary-foreground'
                   : 'bg-muted text-foreground'
               }`}
               data-testid="tab-tools"
@@ -450,8 +450,8 @@ export default function MilestoneDetail() {
               <div className="bg-muted/30 rounded-lg px-4 py-5 space-y-4">
                 {achievementStatus?.achieved ? (
                   <div className="text-center py-12">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 mb-4">
-                      <Check className="w-8 h-8 text-green-600 dark:text-green-400" />
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent/30 mb-4">
+                      <Check className="w-8 h-8 text-accent-foreground" />
                     </div>
                     <h3 className="font-semibold text-lg mb-2">Milestone Achieved!</h3>
                     <p className="text-sm text-muted-foreground">
@@ -593,9 +593,9 @@ export default function MilestoneDetail() {
                 {!achievementStatus?.achieved && recommendations && recommendations.length > 0 && (
                   <>
                     <div className="border-t border-border pt-4 mt-4">
-                      <div className="bg-blue-50 dark:bg-blue-950/20 rounded-md p-3 space-y-2">
+                      <div className="bg-muted/30 rounded-md p-3 space-y-2">
                         <div className="flex items-start gap-2">
-                          <Lightbulb className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                          <Lightbulb className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
                           <p className="text-xs text-muted-foreground leading-relaxed">
                             <span className="font-medium">Want more personalized recommendations?</span> These to-dos are based on the medical history you've provided.
                           </p>
@@ -613,9 +613,9 @@ export default function MilestoneDetail() {
                     </div>
 
                     <div className="border-t border-border pt-4 mt-4">
-                      <div className="bg-amber-50 dark:bg-amber-950/20 rounded-md p-3">
+                      <div className="bg-muted/30 rounded-md p-3">
                         <div className="flex items-start gap-2">
-                          <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                          <AlertTriangle className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
                           <p className="text-xs text-muted-foreground leading-relaxed">
                             These to-dos are AI-generated suggestions. Please consult your GP or pediatrician if you have any concerns about your child's development.
                           </p>
@@ -638,7 +638,7 @@ export default function MilestoneDetail() {
                   >
                     <ToggleGroupItem 
                       value="not-achieved" 
-                      className="flex-1 rounded-l-full data-[state=on]:bg-red-100 data-[state=on]:text-red-800 dark:data-[state=on]:bg-red-950 dark:data-[state=on]:text-red-200"
+                      className="flex-1 rounded-l-full data-[state=on]:bg-destructive/20 data-[state=on]:text-destructive-foreground"
                       data-testid="toggle-not-achieved-action"
                     >
                       Not Achieved
@@ -660,8 +660,8 @@ export default function MilestoneDetail() {
               <div className="bg-muted/30 rounded-lg px-4 py-5 space-y-4">
                 {achievementStatus?.achieved ? (
                   <div className="text-center py-12">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 mb-4">
-                      <Check className="w-8 h-8 text-green-600 dark:text-green-400" />
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent/30 mb-4">
+                      <Check className="w-8 h-8 text-accent-foreground" />
                     </div>
                     <h3 className="font-semibold text-lg mb-2">Milestone Achieved!</h3>
                     <p className="text-sm text-muted-foreground">
@@ -722,7 +722,7 @@ export default function MilestoneDetail() {
                                       </TooltipProvider>
                                     </div>
                                     <p className="text-sm text-muted-foreground leading-relaxed">{toy.description}</p>
-                                    <div className="bg-blue-50 dark:bg-blue-950/20 rounded-md p-2">
+                                    <div className="bg-muted/30 rounded-md p-2">
                                       <p className="text-xs text-muted-foreground">
                                         <span className="font-medium">How to use:</span> {toy.howToUse}
                                       </p>
@@ -753,7 +753,7 @@ export default function MilestoneDetail() {
                                 href={milestone ? buildAmazonUrl(toy.searchQuery, milestone.ageRangeMonthsMin, milestone.ageRangeMonthsMax) : `https://www.amazon.com/s?k=${encodeURIComponent(toy.searchQuery)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center justify-center w-10 h-10 rounded-md bg-[#FF9900] text-white hover-elevate active-elevate-2"
+                                className="inline-flex items-center justify-center w-10 h-10 rounded-md bg-[#FF9900] text-primary-foreground hover-elevate active-elevate-2"
                                 data-testid={`link-amazon-${idx}`}
                                 title="Search on Amazon"
                               >
@@ -763,7 +763,7 @@ export default function MilestoneDetail() {
                                 href={`https://www.target.com/s?searchTerm=${encodeURIComponent(toy.searchQuery)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center justify-center w-10 h-10 rounded-md bg-[#CC0000] text-white hover-elevate active-elevate-2"
+                                className="inline-flex items-center justify-center w-10 h-10 rounded-md bg-[#CC0000] text-primary-foreground hover-elevate active-elevate-2"
                                 data-testid={`link-target-${idx}`}
                                 title="Search on Target"
                               >
@@ -773,7 +773,7 @@ export default function MilestoneDetail() {
                                 href={`https://www.walmart.com/search?q=${encodeURIComponent(toy.searchQuery)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center justify-center w-10 h-10 rounded-md bg-[#0071CE] text-white hover-elevate active-elevate-2"
+                                className="inline-flex items-center justify-center w-10 h-10 rounded-md bg-[#0071CE] text-primary-foreground hover-elevate active-elevate-2"
                                 data-testid={`link-walmart-${idx}`}
                                 title="Search on Walmart"
                               >
@@ -795,9 +795,9 @@ export default function MilestoneDetail() {
                     
                     {toyRecommendations && toyRecommendations.length > 0 && (
                       <div className="border-t border-border pt-4 mt-4">
-                        <div className="bg-amber-50 dark:bg-amber-950/20 rounded-md p-3">
+                        <div className="bg-muted/30 rounded-md p-3">
                           <div className="flex items-start gap-2">
-                            <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                            <AlertTriangle className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
                             <p className="text-xs text-muted-foreground leading-relaxed">
                               These are AI-generated suggestions. Please verify toy safety and age-appropriateness before purchasing.
                             </p>

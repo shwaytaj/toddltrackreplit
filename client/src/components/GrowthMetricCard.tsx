@@ -15,7 +15,7 @@ export default function GrowthMetricCard({
   value,
   unit,
   percentile,
-  color = 'bg-blue-50 dark:bg-blue-950/20',
+  color = 'bg-card',
   onClick
 }: GrowthMetricCardProps) {
   const labels = {

@@ -68,7 +68,7 @@ export default function GrowthDetail() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <div className="bg-blue-50 dark:bg-blue-950/20 px-4 py-6 relative">
+      <div className="bg-muted/30 px-4 py-6 relative">
         <button
           onClick={() => setLocation('/home')}
           className="absolute top-4 right-4 p-2 hover-elevate active-elevate-2 rounded-lg"
@@ -89,7 +89,7 @@ export default function GrowthDetail() {
             onClick={() => setActiveTab('tracking')}
             className={`flex-1 px-6 py-2.5 rounded-full font-medium text-sm transition-colors ${
               activeTab === 'tracking'
-                ? 'bg-[#2C3E50] text-white'
+                ? 'bg-primary text-primary-foreground'
                 : 'bg-muted text-foreground'
             }`}
             data-testid="tab-tracking"
@@ -100,7 +100,7 @@ export default function GrowthDetail() {
             onClick={() => setActiveTab('help')}
             className={`flex-1 px-6 py-2.5 rounded-full font-medium text-sm transition-colors ${
               activeTab === 'help'
-                ? 'bg-[#2C3E50] text-white'
+                ? 'bg-primary text-primary-foreground'
                 : 'bg-muted text-foreground'
             }`}
             data-testid="tab-help"
@@ -135,7 +135,7 @@ export default function GrowthDetail() {
 
             {!showAddForm ? (
               <Button 
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-full"
+                className="w-full rounded-full"
                 onClick={() => setShowAddForm(true)}
                 data-testid="button-add-measurement"
               >
@@ -153,7 +153,7 @@ export default function GrowthDetail() {
                   <Input type="date" data-testid="input-date" />
                 </div>
                 <Button 
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-full"
+                  className="w-full rounded-full"
                   onClick={() => {
                     console.log('Measurement submitted');
                     setShowAddForm(false);

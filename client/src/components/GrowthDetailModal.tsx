@@ -48,7 +48,7 @@ export default function GrowthDetailModal({
           <X className="h-4 w-4" />
         </button>
         
-        <DialogHeader className="bg-blue-50 dark:bg-blue-950/20 -mx-6 -mt-6 px-6 py-4 mb-4">
+        <DialogHeader className="bg-muted/30 -mx-6 -mt-6 px-6 py-4 mb-4">
           <p className="text-xs text-muted-foreground">Growth</p>
           <DialogTitle className="text-lg">{labels[metric.type]}</DialogTitle>
           <p className="text-sm text-muted-foreground">20-26 month</p>
@@ -82,7 +82,7 @@ export default function GrowthDetailModal({
 
             {!showAddForm ? (
               <Button 
-                className="w-full bg-info text-info-foreground hover:bg-info/90 rounded-full"
+                className="w-full rounded-full"
                 onClick={() => setShowAddForm(true)}
                 data-testid="button-add-measurement"
               >
@@ -100,7 +100,7 @@ export default function GrowthDetailModal({
                   <Input type="date" data-testid="input-date" />
                 </div>
                 <Button 
-                  className="w-full bg-info text-info-foreground rounded-full"
+                  className="w-full rounded-full"
                   onClick={() => {
                     console.log('Measurement submitted');
                     setShowAddForm(false);

@@ -14,7 +14,7 @@ export default function BottomNav({ active, onNavigate }: BottomNavProps) {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-[#1e293b] text-white rounded-t-3xl px-4 py-3 shadow-xl border-t border-white/10">
+    <nav className="fixed bottom-0 left-0 right-0 bg-sidebar text-sidebar-foreground rounded-t-3xl px-4 py-3 shadow-xl border-t border-sidebar-border">
       <div className="flex items-center justify-around max-w-md mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -26,7 +26,7 @@ export default function BottomNav({ active, onNavigate }: BottomNavProps) {
               onClick={() => onNavigate(item.id)}
               className={cn(
                 "flex flex-col items-center gap-1 px-6 py-2 rounded-xl transition-colors hover-elevate active-elevate-2",
-                isActive && "bg-white/15"
+                isActive && "bg-sidebar-accent text-sidebar-accent-foreground"
               )}
               data-testid={`nav-${item.id}`}
             >

@@ -30,23 +30,9 @@ const AGE_RANGES = [
   { min: 49, max: 60, label: '49-60 months' },
 ];
 
-// Map categories and subcategories to colors for visual distinction
-const subcategoryColors: Record<string, string> = {
-  'Gross Motor Skills': 'bg-purple-100 dark:bg-purple-900/20',
-  'Fine Motor Skills': 'bg-purple-100 dark:bg-purple-900/20',
-  'Communication': 'bg-green-100 dark:bg-green-900/20',
-  'Social & Emotional': 'bg-amber-100 dark:bg-amber-900/20',
-  'Cognitive': 'bg-blue-100 dark:bg-blue-900/20',
-  'Physical': 'bg-rose-100 dark:bg-rose-900/20',
-  'Development': 'bg-cyan-100 dark:bg-cyan-900/20',
-  'Eruption': 'bg-pink-100 dark:bg-pink-900/20',
-  'Vision': 'bg-amber-50 dark:bg-amber-950/20',
-  'Hearing': 'bg-teal-50 dark:bg-teal-950/20',
-};
-
+// Use semantic theme colors for all milestone cards - clean, neutral aesthetic
 const getMilestoneColor = (milestone: Milestone): string => {
-  const key = milestone.subcategory || milestone.category;
-  return subcategoryColors[key] || 'bg-gray-100 dark:bg-gray-900/20';
+  return 'bg-card';
 };
 
 export default function Milestones() {
@@ -178,7 +164,7 @@ export default function Milestones() {
             >
               <ChevronLeft className="w-4 h-4 mr-1" /> Previous
             </Button>
-            <div className="bg-[#2C3E50] text-white px-6 py-2 rounded-full text-sm font-medium">
+            <div className="bg-primary text-primary-foreground px-6 py-2 rounded-full text-sm font-medium">
               {selectedRangeIndex === childCorrectedAgeRangeIndex ? 'Current: ' : ''}{selectedRange.label}
             </div>
             <Button 
