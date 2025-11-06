@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import ProductCard from '@/components/ProductCard';
 import BottomNav from '@/components/BottomNav';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { X, Check, Lightbulb, AlertTriangle, Loader2, ChevronDown } from 'lucide-react';
@@ -657,33 +657,29 @@ export default function MilestoneDetail() {
                   </>
                 )}
 
-                <div className="border-t border-border pt-4 mt-4">
-                  <ToggleGroup 
-                    type="single" 
-                    value={achievementStatus?.achieved ? 'achieved' : 'not-achieved'}
-                    onValueChange={(value) => {
-                      if (value) toggleAchievement.mutate(value as 'achieved' | 'not-achieved');
-                    }}
-                    className="w-full"
+                <div className="border-t border-border pt-4 mt-4 flex gap-2">
+                  <Button
+                    onClick={() => toggleAchievement.mutate('not-achieved')}
                     disabled={toggleAchievement.isPending}
-                    data-testid="toggle-achievement-action"
+                    className={cn(
+                      "flex-1 rounded-full bg-primary text-primary-foreground hover:bg-primary active:bg-primary",
+                      !achievementStatus?.achieved && "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                    )}
+                    data-testid="toggle-not-achieved-action"
                   >
-                    <ToggleGroupItem 
-                      value="not-achieved" 
-                      className="flex-1 rounded-l-full data-[state=on]:bg-destructive/20 data-[state=on]:text-destructive-foreground"
-                      data-testid="toggle-not-achieved-action"
-                    >
-                      Not Achieved
-                    </ToggleGroupItem>
-                    <ToggleGroupItem 
-                      value="achieved" 
-                      className="flex-1 rounded-r-full"
-                      data-testid="toggle-achieved-action"
-                    >
-                      <Check className="w-4 h-4 mr-1" />
-                      Achieved
-                    </ToggleGroupItem>
-                  </ToggleGroup>
+                    Mark as Not Achieved
+                  </Button>
+                  <Button
+                    onClick={() => toggleAchievement.mutate('achieved')}
+                    disabled={toggleAchievement.isPending}
+                    className={cn(
+                      "flex-1 rounded-full bg-primary text-primary-foreground hover:bg-primary active:bg-primary",
+                      achievementStatus?.achieved && "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                    )}
+                    data-testid="toggle-achieved-action"
+                  >
+                    Mark as achieved
+                  </Button>
                 </div>
               </div>
             )}
