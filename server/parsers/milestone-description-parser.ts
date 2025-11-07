@@ -372,8 +372,12 @@ export function normalizeMilestoneTitle(title: string): string {
   return title
     .toLowerCase()                      // Convert to lowercase for case-insensitive matching
     .replace(/^\d+m:\s*/i, '')         // Remove age prefixes like "2M:", "12M:", "24M:"
+    .replace(/\*\*/g, '')              // Remove markdown bold markers
+    .replace(/\s*\(.*?\)\s*/g, ' ')    // Remove parenthetical content (e.g., "Title (note)" → "Title")
     .replace(/["""'']/g, '"')          // Normalize curly quotes to straight quotes
     .replace(/[–—]/g, '-')              // Normalize em-dash and en-dash to hyphen
+    .replace(/:/g, '')                  // Remove colons (e.g., "Height gain: 4-5" → "Height gain 4-5")
+    .replace(/,/g, '')                  // Remove commas for consistent matching
     .replace(/\s+/g, ' ')               // Replace multiple spaces with single space
     .trim();                            // Remove leading/trailing whitespace
 }

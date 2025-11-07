@@ -47,7 +47,14 @@ async function loadDescriptions() {
   
   for (const parsed of parsedDescriptions) {
     const normalized = normalizeMilestoneTitle(parsed.title);
-    const dbMilestone = dbTitleMap.get(normalized);
+    let dbMilestone = dbTitleMap.get(normalized);
+    
+    // If no exact match, try matching just the first part before comma
+    if (!dbMilestone && parsed.title.includes(',')) {
+      const beforeComma = parsed.title.split(',')[0].trim();
+      const normalizedBeforeComma = normalizeMilestoneTitle(beforeComma);
+      dbMilestone = dbTitleMap.get(normalizedBeforeComma);
+    }
     
     if (dbMilestone) {
       // Format the description for database storage
