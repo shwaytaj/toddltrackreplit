@@ -1,5 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
+import { Pool } from "@neondatabase/serverless";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import passport from "./auth";
@@ -12,8 +14,19 @@ if (!process.env.SESSION_SECRET) {
   throw new Error("SESSION_SECRET environment variable is required");
 }
 
+// Use PostgreSQL session store for production (Autoscale requires shared session storage)
+// Use in-memory store for development (simpler, faster iteration)
+const sessionStore = app.get("env") === "production"
+  ? new (connectPgSimple(session))({
+      pool: new Pool({ connectionString: process.env.DATABASE_URL }),
+      tableName: 'session',
+      createTableIfMissing: true,
+    })
+  : undefined; // MemoryStore (default)
+
 app.use(
   session({
+    store: sessionStore,
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,

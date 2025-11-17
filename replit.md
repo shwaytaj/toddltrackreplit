@@ -20,6 +20,7 @@ Preferred communication style: Simple, everyday language.
 ### Backend Architecture
 
 **Server Framework:** Express.js with TypeScript, session-based authentication using `express-session` and Passport.js (Local Strategy), BCrypt for hashing.
+**Session Management:** PostgreSQL-backed sessions using `connect-pg-simple` for production/Autoscale deployments (required for multi-instance session sharing). In-memory store for development.
 **API Design:** RESTful endpoints, JSON format, session cookies for authentication.
 **Key API Routes:** `/api/auth/*`, `/api/children/*`, `/api/milestones/*`, `/api/children/:id/growth-metrics`, `/api/children/:childId/milestones/:milestoneId/recommendations`.
 
