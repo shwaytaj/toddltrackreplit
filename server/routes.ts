@@ -977,6 +977,62 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
     }
   });
 
+  // Admin endpoint to sync milestones from comprehensive file
+  // This is needed to populate the production database with milestones
+  // SECURITY: Requires authentication
+  app.post("/api/admin/sync-milestones", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized - please log in" });
+    
+    try {
+      const { parseComprehensiveMilestones } = await import("./parsers/parse-comprehensive-milestones.js");
+      const { normalizeTitleForMatch } = await import("./parsers/title-normalizer.js");
+      const path = await import("path");
+      
+      // Parse canonical milestones from comprehensive file
+      const filePath = path.join(process.cwd(), 'attached_assets', 'dev-milestones-comprehensive_1762125221739.md');
+      const canonicalMilestones = parseComprehensiveMilestones(filePath);
+      
+      // Get current database milestones
+      const dbMilestones = await storage.getAllMilestones();
+      
+      // Create maps for efficient lookup
+      const dbTitleMap = new Map(
+        dbMilestones.map(m => [normalizeTitleForMatch(m.title), m])
+      );
+      
+      let added = 0;
+      let skipped = 0;
+      
+      // Add milestones that don't exist
+      for (const fileMilestone of canonicalMilestones) {
+        const normalized = normalizeTitleForMatch(fileMilestone.title);
+        const dbMilestone = dbTitleMap.get(normalized);
+        
+        if (!dbMilestone) {
+          // Add description field (required by schema)
+          await storage.createMilestone({
+            ...fileMilestone,
+            description: fileMilestone.description || '',
+          });
+          added++;
+        } else {
+          skipped++;
+        }
+      }
+      
+      res.json({ 
+        success: true, 
+        total: canonicalMilestones.length,
+        added,
+        skipped,
+        message: `Synced ${canonicalMilestones.length} milestones (${added} added, ${skipped} already exist)`
+      });
+    } catch (error) {
+      console.error("Milestone sync error:", error);
+      res.status(500).json({ error: "Failed to sync milestones", details: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
