@@ -68,6 +68,13 @@ export default function Home() {
     }
   }, [user, userLoading, setLocation]);
 
+  // Redirect to onboarding if user has no children
+  useEffect(() => {
+    if (!childrenLoading && user && children.length === 0) {
+      setLocation('/onboarding');
+    }
+  }, [children, childrenLoading, user, setLocation]);
+
   const selectedChild = useMemo(() => 
     children.find(c => c.id === activeChild),
     [children, activeChild]
