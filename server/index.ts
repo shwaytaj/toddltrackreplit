@@ -16,7 +16,7 @@ if (!process.env.SESSION_SECRET) {
 
 // Use PostgreSQL session store for production (Autoscale requires shared session storage)
 // Use in-memory store for development (simpler, faster iteration)
-const sessionStore = app.get("env") === "production"
+const sessionStore = process.env.NODE_ENV === "production"
   ? new (connectPgSimple(session))({
       pool: new Pool({ connectionString: process.env.DATABASE_URL }),
       tableName: 'session',
