@@ -5,6 +5,7 @@ import { Pool } from "@neondatabase/serverless";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import passport from "./auth";
+import { MilestoneSeeder } from "./services/milestoneSeeder";
 
 const app = express();
 app.use(express.json());
@@ -72,6 +73,10 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Seed milestones on startup (idempotent - only adds missing milestones)
+  // This ensures production database always has milestone data after deployment
+  await MilestoneSeeder.run();
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
