@@ -6,6 +6,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import passport from "./auth";
 import { MilestoneSeeder } from "./services/milestoneSeeder";
+import { DescriptionSeeder } from "./services/descriptionSeeder";
 
 const app = express();
 app.use(express.json());
@@ -73,9 +74,10 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Seed milestones on startup (idempotent - only adds missing milestones)
-  // This ensures production database always has milestone data after deployment
+  // Seed milestones and descriptions on startup (idempotent operations)
+  // This ensures production database always has complete data after deployment
   await MilestoneSeeder.run();
+  await DescriptionSeeder.seed();
   
   const server = await registerRoutes(app);
 
