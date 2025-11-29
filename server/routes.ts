@@ -488,11 +488,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Calculate age in months at measurement time (using due date)
+      // Formula: Adjusted Age = Measurement Date - Due Date
       const dueDate = new Date(child.dueDate);
       const measurementDate = new Date(validatedData.date);
-      const ageMonths = Math.floor(
+      const ageMonths = Math.max(0, Math.floor(
         (measurementDate.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44)
-      );
+      ));
       
       // Calculate WHO percentile
       const percentile = child.gender
