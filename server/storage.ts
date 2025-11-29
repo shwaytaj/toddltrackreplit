@@ -512,7 +512,16 @@ export class DbStorage implements IStorage {
 
   async isPrimaryParent(userId: string): Promise<boolean> {
     const relationships = await this.getUserParentRoles(userId);
-    return relationships.some(rel => rel.role === "primary");
+    
+    // If user has explicit relationship records, check if any are primary
+    if (relationships.length > 0) {
+      return relationships.some(rel => rel.role === "primary");
+    }
+    
+    // For legacy users without relationship records:
+    // If they have children via parentIds, they're considered primary
+    const children = await this.getChildrenByParentId(userId);
+    return children.length > 0;
   }
 
   // Invitation operations

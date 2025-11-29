@@ -189,6 +189,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       const child = await storage.createChild(validatedData);
+      
+      // Create parent-child relationship (primary parent when creating child)
+      await storage.createParentChildRelationship({
+        userId: req.user.id,
+        childId: child.id,
+        role: "primary",
+      });
+      
       res.json(child);
     } catch (error) {
       res.status(400).json({ error: "Invalid input" });
@@ -1183,6 +1191,401 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
     } catch (error) {
       console.error("Data export error:", error);
       res.status(500).json({ error: "Failed to export data" });
+    }
+  });
+
+  // Get user role (primary or secondary parent)
+  app.get("/api/user/role", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      const isPrimary = await storage.isPrimaryParent(req.user.id);
+      res.json({ role: isPrimary ? "primary" : "secondary" });
+    } catch (error) {
+      console.error("Error getting user role:", error);
+      res.status(500).json({ error: "Failed to get user role" });
+    }
+  });
+
+  // Get all parents for the current user's children
+  app.get("/api/parents", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      const children = await storage.getChildrenByParentId(req.user.id);
+      
+      if (children.length === 0) {
+        return res.json([]);
+      }
+      
+      // Get all parents for the first child (all children share same parents)
+      const childId = children[0].id;
+      const parents = await storage.getChildParents(childId);
+      
+      // Sanitize user data (remove passwords)
+      const sanitizedParents = parents.map(p => ({
+        id: p.id,
+        userId: p.userId,
+        childId: p.childId,
+        role: p.role,
+        joinedAt: p.joinedAt,
+        user: {
+          id: p.user.id,
+          email: p.user.email,
+          firstName: p.user.firstName,
+          lastName: p.user.lastName,
+        }
+      }));
+      
+      res.json(sanitizedParents);
+    } catch (error) {
+      console.error("Error getting parents:", error);
+      res.status(500).json({ error: "Failed to get parents" });
+    }
+  });
+
+  // Remove a secondary parent (primary parent only)
+  app.delete("/api/parents/:userId", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      const targetUserId = req.params.userId;
+      
+      // Verify current user is a primary parent
+      const isPrimary = await storage.isPrimaryParent(req.user.id);
+      if (!isPrimary) {
+        return res.status(403).json({ error: "Only primary parents can remove other parents" });
+      }
+      
+      // Get the target user's role
+      const children = await storage.getChildrenByParentId(req.user.id);
+      if (children.length === 0) {
+        return res.status(400).json({ error: "No children found" });
+      }
+      
+      const targetRole = await storage.getParentRole(targetUserId, children[0].id);
+      if (targetRole === "primary") {
+        return res.status(400).json({ error: "Cannot remove primary parent" });
+      }
+      
+      // Remove the secondary parent from all children
+      for (const child of children) {
+        await storage.deleteParentChildRelationship(targetUserId, child.id);
+        
+        // Also remove from parentIds array in children table
+        const updatedParentIds = child.parentIds.filter(id => id !== targetUserId);
+        await storage.updateChild(child.id, { parentIds: updatedParentIds });
+      }
+      
+      res.json({ success: true, message: "Parent removed successfully" });
+    } catch (error) {
+      console.error("Error removing parent:", error);
+      res.status(500).json({ error: "Failed to remove parent" });
+    }
+  });
+
+  // Secondary parent leaves (removes themselves)
+  app.post("/api/parents/leave", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      // Verify current user is a secondary parent
+      const isPrimary = await storage.isPrimaryParent(req.user.id);
+      if (isPrimary) {
+        return res.status(400).json({ error: "Primary parents cannot leave. Delete your account instead." });
+      }
+      
+      // Get all children the user is associated with
+      const children = await storage.getChildrenByParentId(req.user.id);
+      
+      // Remove user from all children
+      for (const child of children) {
+        await storage.deleteParentChildRelationship(req.user.id, child.id);
+        
+        // Also remove from parentIds array in children table
+        const updatedParentIds = child.parentIds.filter(id => id !== req.user.id);
+        await storage.updateChild(child.id, { parentIds: updatedParentIds });
+      }
+      
+      res.json({ success: true, message: "Successfully left family" });
+    } catch (error) {
+      console.error("Error leaving family:", error);
+      res.status(500).json({ error: "Failed to leave family" });
+    }
+  });
+
+  // Create invitation (primary parent only)
+  app.post("/api/invitations", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      const { email } = req.body;
+      
+      if (!email || typeof email !== "string") {
+        return res.status(400).json({ error: "Email is required" });
+      }
+      
+      // Verify current user is a primary parent
+      const isPrimary = await storage.isPrimaryParent(req.user.id);
+      if (!isPrimary) {
+        return res.status(403).json({ error: "Only primary parents can invite other parents" });
+      }
+      
+      // Check if email is already registered
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        // Check if they're already a parent
+        const children = await storage.getChildrenByParentId(req.user.id);
+        if (children.length > 0) {
+          const isAlreadyParent = children[0].parentIds.includes(existingUser.id);
+          if (isAlreadyParent) {
+            return res.status(400).json({ error: "This person is already a parent" });
+          }
+        }
+      }
+      
+      // Check for pending invitation
+      const pendingInvitation = await storage.getPendingInvitationByEmail(email);
+      if (pendingInvitation) {
+        return res.status(400).json({ error: "An invitation is already pending for this email" });
+      }
+      
+      // Generate unique token
+      const crypto = await import("crypto");
+      const token = crypto.randomBytes(32).toString("hex");
+      
+      // Set expiration to 7 days from now
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+      
+      // Create invitation
+      const invitation = await storage.createInvitation({
+        email,
+        invitedByUserId: req.user.id,
+        token,
+        status: "pending",
+        expiresAt,
+      });
+      
+      // Get inviter name for email
+      const inviter = await storage.getUser(req.user.id);
+      const inviterName = inviter?.firstName || inviter?.email || "A parent";
+      
+      // Get children count for message
+      const children = await storage.getChildrenByParentId(req.user.id);
+      
+      // Send invitation email (stub for now)
+      const { emailService } = await import("./services/emailService");
+      const inviteUrl = `${process.env.REPLIT_DEV_DOMAIN ? 'https://' + process.env.REPLIT_DEV_DOMAIN : 'http://localhost:5000'}/invite/${token}`;
+      
+      await emailService.sendInvitationEmail({
+        to: email,
+        inviterName,
+        inviteUrl,
+        expiresAt,
+      });
+      
+      res.json({ 
+        success: true, 
+        invitation: {
+          id: invitation.id,
+          email: invitation.email,
+          status: invitation.status,
+          expiresAt: invitation.expiresAt,
+        },
+        message: `Invitation sent to ${email}. They will have access to ${children.length} child profile(s).`
+      });
+    } catch (error) {
+      console.error("Error creating invitation:", error);
+      res.status(500).json({ error: "Failed to create invitation" });
+    }
+  });
+
+  // Get all invitations sent by current user
+  app.get("/api/invitations", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      const invitations = await storage.getInvitationsByUser(req.user.id);
+      
+      // Filter out sensitive data and check for expired invitations
+      const now = new Date();
+      const sanitizedInvitations = invitations.map(inv => {
+        const isExpired = inv.expiresAt && new Date(inv.expiresAt) < now && inv.status === "pending";
+        return {
+          id: inv.id,
+          email: inv.email,
+          status: isExpired ? "expired" : inv.status,
+          createdAt: inv.createdAt,
+          expiresAt: inv.expiresAt,
+          acceptedAt: inv.acceptedAt,
+        };
+      });
+      
+      res.json(sanitizedInvitations);
+    } catch (error) {
+      console.error("Error getting invitations:", error);
+      res.status(500).json({ error: "Failed to get invitations" });
+    }
+  });
+
+  // Revoke an invitation (primary parent only)
+  app.delete("/api/invitations/:id", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      const invitation = await storage.getInvitation(req.params.id);
+      
+      if (!invitation) {
+        return res.status(404).json({ error: "Invitation not found" });
+      }
+      
+      if (invitation.invitedByUserId !== req.user.id) {
+        return res.status(403).json({ error: "You can only revoke your own invitations" });
+      }
+      
+      if (invitation.status !== "pending") {
+        return res.status(400).json({ error: "Can only revoke pending invitations" });
+      }
+      
+      await storage.revokeInvitation(req.params.id);
+      res.json({ success: true, message: "Invitation revoked" });
+    } catch (error) {
+      console.error("Error revoking invitation:", error);
+      res.status(500).json({ error: "Failed to revoke invitation" });
+    }
+  });
+
+  // Validate invitation token (public - for registration page)
+  app.get("/api/invitations/validate/:token", async (req, res) => {
+    try {
+      const invitation = await storage.getInvitationByToken(req.params.token);
+      
+      if (!invitation) {
+        return res.status(404).json({ valid: false, error: "Invitation not found" });
+      }
+      
+      if (invitation.status !== "pending") {
+        return res.status(400).json({ valid: false, error: `Invitation has been ${invitation.status}` });
+      }
+      
+      const now = new Date();
+      if (invitation.expiresAt && new Date(invitation.expiresAt) < now) {
+        return res.status(400).json({ valid: false, error: "Invitation has expired" });
+      }
+      
+      // Get inviter info
+      const inviter = await storage.getUser(invitation.invitedByUserId);
+      const inviterName = inviter?.firstName 
+        ? `${inviter.firstName}${inviter.lastName ? ' ' + inviter.lastName : ''}`
+        : inviter?.email || "A parent";
+      
+      // Get children info
+      const children = await storage.getChildrenByParentId(invitation.invitedByUserId);
+      const childNames = children.map(c => c.name);
+      
+      res.json({ 
+        valid: true,
+        email: invitation.email,
+        inviterName,
+        childNames,
+        childCount: children.length,
+      });
+    } catch (error) {
+      console.error("Error validating invitation:", error);
+      res.status(500).json({ valid: false, error: "Failed to validate invitation" });
+    }
+  });
+
+  // Register via invitation (creates secondary parent)
+  app.post("/api/auth/register-invited", async (req, res) => {
+    try {
+      const { token, email, password, firstName, lastName, medicalHistory } = req.body;
+      
+      if (!token || !email || !password) {
+        return res.status(400).json({ error: "Token, email, and password are required" });
+      }
+      
+      // Validate invitation
+      const invitation = await storage.getInvitationByToken(token);
+      
+      if (!invitation) {
+        return res.status(404).json({ error: "Invitation not found" });
+      }
+      
+      if (invitation.status !== "pending") {
+        return res.status(400).json({ error: `Invitation has been ${invitation.status}` });
+      }
+      
+      const now = new Date();
+      if (invitation.expiresAt && new Date(invitation.expiresAt) < now) {
+        return res.status(400).json({ error: "Invitation has expired" });
+      }
+      
+      if (invitation.email.toLowerCase() !== email.toLowerCase()) {
+        return res.status(400).json({ error: "Email does not match invitation" });
+      }
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: "Email already registered. Please login instead." });
+      }
+      
+      // Create user
+      const hashedPassword = await hashPassword(password);
+      const user = await storage.createUser({ 
+        email, 
+        password: hashedPassword 
+      });
+      
+      // Update user with optional fields
+      if (firstName || lastName || medicalHistory) {
+        await storage.updateUser(user.id, {
+          firstName: firstName || null,
+          lastName: lastName || null,
+          medicalHistory: medicalHistory || null,
+          medicalHistoryUpdatedAt: medicalHistory ? new Date() : null,
+        });
+      }
+      
+      // Get inviter's children
+      const children = await storage.getChildrenByParentId(invitation.invitedByUserId);
+      
+      // Add new user as secondary parent to all children
+      for (const child of children) {
+        // Add to parentIds array
+        const updatedParentIds = [...child.parentIds, user.id];
+        await storage.updateChild(child.id, { parentIds: updatedParentIds });
+        
+        // Create parent-child relationship
+        await storage.createParentChildRelationship({
+          userId: user.id,
+          childId: child.id,
+          role: "secondary",
+        });
+      }
+      
+      // Mark invitation as accepted
+      await storage.updateInvitation(invitation.id, {
+        status: "accepted",
+        acceptedAt: new Date(),
+        acceptedByUserId: user.id,
+      });
+      
+      // Log the user in
+      req.login(user, (err) => {
+        if (err) return res.status(500).json({ error: "Login failed after registration" });
+        res.json({ 
+          id: user.id, 
+          email: user.email,
+          role: "secondary",
+          childCount: children.length,
+        });
+      });
+    } catch (error) {
+      console.error("Invited registration error:", error);
+      res.status(500).json({ error: "Registration failed" });
     }
   });
 
