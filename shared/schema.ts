@@ -138,6 +138,26 @@ export const aiToyRecommendations = pgTable("ai_toy_recommendations", {
   parentDataVersion: timestamp("parent_data_version").notNull(),
 });
 
+export const parentChildRelationships = pgTable("parent_child_relationships", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  childId: varchar("child_id").notNull().references(() => children.id, { onDelete: "cascade" }),
+  role: text("role").notNull(), // "primary" | "secondary"
+  joinedAt: timestamp("joined_at").defaultNow(),
+});
+
+export const invitations = pgTable("invitations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull(),
+  invitedByUserId: varchar("invited_by_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  status: text("status").notNull().default("pending"), // "pending" | "accepted" | "expired" | "revoked"
+  createdAt: timestamp("created_at").defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(),
+  acceptedAt: timestamp("accepted_at"),
+  acceptedByUserId: varchar("accepted_by_user_id").references(() => users.id, { onDelete: "set null" }),
+});
+
 // Insert schemas and types
 export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
@@ -186,6 +206,18 @@ export const insertAiToyRecommendationSchema = createInsertSchema(aiToyRecommend
   generatedAt: true,
 });
 
+export const insertParentChildRelationshipSchema = createInsertSchema(parentChildRelationships).omit({
+  id: true,
+  joinedAt: true,
+});
+
+export const insertInvitationSchema = createInsertSchema(invitations).omit({
+  id: true,
+  createdAt: true,
+  acceptedAt: true,
+  acceptedByUserId: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -216,3 +248,12 @@ export type DismissedToyRecommendation = typeof dismissedToyRecommendations.$inf
 
 export type InsertAiToyRecommendation = z.infer<typeof insertAiToyRecommendationSchema>;
 export type AiToyRecommendation = typeof aiToyRecommendations.$inferSelect;
+
+export type InsertParentChildRelationship = z.infer<typeof insertParentChildRelationshipSchema>;
+export type ParentChildRelationship = typeof parentChildRelationships.$inferSelect;
+
+export type InsertInvitation = z.infer<typeof insertInvitationSchema>;
+export type Invitation = typeof invitations.$inferSelect;
+
+export type ParentRole = "primary" | "secondary";
+export type InvitationStatus = "pending" | "accepted" | "expired" | "revoked";

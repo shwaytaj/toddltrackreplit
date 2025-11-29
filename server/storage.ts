@@ -25,6 +25,11 @@ import {
   type InsertDismissedToyRecommendation,
   type AiToyRecommendation,
   type InsertAiToyRecommendation,
+  type ParentChildRelationship,
+  type InsertParentChildRelationship,
+  type Invitation,
+  type InsertInvitation,
+  type ParentRole,
   users,
   children,
   milestones,
@@ -35,6 +40,8 @@ import {
   completedRecommendations,
   dismissedToyRecommendations,
   aiToyRecommendations,
+  parentChildRelationships,
+  invitations,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -93,6 +100,23 @@ export interface IStorage {
   // AI toy recommendation operations
   getAiToyRecommendation(childId: string, milestoneId: string): Promise<AiToyRecommendation | undefined>;
   createAiToyRecommendation(recommendation: InsertAiToyRecommendation): Promise<AiToyRecommendation>;
+
+  // Parent-child relationship operations
+  getParentRole(userId: string, childId: string): Promise<ParentRole | undefined>;
+  getUserParentRoles(userId: string): Promise<ParentChildRelationship[]>;
+  getChildParents(childId: string): Promise<Array<ParentChildRelationship & { user: User }>>;
+  createParentChildRelationship(relationship: InsertParentChildRelationship): Promise<ParentChildRelationship>;
+  deleteParentChildRelationship(userId: string, childId: string): Promise<boolean>;
+  isPrimaryParent(userId: string): Promise<boolean>;
+
+  // Invitation operations
+  getInvitation(id: string): Promise<Invitation | undefined>;
+  getInvitationByToken(token: string): Promise<Invitation | undefined>;
+  getInvitationsByUser(userId: string): Promise<Invitation[]>;
+  getPendingInvitationByEmail(email: string): Promise<Invitation | undefined>;
+  createInvitation(invitation: InsertInvitation): Promise<Invitation>;
+  updateInvitation(id: string, data: Partial<Invitation>): Promise<Invitation | undefined>;
+  revokeInvitation(id: string): Promise<boolean>;
 }
 
 export class DbStorage implements IStorage {
@@ -429,6 +453,121 @@ export class DbStorage implements IStorage {
   async createAiToyRecommendation(recommendation: InsertAiToyRecommendation): Promise<AiToyRecommendation> {
     const result = await this.db.insert(aiToyRecommendations).values(recommendation as any).returning();
     return result[0];
+  }
+
+  // Parent-child relationship operations
+  async getParentRole(userId: string, childId: string): Promise<ParentRole | undefined> {
+    const result = await this.db
+      .select()
+      .from(parentChildRelationships)
+      .where(
+        and(
+          eq(parentChildRelationships.userId, userId),
+          eq(parentChildRelationships.childId, childId)
+        )
+      );
+    return result[0]?.role as ParentRole | undefined;
+  }
+
+  async getUserParentRoles(userId: string): Promise<ParentChildRelationship[]> {
+    return await this.db
+      .select()
+      .from(parentChildRelationships)
+      .where(eq(parentChildRelationships.userId, userId));
+  }
+
+  async getChildParents(childId: string): Promise<Array<ParentChildRelationship & { user: User }>> {
+    const relationships = await this.db
+      .select()
+      .from(parentChildRelationships)
+      .where(eq(parentChildRelationships.childId, childId));
+    
+    const result: Array<ParentChildRelationship & { user: User }> = [];
+    for (const rel of relationships) {
+      const user = await this.getUser(rel.userId);
+      if (user) {
+        result.push({ ...rel, user });
+      }
+    }
+    return result;
+  }
+
+  async createParentChildRelationship(relationship: InsertParentChildRelationship): Promise<ParentChildRelationship> {
+    const result = await this.db.insert(parentChildRelationships).values(relationship).returning();
+    return result[0];
+  }
+
+  async deleteParentChildRelationship(userId: string, childId: string): Promise<boolean> {
+    const result = await this.db
+      .delete(parentChildRelationships)
+      .where(
+        and(
+          eq(parentChildRelationships.userId, userId),
+          eq(parentChildRelationships.childId, childId)
+        )
+      )
+      .returning();
+    return result.length > 0;
+  }
+
+  async isPrimaryParent(userId: string): Promise<boolean> {
+    const relationships = await this.getUserParentRoles(userId);
+    return relationships.some(rel => rel.role === "primary");
+  }
+
+  // Invitation operations
+  async getInvitation(id: string): Promise<Invitation | undefined> {
+    const result = await this.db.select().from(invitations).where(eq(invitations.id, id));
+    return result[0];
+  }
+
+  async getInvitationByToken(token: string): Promise<Invitation | undefined> {
+    const result = await this.db.select().from(invitations).where(eq(invitations.token, token));
+    return result[0];
+  }
+
+  async getInvitationsByUser(userId: string): Promise<Invitation[]> {
+    return await this.db
+      .select()
+      .from(invitations)
+      .where(eq(invitations.invitedByUserId, userId))
+      .orderBy(desc(invitations.createdAt));
+  }
+
+  async getPendingInvitationByEmail(email: string): Promise<Invitation | undefined> {
+    const result = await this.db
+      .select()
+      .from(invitations)
+      .where(
+        and(
+          eq(invitations.email, email),
+          eq(invitations.status, "pending")
+        )
+      );
+    return result[0];
+  }
+
+  async createInvitation(invitation: InsertInvitation): Promise<Invitation> {
+    const result = await this.db.insert(invitations).values(invitation).returning();
+    return result[0];
+  }
+
+  async updateInvitation(id: string, data: Partial<Invitation>): Promise<Invitation | undefined> {
+    const result = await this.db
+      .update(invitations)
+      .set(data)
+      .where(eq(invitations.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async revokeInvitation(id: string): Promise<boolean> {
+    const result = await this.db
+      .update(invitations)
+      .set({ status: "revoked" })
+      .where(eq(invitations.id, id))
+      .returning();
+    return result.length > 0;
   }
 }
 
