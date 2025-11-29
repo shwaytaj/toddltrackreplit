@@ -1050,11 +1050,11 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
       // Create milestone lookup map
       const milestoneMap = new Map(allMilestones.map(m => [m.id, m]));
       
-      // Collect all child data
-      const allChildMilestones: Array<{childName: string; milestone: any; childMilestone: any}> = [];
-      const allGrowthMetrics: Array<{childName: string; metric: any}> = [];
-      const allTeeth: Array<{childName: string; tooth: any}> = [];
-      const allCompletedActivities: Array<{childName: string; activity: any}> = [];
+      // Collect all child data (include childId for unique identification)
+      const allChildMilestones: Array<{childId: string; childName: string; milestone: any; childMilestone: any}> = [];
+      const allGrowthMetrics: Array<{childId: string; childName: string; metric: any}> = [];
+      const allTeeth: Array<{childId: string; childName: string; tooth: any}> = [];
+      const allCompletedActivities: Array<{childId: string; childName: string; activity: any}> = [];
       
       for (const child of userChildren) {
         const childMilestones = await storage.getChildMilestones(child.id);
@@ -1064,12 +1064,12 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
         
         childMilestones.forEach(cm => {
           const milestone = milestoneMap.get(cm.milestoneId);
-          allChildMilestones.push({ childName: child.name, milestone, childMilestone: cm });
+          allChildMilestones.push({ childId: child.id, childName: child.name, milestone, childMilestone: cm });
         });
         
-        growthMetrics.forEach(m => allGrowthMetrics.push({ childName: child.name, metric: m }));
-        teeth.forEach(t => allTeeth.push({ childName: child.name, tooth: t }));
-        completedRecs.forEach(a => allCompletedActivities.push({ childName: child.name, activity: a }));
+        growthMetrics.forEach(m => allGrowthMetrics.push({ childId: child.id, childName: child.name, metric: m }));
+        teeth.forEach(t => allTeeth.push({ childId: child.id, childName: child.name, tooth: t }));
+        completedRecs.forEach(a => allCompletedActivities.push({ childId: child.id, childName: child.name, activity: a }));
       }
       
       // Helper to escape CSV values
@@ -1105,8 +1105,9 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
       ].join('\n');
       
       const childrenCSV = [
-        'Name,Due Date,Sex,Medical History',
+        'Child ID,Name,Due Date,Sex,Medical History',
         ...userChildren.map(c => [
+          escapeCSV(c.id),
           escapeCSV(c.name),
           escapeCSV(formatDate(c.dueDate)),
           escapeCSV(c.sex || ''),
@@ -1115,8 +1116,9 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
       ].join('\n');
       
       const milestonesCSV = [
-        'Child Name,Milestone,Category,Status,Date Achieved,Notes',
-        ...allChildMilestones.map(({ childName, milestone, childMilestone }) => [
+        'Child ID,Child Name,Milestone,Category,Status,Date Achieved,Notes',
+        ...allChildMilestones.map(({ childId, childName, milestone, childMilestone }) => [
+          escapeCSV(childId),
           escapeCSV(childName),
           escapeCSV(milestone?.title || 'Unknown'),
           escapeCSV(milestone?.category || ''),
@@ -1127,8 +1129,9 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
       ].join('\n');
       
       const growthCSV = [
-        'Child Name,Date,Type,Value,Unit,Percentile',
-        ...allGrowthMetrics.map(({ childName, metric }) => [
+        'Child ID,Child Name,Date,Type,Value,Unit,Percentile',
+        ...allGrowthMetrics.map(({ childId, childName, metric }) => [
+          escapeCSV(childId),
           escapeCSV(childName),
           escapeCSV(formatDate(metric.recordedAt)),
           escapeCSV(metric.type),
@@ -1139,8 +1142,9 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
       ].join('\n');
       
       const teethCSV = [
-        'Child Name,Tooth Number,Tooth Name,Eruption Date,Status',
-        ...allTeeth.map(({ childName, tooth }) => [
+        'Child ID,Child Name,Tooth Number,Tooth Name,Eruption Date,Status',
+        ...allTeeth.map(({ childId, childName, tooth }) => [
+          escapeCSV(childId),
           escapeCSV(childName),
           escapeCSV(tooth.toothNumber),
           escapeCSV(tooth.toothName || ''),
@@ -1150,8 +1154,9 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
       ].join('\n');
       
       const activitiesCSV = [
-        'Child Name,Activity Title,Description,Completed At',
-        ...allCompletedActivities.map(({ childName, activity }) => [
+        'Child ID,Child Name,Activity Title,Description,Completed At',
+        ...allCompletedActivities.map(({ childId, childName, activity }) => [
+          escapeCSV(childId),
           escapeCSV(childName),
           escapeCSV(activity.recommendationTitle),
           escapeCSV(activity.recommendationDescription || ''),
