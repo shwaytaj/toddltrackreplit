@@ -30,7 +30,7 @@ import { useUser } from '@/hooks/use-user';
 import { useActiveChild } from '@/contexts/ActiveChildContext';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { calculateCorrectedAge, formatAdjustment, formatAge } from '@/lib/age-calculation';
+import { calculateAdjustedAge, formatAge } from '@/lib/age-calculation';
 import { Plus, Trash2, Edit, Check, ChevronRight } from 'lucide-react';
 import type { Child, User } from '@shared/schema';
 
@@ -49,7 +49,6 @@ export default function Profile() {
 
   // Form states for editing/adding child
   const [childName, setChildName] = useState('');
-  const [birthDate, setBirthDate] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [childNotes, setChildNotes] = useState('');
   const [parentNotes, setParentNotes] = useState('');
@@ -73,8 +72,7 @@ export default function Profile() {
 
   // Calculate age for display
   const getChildAge = (child: Child) => {
-    const ageInfo = calculateCorrectedAge(child.birthDate, child.dueDate);
-    const age = ageInfo.shouldUseCorrectedAge ? ageInfo.corrected : ageInfo.chronological;
+    const age = calculateAdjustedAge(child.dueDate);
     return formatAge(age);
   };
 
@@ -86,8 +84,7 @@ export default function Profile() {
   const openEditDialog = (child: Child) => {
     setEditingChild(child);
     setChildName(child.name);
-    setBirthDate(child.birthDate);
-    setDueDate(child.dueDate || '');
+    setDueDate(child.dueDate);
     setChildNotes(child.medicalHistory?.notes || '');
     setIsAddingChild(false);
   };
@@ -96,7 +93,6 @@ export default function Profile() {
     setIsAddingChild(true);
     setEditingChild(null);
     setChildName('');
-    setBirthDate('');
     setDueDate('');
     setChildNotes('');
   };
@@ -105,17 +101,15 @@ export default function Profile() {
     setEditingChild(null);
     setIsAddingChild(false);
     setChildName('');
-    setBirthDate('');
     setDueDate('');
     setChildNotes('');
   };
 
   const createChildMutation = useMutation({
-    mutationFn: async (data: { name: string; birthDate: string; dueDate: string; notes: string }) => {
+    mutationFn: async (data: { name: string; dueDate: string; notes: string }) => {
       const response = await apiRequest('POST', '/api/children', {
         name: data.name,
-        birthDate: data.birthDate,
-        dueDate: data.dueDate || null,
+        dueDate: data.dueDate,
         gender: 'other',
       });
       const newChild = await response.json();
@@ -150,12 +144,11 @@ export default function Profile() {
   });
 
   const updateChildMutation = useMutation({
-    mutationFn: async (data: { childId: string; name: string; birthDate: string; dueDate: string; notes: string }) => {
+    mutationFn: async (data: { childId: string; name: string; dueDate: string; notes: string }) => {
       // Update basic info
       await apiRequest('PATCH', `/api/children/${data.childId}`, {
         name: data.name,
-        birthDate: data.birthDate,
-        dueDate: data.dueDate || null,
+        dueDate: data.dueDate,
       });
       
       // Update medical history
@@ -266,12 +259,6 @@ export default function Profile() {
     if (page === 'home') setLocation('/home');
     if (page === 'milestones') setLocation('/milestones');
   };
-
-  // Calculate adjustment for display in edit dialog
-  const adjustmentInfo = useMemo(() => 
-    birthDate && dueDate ? calculateCorrectedAge(birthDate, dueDate) : null,
-    [birthDate, dueDate]
-  );
 
   if (childrenLoading || userLoading) {
     return (
@@ -440,18 +427,7 @@ export default function Profile() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="dialog-birth-date">Birth Date</Label>
-              <Input
-                id="dialog-birth-date"
-                type="date"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                data-testid="input-dialog-birth-date"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="dialog-due-date">Original Due Date (Optional)</Label>
+              <Label htmlFor="dialog-due-date">Due Date</Label>
               <Input
                 id="dialog-due-date"
                 type="date"
@@ -460,26 +436,9 @@ export default function Profile() {
                 data-testid="input-dialog-due-date"
               />
               <p className="text-xs text-muted-foreground">
-                Used to calculate adjusted age for premature babies
+                The expected delivery date from your doctor. We'll use this to calculate your child's age.
               </p>
             </div>
-
-            {adjustmentInfo && adjustmentInfo.adjustmentWeeks > 0 && (
-              <div className="p-3 bg-muted rounded-md">
-                <p className="text-sm font-medium">
-                  Birth Adjustment: {formatAdjustment(
-                    adjustmentInfo.adjustmentWeeks,
-                    adjustmentInfo.isPremature,
-                    adjustmentInfo.isPostMature
-                  )}
-                </p>
-                {adjustmentInfo.shouldUseCorrectedAge && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Milestones will be adjusted accordingly until age 3
-                  </p>
-                )}
-              </div>
-            )}
 
             <div className="space-y-2">
               <Label htmlFor="dialog-child-notes">Medical Notes (Optional)</Label>
@@ -500,10 +459,10 @@ export default function Profile() {
             </Button>
             <Button
               onClick={() => {
-                if (!childName || !birthDate) {
+                if (!childName || !dueDate) {
                   toast({
                     title: 'Missing information',
-                    description: 'Please enter a name and birth date.',
+                    description: 'Please enter a name and due date.',
                     variant: 'destructive',
                   });
                   return;
@@ -512,7 +471,6 @@ export default function Profile() {
                 if (isAddingChild) {
                   createChildMutation.mutate({
                     name: childName,
-                    birthDate,
                     dueDate,
                     notes: childNotes,
                   });
@@ -520,7 +478,6 @@ export default function Profile() {
                   updateChildMutation.mutate({
                     childId: editingChild.id,
                     name: childName,
-                    birthDate,
                     dueDate,
                     notes: childNotes,
                   });

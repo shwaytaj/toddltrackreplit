@@ -1,6 +1,7 @@
 /**
- * Calculate corrected age for premature/post-mature babies
+ * Calculate adjusted age based on due date
  * Backend utility matching frontend logic
+ * Formula: Adjusted Age = Current Date - Due Date
  */
 
 interface AgeResult {
@@ -9,30 +10,24 @@ interface AgeResult {
   days: number;
 }
 
-interface CorrectedAgeResult {
-  chronological: AgeResult;
-  corrected: AgeResult;
-  adjustmentWeeks: number;
-  isPremature: boolean;
-  isPostMature: boolean;
-  shouldUseCorrectedAge: boolean;
-}
-
-function calculateAge(birthDate: Date | string): AgeResult {
-  const birth = new Date(birthDate);
-  birth.setHours(0, 0, 0, 0);
+/**
+ * Calculate adjusted age from due date
+ */
+export function calculateAdjustedAge(dueDate: Date | string): AgeResult {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
+  const due = new Date(dueDate);
+  due.setHours(0, 0, 0, 0);
   
-  let years = now.getFullYear() - birth.getFullYear();
-  let months = now.getMonth() - birth.getMonth();
-  let days = now.getDate() - birth.getDate();
+  let years = today.getFullYear() - due.getFullYear();
+  let months = today.getMonth() - due.getMonth();
+  let days = today.getDate() - due.getDate();
   
   if (days < 0) {
     months--;
-    const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-    days += prevMonth.getDate();
+    const lastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+    days += lastMonth.getDate();
   }
   
   if (months < 0) {
@@ -40,85 +35,18 @@ function calculateAge(birthDate: Date | string): AgeResult {
     months += 12;
   }
   
-  return {
-    years: Math.max(0, years),
-    months: Math.max(0, months),
-    days: Math.max(0, days),
-  };
-}
-
-export function calculateCorrectedAge(
-  birthDate: Date | string,
-  dueDate?: Date | string | null
-): CorrectedAgeResult {
-  const chronological = calculateAge(birthDate);
-  
-  // If no due date provided, use chronological age only
-  if (!dueDate) {
-    return {
-      chronological,
-      corrected: chronological,
-      adjustmentWeeks: 0,
-      isPremature: false,
-      isPostMature: false,
-      shouldUseCorrectedAge: false,
-    };
+  // Handle case where due date is in the future
+  if (years < 0) {
+    return { years: 0, months: 0, days: 0 };
   }
   
-  const birth = new Date(birthDate);
-  birth.setHours(0, 0, 0, 0);
-  
-  const due = new Date(dueDate);
-  due.setHours(0, 0, 0, 0);
-  
-  // Calculate adjustment in weeks
-  const diffTime = due.getTime() - birth.getTime();
-  const adjustmentWeeks = Math.round(diffTime / (7 * 24 * 60 * 60 * 1000));
-  
-  const isPremature = adjustmentWeeks > 0; // born before due date
-  const isPostMature = adjustmentWeeks < 0; // born after due date
-  
-  // Stop using corrected age after 3 years (36 months)
-  const totalChronologicalMonths = chronological.years * 12 + chronological.months;
-  const shouldUseCorrectedAge = totalChronologicalMonths < 36;
-  
-  // Calculate corrected age if applicable
-  let corrected = chronological;
-  
-  if (shouldUseCorrectedAge && adjustmentWeeks !== 0) {
-    // Convert adjustment weeks to months (using 4.345 weeks per month)
-    const adjustmentMonths = adjustmentWeeks / 4.345;
-    
-    // Calculate total corrected months
-    const totalCorrectedMonths = totalChronologicalMonths - adjustmentMonths;
-    
-    // Convert back to years, months, days
-    const correctedYears = Math.floor(totalCorrectedMonths / 12);
-    const correctedMonths = Math.floor(totalCorrectedMonths % 12);
-    
-    // Keep days the same as chronological
-    corrected = {
-      years: Math.max(0, correctedYears),
-      months: Math.max(0, correctedMonths),
-      days: chronological.days,
-    };
-  }
-  
-  return {
-    chronological,
-    corrected,
-    adjustmentWeeks: Math.abs(adjustmentWeeks),
-    isPremature,
-    isPostMature,
-    shouldUseCorrectedAge,
-  };
+  return { years, months, days };
 }
 
 /**
- * Get age in months for AI prompts (uses corrected age if applicable)
+ * Get adjusted age in months for AI prompts and calculations
  */
-export function getAgeInMonthsForAI(birthDate: Date | string, dueDate?: Date | string | null): number {
-  const ageInfo = calculateCorrectedAge(birthDate, dueDate);
-  const age = ageInfo.shouldUseCorrectedAge ? ageInfo.corrected : ageInfo.chronological;
+export function getAgeInMonthsForAI(dueDate: Date | string): number {
+  const age = calculateAdjustedAge(dueDate);
   return age.years * 12 + age.months;
 }

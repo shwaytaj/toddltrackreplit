@@ -9,7 +9,7 @@ import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { useUser } from '@/hooks/use-user';
 import { useActiveChild } from '@/contexts/ActiveChildContext';
-import { calculateCorrectedAge, getAgeRange, formatAge, formatAdjustment } from '@/lib/age-calculation';
+import { calculateAdjustedAge, getAgeRange, getAdjustedMonths, formatAge } from '@/lib/age-calculation';
 import { getMonkeyIcon } from '@/components/MonkeyIcons';
 import type { Milestone, ChildMilestone, GrowthMetric } from '@shared/schema';
 
@@ -58,22 +58,21 @@ export default function Home() {
     }
   }, [userLoading, user, setLocation]);
 
-  // Calculate corrected age (accounts for premature/post-mature birth)
-  const ageInfo = useMemo(() => {
+  // Calculate adjusted age (based on due date)
+  const adjustedAge = useMemo(() => {
     if (!selectedChild) return null;
-    return calculateCorrectedAge(selectedChild.birthDate, selectedChild.dueDate);
+    return calculateAdjustedAge(selectedChild.dueDate);
   }, [selectedChild]);
 
-  // Use corrected age for milestone filtering
-  const correctedMonths = useMemo(() => {
-    if (!ageInfo) return 0;
-    const age = ageInfo.shouldUseCorrectedAge ? ageInfo.corrected : ageInfo.chronological;
-    return age.years * 12 + age.months;
-  }, [ageInfo]);
+  // Get adjusted age in months for milestone filtering
+  const adjustedMonths = useMemo(() => {
+    if (!selectedChild) return 0;
+    return getAdjustedMonths(selectedChild.dueDate);
+  }, [selectedChild]);
 
   const ageRange = useMemo(() => 
-    correctedMonths >= 0 ? getAgeRange(correctedMonths) : null,
-    [correctedMonths]
+    adjustedMonths >= 0 ? getAgeRange(adjustedMonths) : null,
+    [adjustedMonths]
   );
 
   const { data: milestones = [] } = useQuery<Milestone[]>({
@@ -128,7 +127,7 @@ export default function Home() {
     if (page === 'profile') setLocation('/profile');
   };
 
-  if (childrenLoading || !selectedChild || !ageInfo) {
+  if (childrenLoading || !selectedChild || !adjustedAge) {
     return (
       <div className="min-h-screen bg-background pb-20">
         <div className="p-4 space-y-6 max-w-2xl mx-auto">
@@ -162,22 +161,11 @@ export default function Home() {
           <h1 className="text-3xl font-bold mb-2" data-testid="heading-overview">Overview</h1>
           <div className="space-y-1">
             <p className="text-muted-foreground" data-testid="text-child-age">
-              {firstName} is {formatAge(ageInfo.chronological)}
+              {firstName} is {formatAge(adjustedAge)}
             </p>
-            {ageInfo.shouldUseCorrectedAge && ageInfo.adjustmentWeeks > 0 && (
-              <>
-                <p className="text-sm text-muted-foreground" data-testid="text-adjusted-age">
-                  Adjusted age: {formatAge(ageInfo.corrected)} ({formatAdjustment(
-                    ageInfo.adjustmentWeeks,
-                    ageInfo.isPremature,
-                    ageInfo.isPostMature
-                  )})
-                </p>
-                <p className="text-xs text-muted-foreground" data-testid="text-milestone-range">
-                  Showing milestones for: {ageRange?.label} range
-                </p>
-              </>
-            )}
+            <p className="text-xs text-muted-foreground" data-testid="text-milestone-range">
+              Showing milestones for: {ageRange?.label} range
+            </p>
           </div>
         </div>
 
@@ -208,11 +196,6 @@ export default function Home() {
         <div>
           <div className="mb-3">
             <h2 className="font-semibold">{ageRange?.label} Milestones</h2>
-            {ageInfo?.shouldUseCorrectedAge && (
-              <p className="text-xs text-muted-foreground mt-1" data-testid="text-adjusted-milestone-note">
-                Milestone age range based on adjusted age
-              </p>
-            )}
           </div>
 
           {milestonesByCategory.developmental.length > 0 && (

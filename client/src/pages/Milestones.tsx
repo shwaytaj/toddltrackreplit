@@ -15,7 +15,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useActiveChild } from '@/contexts/ActiveChildContext';
 import type { ChildMilestone, Milestone } from '@shared/schema';
-import { calculateCorrectedAge } from '@/lib/age-calculation';
+import { getAdjustedMonths } from '@/lib/age-calculation';
 import { getMonkeyIcon } from '@/components/MonkeyIcons';
 
 const AGE_RANGES = [
@@ -75,18 +75,10 @@ export default function Milestones() {
 
   const { activeChild: selectedChild, activeChildId } = useActiveChild();
 
-  // Calculate child's corrected age and store age info
-  const ageInfo = useMemo(() => {
-    if (!selectedChild) return null;
-    return calculateCorrectedAge(selectedChild.birthDate, selectedChild.dueDate);
-  }, [selectedChild]);
-
-  // Calculate child's current age in months (using corrected age) and set initial range
+  // Calculate child's adjusted age in months and set initial range
   useEffect(() => {
-    if (selectedChild && ageInfo) {
-      // Use corrected age if applicable, otherwise use chronological
-      const age = ageInfo.shouldUseCorrectedAge ? ageInfo.corrected : ageInfo.chronological;
-      const ageInMonths = age.years * 12 + age.months;
+    if (selectedChild) {
+      const ageInMonths = getAdjustedMonths(selectedChild.dueDate);
       
       // Find the age range that contains the child's current age
       const rangeIndex = AGE_RANGES.findIndex(range => 
@@ -95,10 +87,10 @@ export default function Milestones() {
       
       if (rangeIndex !== -1) {
         setSelectedRangeIndex(rangeIndex);
-        setChildCorrectedAgeRangeIndex(rangeIndex); // Track the child's corrected age range
+        setChildCorrectedAgeRangeIndex(rangeIndex);
       }
     }
-  }, [selectedChild, ageInfo]);
+  }, [selectedChild]);
 
   const selectedRange = AGE_RANGES[selectedRangeIndex];
 
@@ -201,11 +193,6 @@ export default function Milestones() {
               Next <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
-          {ageInfo?.shouldUseCorrectedAge && selectedRangeIndex === childCorrectedAgeRangeIndex && (
-            <p className="text-xs text-muted-foreground text-center" data-testid="text-adjusted-range-note">
-              Age range based on adjusted age
-            </p>
-          )}
         </div>
 
         {/* Search input */}

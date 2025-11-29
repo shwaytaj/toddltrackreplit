@@ -208,8 +208,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const updateChildSchema = z.object({
         name: z.string().optional(),
-        birthDate: z.string().optional(),
-        dueDate: z.string().nullable().optional(),
+        dueDate: z.string().optional(),
         gender: z.enum(['male', 'female', 'other']).optional(),
       });
       
@@ -488,11 +487,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
       });
       
-      // Calculate age in months at measurement time
-      const birthDate = new Date(child.birthDate);
+      // Calculate age in months at measurement time (using due date)
+      const dueDate = new Date(child.dueDate);
       const measurementDate = new Date(validatedData.date);
       const ageMonths = Math.floor(
-        (measurementDate.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44)
+        (measurementDate.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44)
       );
       
       // Calculate WHO percentile
@@ -641,7 +640,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         : '';
 
       // Generate new recommendations with Claude
-      const childAgeInMonths = getAgeInMonthsForAI(child.birthDate, child.dueDate);
+      const childAgeInMonths = getAgeInMonthsForAI(child.dueDate);
       const prompt = `You are a pediatric development expert. Based on the following information, provide 3-4 practical, personalized recommendations for how parents can help their child achieve this milestone.
 
 Child Information:
@@ -791,7 +790,7 @@ Each recommendation should be evidence-based and cite at least one authoritative
       }
 
       // Generate new toy recommendations with Claude (more recommendations now)
-      const childAgeInMonths = getAgeInMonthsForAI(child.birthDate, child.dueDate);
+      const childAgeInMonths = getAgeInMonthsForAI(child.dueDate);
       const prompt = `You are a pediatric development expert and toy specialist. Based on the following information, recommend 10-15 specific toys or tools that parents can use to help their child achieve this milestone.
 
 Child Information:
