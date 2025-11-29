@@ -108,6 +108,7 @@ export interface IStorage {
   createParentChildRelationship(relationship: InsertParentChildRelationship): Promise<ParentChildRelationship>;
   deleteParentChildRelationship(userId: string, childId: string): Promise<boolean>;
   isPrimaryParent(userId: string): Promise<boolean>;
+  deleteSecondaryParent(userId: string): Promise<boolean>;
 
   // Invitation operations
   getInvitation(id: string): Promise<Invitation | undefined>;
@@ -457,6 +458,7 @@ export class DbStorage implements IStorage {
 
   // Parent-child relationship operations
   async getParentRole(userId: string, childId: string): Promise<ParentRole | undefined> {
+    // First check explicit relationships
     const result = await this.db
       .select()
       .from(parentChildRelationships)
@@ -466,7 +468,19 @@ export class DbStorage implements IStorage {
           eq(parentChildRelationships.childId, childId)
         )
       );
-    return result[0]?.role as ParentRole | undefined;
+    
+    if (result[0]) {
+      return result[0].role as ParentRole;
+    }
+    
+    // For legacy users without relationship records:
+    // If they have this child in their parentIds array, treat them as primary
+    const child = await this.getChild(childId);
+    if (child && child.parentIds.includes(userId)) {
+      return "primary";
+    }
+    
+    return undefined;
   }
 
   async getUserParentRoles(userId: string): Promise<ParentChildRelationship[]> {
@@ -522,6 +536,31 @@ export class DbStorage implements IStorage {
     // If they have children via parentIds, they're considered primary
     const children = await this.getChildrenByParentId(userId);
     return children.length > 0;
+  }
+
+  async deleteSecondaryParent(userId: string): Promise<boolean> {
+    // Get all children this user has access to via parentIds
+    const childrenWithAccess = await this.getChildrenByParentId(userId);
+    
+    // Remove userId from each child's parentIds array
+    for (const child of childrenWithAccess) {
+      const updatedParentIds = child.parentIds.filter(id => id !== userId);
+      if (updatedParentIds.length > 0) {
+        await this.db
+          .update(children)
+          .set({ parentIds: updatedParentIds })
+          .where(eq(children.id, child.id));
+      }
+    }
+    
+    // Delete all parent-child relationships for this user
+    await this.db
+      .delete(parentChildRelationships)
+      .where(eq(parentChildRelationships.userId, userId));
+    
+    // Delete the user record (but not the children they had access to)
+    const result = await this.db.delete(users).where(eq(users.id, userId)).returning();
+    return result.length > 0;
   }
 
   // Invitation operations

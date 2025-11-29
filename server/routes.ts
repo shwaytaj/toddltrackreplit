@@ -183,6 +183,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
     
     try {
+      // Check if user is a secondary parent (has relationships but none are primary)
+      const existingChildren = await storage.getChildrenByParentId(req.user.id);
+      if (existingChildren.length > 0) {
+        // User already has children, check if they're primary
+        const isPrimary = await storage.isPrimaryParent(req.user.id);
+        if (!isPrimary) {
+          return res.status(403).json({ 
+            error: "Only primary parents can add children",
+            message: "As a co-parent, you can view and track milestones but cannot add new children."
+          });
+        }
+      }
+      
       const validatedData = insertChildSchema.parse({
         ...req.body,
         parentIds: [req.user.id],
@@ -211,6 +224,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     if (!child.parentIds.includes(req.user.id)) {
       return res.status(403).json({ error: "Forbidden" });
+    }
+    
+    // Only primary parents of THIS SPECIFIC CHILD can update their profile
+    const roleForChild = await storage.getParentRole(req.user.id, req.params.id);
+    if (roleForChild !== "primary") {
+      return res.status(403).json({ 
+        error: "Only primary parents can edit child profiles",
+        message: "As a co-parent, you can view and track milestones but cannot edit child information."
+      });
     }
     
     try {
@@ -271,6 +293,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Verify parent ownership
     if (!child.parentIds.includes(req.user.id)) {
       return res.status(403).json({ error: "Forbidden" });
+    }
+    
+    // Only primary parents of THIS SPECIFIC CHILD can delete them
+    const roleForChild = await storage.getParentRole(req.user.id, req.params.id);
+    if (roleForChild !== "primary") {
+      return res.status(403).json({ 
+        error: "Only primary parents can delete child profiles",
+        message: "As a co-parent, you can view and track milestones but cannot delete child profiles."
+      });
     }
     
     // Check if this is the last child - prevent deletion
@@ -1613,11 +1644,19 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
         return res.status(401).json({ error: "Invalid password" });
       }
       
-      // Delete all user data (children cascade to milestones, metrics, etc.)
-      const deleted = await storage.deleteUser(req.user.id);
+      // Check if user is primary or secondary parent
+      const isPrimary = await storage.isPrimaryParent(req.user.id);
       
-      if (!deleted) {
-        return res.status(500).json({ error: "Failed to delete account" });
+      if (isPrimary) {
+        // Primary parent: Delete all user data including children (children cascade to milestones, metrics, etc.)
+        const deleted = await storage.deleteUser(req.user.id);
+        
+        if (!deleted) {
+          return res.status(500).json({ error: "Failed to delete account" });
+        }
+      } else {
+        // Secondary parent: Only delete their user record and relationships, not the children
+        await storage.deleteSecondaryParent(req.user.id);
       }
       
       // Destroy session
@@ -1629,7 +1668,10 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
           if (sessionErr) {
             console.error("Session destruction error:", sessionErr);
           }
-          res.json({ success: true, message: "Account and all data permanently deleted" });
+          const message = isPrimary 
+            ? "Account and all data permanently deleted"
+            : "Account deleted. Family data has been preserved.";
+          res.json({ success: true, message });
         });
       });
     } catch (error) {

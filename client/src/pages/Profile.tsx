@@ -532,15 +532,17 @@ export default function Profile() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Children</h2>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={openAddDialog}
-              data-testid="button-add-child"
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              Add Child
-            </Button>
+            {isPrimaryParent && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={openAddDialog}
+                data-testid="button-add-child"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add Child
+              </Button>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -571,32 +573,34 @@ export default function Profile() {
                       </div>
                       <p className="text-sm text-muted-foreground">{getChildAge(child)}</p>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEditDialog(child);
-                        }}
-                        data-testid={`button-edit-child-${child.id}`}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setChildToDelete(child);
-                          setDeleteError(null);
-                        }}
-                        data-testid={`button-delete-child-${child.id}`}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    {isPrimaryParent && (
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditDialog(child);
+                          }}
+                          data-testid={`button-edit-child-${child.id}`}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setChildToDelete(child);
+                            setDeleteError(null);
+                          }}
+                          data-testid={`button-delete-child-${child.id}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -788,30 +792,34 @@ export default function Profile() {
         <div className="space-y-4 p-4 bg-card rounded-lg border">
           <h3 className="font-semibold">Privacy & Data</h3>
           <p className="text-sm text-muted-foreground">
-            Manage your data and account settings. You can download all your data or permanently delete your account.
+            {isPrimaryParent 
+              ? "Manage your data and account settings. You can download all your data or permanently delete your account."
+              : "Manage your account settings. Only the primary parent can manage family data."}
           </p>
           
           <div className="space-y-3">
-            {/* Download Data Button */}
-            <div className="flex items-start gap-3 p-3 border rounded-lg">
-              <Download className="w-5 h-5 text-muted-foreground mt-0.5" />
-              <div className="flex-1">
-                <p className="font-medium">Download Your Data</p>
-                <p className="text-sm text-muted-foreground">
-                  Export all your children's milestone progress, growth measurements, and account data as CSV files. Perfect for sharing with your GP or keeping a backup.
-                </p>
-                <Button 
-                  variant="outline" 
-                  className="mt-2"
-                  onClick={handleExportData}
-                  disabled={isExporting}
-                  data-testid="button-export-data"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  {isExporting ? 'Preparing download...' : 'Download My Data'}
-                </Button>
+            {/* Download Data Button - Only for primary parents */}
+            {isPrimaryParent && (
+              <div className="flex items-start gap-3 p-3 border rounded-lg">
+                <Download className="w-5 h-5 text-muted-foreground mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-medium">Download Your Data</p>
+                  <p className="text-sm text-muted-foreground">
+                    Export all your children's milestone progress, growth measurements, and account data as CSV files. Perfect for sharing with your GP or keeping a backup.
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-2"
+                    onClick={handleExportData}
+                    disabled={isExporting}
+                    data-testid="button-export-data"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    {isExporting ? 'Preparing download...' : 'Download My Data'}
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Delete Account Button */}
             <div className="flex items-start gap-3 p-3 border border-destructive/20 rounded-lg bg-destructive/5">
@@ -819,7 +827,9 @@ export default function Profile() {
               <div className="flex-1">
                 <p className="font-medium text-destructive">Delete Account</p>
                 <p className="text-sm text-muted-foreground">
-                  Permanently delete your account and all associated data. This action cannot be undone.
+                  {isPrimaryParent 
+                    ? "Permanently delete your account and all associated data including all children's profiles. This action cannot be undone."
+                    : "Permanently delete your account. This will remove your access to all children's profiles but won't affect the family data."}
                 </p>
                 <Button 
                   variant="destructive" 
@@ -993,18 +1003,37 @@ export default function Profile() {
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-4">
-                <p>
-                  This will <span className="font-semibold">permanently delete</span> your account and ALL associated data:
-                </p>
-                <ul className="list-disc list-inside space-y-1 text-sm">
-                  <li>All children's profiles and milestone progress</li>
-                  <li>All growth measurements and health data</li>
-                  <li>All activity and toy recommendations</li>
-                  <li>All medical notes and history</li>
-                </ul>
-                <p className="font-medium text-destructive">
-                  This action cannot be undone. Please download your data first if you need a backup.
-                </p>
+                {isPrimaryParent ? (
+                  <>
+                    <p>
+                      This will <span className="font-semibold">permanently delete</span> your account and ALL associated data:
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 text-sm">
+                      <li>All children's profiles and milestone progress</li>
+                      <li>All growth measurements and health data</li>
+                      <li>All activity and toy recommendations</li>
+                      <li>All medical notes and history</li>
+                      <li>All co-parent access will be removed</li>
+                    </ul>
+                    <p className="font-medium text-destructive">
+                      This action cannot be undone. Please download your data first if you need a backup.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p>
+                      This will <span className="font-semibold">permanently delete</span> your account:
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 text-sm">
+                      <li>Your access to all children's profiles will be removed</li>
+                      <li>Your medical history notes will be deleted</li>
+                      <li>Your login credentials will be removed</li>
+                    </ul>
+                    <p className="text-sm text-muted-foreground">
+                      The children's data and other family members' access will not be affected.
+                    </p>
+                  </>
+                )}
                 
                 <div className="space-y-2 pt-2">
                   <Label htmlFor="delete-password">Enter your password to confirm:</Label>
