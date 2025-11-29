@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import ChildSelector from '@/components/ChildSelector';
 import HighlightCard from '@/components/HighlightCard';
 import MilestoneCard from '@/components/MilestoneCard';
@@ -51,9 +51,12 @@ export default function Home() {
   const { user, isLoading: userLoading } = useUser();
   const { children, activeChildId, activeChild: selectedChild, setActiveChildId, isLoading: childrenLoading } = useActiveChild();
 
-  if (!userLoading && !user) {
-    setLocation('/');
-  }
+  // Redirect to login if not authenticated (using useEffect to avoid render-time side effects)
+  useEffect(() => {
+    if (!userLoading && !user) {
+      setLocation('/');
+    }
+  }, [userLoading, user, setLocation]);
 
   // Calculate corrected age (accounts for premature/post-mature birth)
   const ageInfo = useMemo(() => {

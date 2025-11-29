@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import Logo from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { useUser } from '@/hooks/use-user';
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -15,6 +16,14 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { user, isLoading: userLoading } = useUser();
+
+  // Redirect to home if already authenticated
+  useEffect(() => {
+    if (!userLoading && user) {
+      setLocation('/home');
+    }
+  }, [user, userLoading, setLocation]);
 
   const handleEmailAuth = async () => {
     if (!email || !password) {
@@ -30,9 +39,13 @@ export default function Login() {
     try {
       if (isSignup) {
         await apiRequest('POST', '/api/auth/register', { email, password });
+        // Invalidate auth query so Home page sees the new user
+        await queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
         setLocation('/onboarding');
       } else {
         await apiRequest('POST', '/api/auth/login', { email, password });
+        // Invalidate auth query so Home page sees the new user
+        await queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
         setLocation('/home');
       }
     } catch (error) {
