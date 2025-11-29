@@ -1082,11 +1082,25 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
         return str;
       };
       
+      // Helper to safely format dates (handles both Date objects and strings)
+      const formatDate = (date: any): string => {
+        if (!date) return '';
+        if (date instanceof Date) {
+          return date.toISOString().split('T')[0];
+        }
+        // If it's already a string, try to parse and format it
+        const parsed = new Date(date);
+        if (!isNaN(parsed.getTime())) {
+          return parsed.toISOString().split('T')[0];
+        }
+        return String(date);
+      };
+      
       // Create CSV content
       const accountCSV = [
         'Email,Created At,Milestone Sources',
         escapeCSV(user?.email) + ',' + 
-        escapeCSV(user?.createdAt?.toISOString() || '') + ',' +
+        escapeCSV(formatDate(user?.createdAt)) + ',' +
         escapeCSV(Array.isArray(user?.milestoneSources) ? user.milestoneSources.join('; ') : '')
       ].join('\n');
       
@@ -1094,7 +1108,7 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
         'Name,Due Date,Sex,Medical History',
         ...userChildren.map(c => [
           escapeCSV(c.name),
-          escapeCSV(c.dueDate?.toISOString()?.split('T')[0] || ''),
+          escapeCSV(formatDate(c.dueDate)),
           escapeCSV(c.sex || ''),
           escapeCSV(c.medicalHistory ? JSON.stringify(c.medicalHistory) : '')
         ].join(','))
@@ -1107,7 +1121,7 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
           escapeCSV(milestone?.title || 'Unknown'),
           escapeCSV(milestone?.category || ''),
           escapeCSV(childMilestone.status),
-          escapeCSV(childMilestone.achievedAt?.toISOString()?.split('T')[0] || ''),
+          escapeCSV(formatDate(childMilestone.achievedAt)),
           escapeCSV(childMilestone.notes || '')
         ].join(','))
       ].join('\n');
@@ -1116,7 +1130,7 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
         'Child Name,Date,Type,Value,Unit,Percentile',
         ...allGrowthMetrics.map(({ childName, metric }) => [
           escapeCSV(childName),
-          escapeCSV(metric.recordedAt?.toISOString()?.split('T')[0] || ''),
+          escapeCSV(formatDate(metric.recordedAt)),
           escapeCSV(metric.type),
           escapeCSV(metric.value),
           escapeCSV(metric.unit || ''),
@@ -1130,7 +1144,7 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
           escapeCSV(childName),
           escapeCSV(tooth.toothNumber),
           escapeCSV(tooth.toothName || ''),
-          escapeCSV(tooth.eruptionDate?.toISOString()?.split('T')[0] || ''),
+          escapeCSV(formatDate(tooth.eruptionDate)),
           escapeCSV(tooth.status || '')
         ].join(','))
       ].join('\n');
@@ -1141,7 +1155,7 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
           escapeCSV(childName),
           escapeCSV(activity.recommendationTitle),
           escapeCSV(activity.recommendationDescription || ''),
-          escapeCSV(activity.completedAt?.toISOString()?.split('T')[0] || '')
+          escapeCSV(formatDate(activity.completedAt))
         ].join(','))
       ].join('\n');
       
