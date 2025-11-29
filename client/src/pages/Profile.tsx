@@ -517,9 +517,9 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <div className="p-4 space-y-6 max-w-2xl mx-auto">
+      <div className="p-4 space-y-8 max-w-2xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Profile</h1>
           <Link href="/settings">
             <Button variant="outline" size="sm" data-testid="button-settings">
@@ -528,10 +528,12 @@ export default function Profile() {
           </Link>
         </div>
 
-        {/* Children List Section */}
-        <div className="space-y-3">
+        {/* ============================================ */}
+        {/* SECTION 1: YOUR CHILDREN */}
+        {/* ============================================ */}
+        <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Children</h2>
+            <h2 className="text-lg font-semibold">Your Children</h2>
             {isPrimaryParent && (
               <Button 
                 variant="outline" 
@@ -545,7 +547,7 @@ export default function Profile() {
             )}
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             {children.map((child) => (
               <Card 
                 key={child.id} 
@@ -566,9 +568,7 @@ export default function Profile() {
                       <div className="flex items-center gap-2">
                         <p className="font-semibold truncate">{child.name}</p>
                         {child.id === activeChildId && (
-                          <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
-                            Active
-                          </span>
+                          <Badge variant="default" className="text-xs">Active</Badge>
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground">{getChildAge(child)}</p>
@@ -606,248 +606,274 @@ export default function Profile() {
               </Card>
             ))}
           </div>
-        </div>
+        </section>
 
-        {/* Parent Information Section */}
-        <div className="space-y-4 p-4 bg-card rounded-lg border">
-          <h3 className="font-semibold">Parent Information</h3>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Parent's Name</Label>
-              <Input 
-                value={user?.firstName || user?.email || ''} 
-                disabled 
-                data-testid="input-parent-name" 
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="parent-history">Family Medical History</Label>
-              <Textarea
-                id="parent-history"
-                placeholder="Enter any relevant family medical history, genetic conditions, or health information that might be relevant for your children's development..."
-                value={parentNotes}
-                onChange={(e) => setParentNotes(e.target.value)}
-                rows={4}
-                data-testid="textarea-parent-history"
-              />
-              <p className="text-sm text-muted-foreground">
-                This information is shared across all children's profiles.
-              </p>
-            </div>
-
-            <Button 
-              onClick={() => updateParentMutation.mutate(parentNotes)}
-              disabled={updateParentMutation.isPending}
-              data-testid="button-save-parent"
-            >
-              {updateParentMutation.isPending ? 'Saving...' : 'Save Parent Info'}
-            </Button>
-          </div>
-        </div>
-
-        {/* Manage Parents Section */}
-        <div className="space-y-4 p-4 bg-card rounded-lg border">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-muted-foreground" />
-              <h3 className="font-semibold">Family Members</h3>
-            </div>
-            {isPrimaryParent && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowInviteDialog(true)}
-                data-testid="button-invite-parent"
-              >
-                <UserPlus className="w-4 h-4 mr-1" />
-                Invite
-              </Button>
-            )}
-          </div>
-
-          <p className="text-sm text-muted-foreground">
-            {isPrimaryParent 
-              ? "Manage who has access to your children's profiles. Invited parents can view and track milestones."
-              : "View other parents who have access to these children."}
-          </p>
-
-          {/* Parents List */}
-          <div className="space-y-2">
-            {parents.length > 0 ? (
-              parents.map((parent) => (
-                <div
-                  key={parent.id}
-                  className="flex items-center justify-between p-3 border rounded-lg"
-                  data-testid={`parent-card-${parent.userId}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-accent text-accent-foreground text-sm">
-                        {parent.user.firstName?.[0]?.toUpperCase() || parent.user.email[0].toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">
-                          {parent.user.firstName 
-                            ? `${parent.user.firstName}${parent.user.lastName ? ' ' + parent.user.lastName : ''}`
-                            : parent.user.email}
-                        </p>
-                        <Badge variant={parent.role === 'primary' ? 'default' : 'secondary'} className="text-xs">
-                          {parent.role === 'primary' ? 'Primary' : 'Co-parent'}
-                        </Badge>
-                        {parent.userId === user?.id && (
-                          <span className="text-xs text-muted-foreground">(You)</span>
-                        )}
-                      </div>
-                      {parent.user.firstName && (
-                        <p className="text-sm text-muted-foreground">{parent.user.email}</p>
-                      )}
-                    </div>
-                  </div>
-                  {isPrimaryParent && parent.role === 'secondary' && parent.userId !== user?.id && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => setParentToRemove(parent)}
-                      data-testid={`button-remove-parent-${parent.userId}`}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-4 text-muted-foreground">
-                <p>No parent relationships found.</p>
-                <p className="text-sm">You're the only parent with access.</p>
-              </div>
-            )}
-          </div>
-
-          {/* Pending Invitations (Primary Parent Only) */}
-          {isPrimaryParent && invitations.filter(inv => inv.status === 'pending').length > 0 && (
-            <div className="space-y-2 pt-2 border-t">
-              <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                Pending Invitations
-              </p>
-              {invitations
-                .filter(inv => inv.status === 'pending')
-                .map((invitation) => (
-                  <div
-                    key={invitation.id}
-                    className="flex items-center justify-between p-3 border rounded-lg bg-muted/50"
-                    data-testid={`invitation-card-${invitation.id}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                        <Mail className="w-4 h-4 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{invitation.email}</p>
-                        <p className="text-xs text-muted-foreground">
-                          Expires {invitation.expiresAt 
-                            ? new Date(invitation.expiresAt).toLocaleDateString()
-                            : 'soon'}
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => revokeInvitationMutation.mutate(invitation.id)}
-                      disabled={revokeInvitationMutation.isPending}
-                      data-testid={`button-revoke-invitation-${invitation.id}`}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                ))}
-            </div>
-          )}
-
-          {/* Leave Family (Secondary Parent Only) */}
-          {!isPrimaryParent && (
-            <div className="pt-2 border-t">
-              <Button
-                variant="outline"
-                className="text-destructive border-destructive/50 hover:bg-destructive/10"
-                onClick={() => setShowLeaveDialog(true)}
-                data-testid="button-leave-family"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Leave Family
-              </Button>
-              <p className="text-xs text-muted-foreground mt-2">
-                This will remove your access to these children's profiles. Your account will remain active.
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Privacy & Data Section */}
-        <div className="space-y-4 p-4 bg-card rounded-lg border">
-          <h3 className="font-semibold">Privacy & Data</h3>
-          <p className="text-sm text-muted-foreground">
-            {isPrimaryParent 
-              ? "Manage your data and account settings. You can download all your data or permanently delete your account."
-              : "Manage your account settings. Only the primary parent can manage family data."}
-          </p>
+        {/* ============================================ */}
+        {/* SECTION 2: FAMILY */}
+        {/* ============================================ */}
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold">Family</h2>
           
-          <div className="space-y-3">
-            {/* Download Data Button - Only for primary parents */}
-            {isPrimaryParent && (
-              <div className="flex items-start gap-3 p-3 border rounded-lg">
-                <Download className="w-5 h-5 text-muted-foreground mt-0.5" />
+          {/* Your Account Card */}
+          <Card>
+            <CardContent className="p-4 space-y-4">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-12 w-12">
+                  <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                    {user?.firstName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?'}
+                  </AvatarFallback>
+                </Avatar>
                 <div className="flex-1">
-                  <p className="font-medium">Download Your Data</p>
-                  <p className="text-sm text-muted-foreground">
-                    Export all your children's milestone progress, growth measurements, and account data as CSV files. Perfect for sharing with your GP or keeping a backup.
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold">
+                      {user?.firstName 
+                        ? `${user.firstName}${user.lastName ? ' ' + user.lastName : ''}`
+                        : user?.email}
+                    </p>
+                    <Badge variant="default" className="text-xs">
+                      {isPrimaryParent ? 'Primary' : 'Co-parent'}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{user?.email}</p>
+                </div>
+              </div>
+              
+              <div className="space-y-2 pt-2 border-t">
+                <Label htmlFor="parent-history">Family Medical History</Label>
+                <Textarea
+                  id="parent-history"
+                  placeholder="Enter any relevant family medical history, genetic conditions, or health information..."
+                  value={parentNotes}
+                  onChange={(e) => setParentNotes(e.target.value)}
+                  rows={3}
+                  data-testid="textarea-parent-history"
+                />
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">
+                    Shared across all children's profiles
                   </p>
                   <Button 
-                    variant="outline" 
-                    className="mt-2"
-                    onClick={handleExportData}
-                    disabled={isExporting}
-                    data-testid="button-export-data"
+                    size="sm"
+                    onClick={() => updateParentMutation.mutate(parentNotes)}
+                    disabled={updateParentMutation.isPending}
+                    data-testid="button-save-parent"
                   >
-                    <Download className="w-4 h-4 mr-2" />
-                    {isExporting ? 'Preparing download...' : 'Download My Data'}
+                    {updateParentMutation.isPending ? 'Saving...' : 'Save'}
                   </Button>
                 </div>
               </div>
-            )}
+            </CardContent>
+          </Card>
 
-            {/* Delete Account Button */}
-            <div className="flex items-start gap-3 p-3 border border-destructive/20 rounded-lg bg-destructive/5">
-              <AlertTriangle className="w-5 h-5 text-destructive mt-0.5" />
-              <div className="flex-1">
-                <p className="font-medium text-destructive">Delete Account</p>
-                <p className="text-sm text-muted-foreground">
-                  {isPrimaryParent 
-                    ? "Permanently delete your account and all associated data including all children's profiles. This action cannot be undone."
-                    : "Permanently delete your account. This will remove your access to all children's profiles but won't affect the family data."}
-                </p>
-                <Button 
-                  variant="destructive" 
-                  className="mt-2"
-                  onClick={() => {
-                    setShowDeleteAccountDialog(true);
-                    setDeleteAccountPassword('');
-                    setDeleteAccountError(null);
-                  }}
-                  data-testid="button-delete-account"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete My Account
-                </Button>
+          {/* Other Family Members Card */}
+          <Card>
+            <CardContent className="p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-muted-foreground" />
+                  <h3 className="font-medium">Family Members</h3>
+                </div>
+                {isPrimaryParent && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowInviteDialog(true)}
+                    data-testid="button-invite-parent"
+                  >
+                    <UserPlus className="w-4 h-4 mr-1" />
+                    Invite
+                  </Button>
+                )}
               </div>
-            </div>
-          </div>
-        </div>
+
+              <p className="text-sm text-muted-foreground">
+                {isPrimaryParent 
+                  ? "Manage who has access to your children's profiles."
+                  : "View other parents who have access to these children."}
+              </p>
+
+              {/* Other Parents List (excluding current user) */}
+              <div className="space-y-2">
+                {parents.filter(p => p.userId !== user?.id).length > 0 ? (
+                  parents.filter(p => p.userId !== user?.id).map((parent) => (
+                    <div
+                      key={parent.id}
+                      className="flex items-center justify-between p-3 border rounded-lg"
+                      data-testid={`parent-card-${parent.userId}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className="bg-accent text-accent-foreground text-sm">
+                            {parent.user.firstName?.[0]?.toUpperCase() || parent.user.email[0].toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">
+                              {parent.user.firstName 
+                                ? `${parent.user.firstName}${parent.user.lastName ? ' ' + parent.user.lastName : ''}`
+                                : parent.user.email}
+                            </p>
+                            <Badge variant={parent.role === 'primary' ? 'default' : 'secondary'} className="text-xs">
+                              {parent.role === 'primary' ? 'Primary' : 'Co-parent'}
+                            </Badge>
+                          </div>
+                          {parent.user.firstName && (
+                            <p className="text-sm text-muted-foreground">{parent.user.email}</p>
+                          )}
+                        </div>
+                      </div>
+                      {isPrimaryParent && parent.role === 'secondary' && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => setParentToRemove(parent)}
+                          data-testid={`button-remove-parent-${parent.userId}`}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground border rounded-lg">
+                    <p className="text-sm">No other family members yet</p>
+                    {isPrimaryParent && (
+                      <p className="text-xs mt-1">Invite a co-parent to share access</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Pending Invitations (Primary Parent Only) */}
+              {isPrimaryParent && invitations.filter(inv => inv.status === 'pending').length > 0 && (
+                <div className="space-y-2 pt-3 border-t">
+                  <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Pending Invitations
+                  </p>
+                  {invitations
+                    .filter(inv => inv.status === 'pending')
+                    .map((invitation) => (
+                      <div
+                        key={invitation.id}
+                        className="flex items-center justify-between p-3 border rounded-lg bg-muted/50"
+                        data-testid={`invitation-card-${invitation.id}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                            <Mail className="w-4 h-4 text-muted-foreground" />
+                          </div>
+                          <div>
+                            <p className="font-medium">{invitation.email}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Expires {invitation.expiresAt 
+                                ? new Date(invitation.expiresAt).toLocaleDateString()
+                                : 'soon'}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => revokeInvitationMutation.mutate(invitation.id)}
+                          disabled={revokeInvitationMutation.isPending}
+                          data-testid={`button-revoke-invitation-${invitation.id}`}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    ))}
+                </div>
+              )}
+
+              {/* Leave Family (Secondary Parent Only) */}
+              {!isPrimaryParent && (
+                <div className="pt-3 border-t">
+                  <Button
+                    variant="outline"
+                    className="text-destructive border-destructive/50 hover:bg-destructive/10"
+                    onClick={() => setShowLeaveDialog(true)}
+                    data-testid="button-leave-family"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Leave Family
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Remove your access to these children's profiles
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* ============================================ */}
+        {/* SECTION 3: ACCOUNT & PRIVACY */}
+        {/* ============================================ */}
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold">Account & Privacy</h2>
+          
+          <Card>
+            <CardContent className="p-4 space-y-4">
+              <p className="text-sm text-muted-foreground">
+                {isPrimaryParent 
+                  ? "Download your data or manage your account settings."
+                  : "Manage your account settings. Only the primary parent can download family data."}
+              </p>
+              
+              {/* Download Data Button - Only for primary parents */}
+              {isPrimaryParent && (
+                <div className="flex items-start gap-3 p-3 border rounded-lg">
+                  <Download className="w-5 h-5 text-muted-foreground mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-medium">Download Your Data</p>
+                    <p className="text-sm text-muted-foreground">
+                      Export milestone progress, growth measurements, and account data as CSV files.
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      className="mt-2"
+                      onClick={handleExportData}
+                      disabled={isExporting}
+                      data-testid="button-export-data"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      {isExporting ? 'Preparing...' : 'Download My Data'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Delete Account Button */}
+              <div className="flex items-start gap-3 p-3 border border-destructive/20 rounded-lg bg-destructive/5">
+                <AlertTriangle className="w-5 h-5 text-destructive mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-medium text-destructive">Delete Account</p>
+                  <p className="text-sm text-muted-foreground">
+                    {isPrimaryParent 
+                      ? "Permanently delete your account and all data. This cannot be undone."
+                      : "Permanently delete your account. Family data will not be affected."}
+                  </p>
+                  <Button 
+                    variant="destructive" 
+                    className="mt-2"
+                    onClick={() => {
+                      setShowDeleteAccountDialog(true);
+                      setDeleteAccountPassword('');
+                      setDeleteAccountError(null);
+                    }}
+                    data-testid="button-delete-account"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete My Account
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
       </div>
 
       {/* Add/Edit Child Dialog */}
