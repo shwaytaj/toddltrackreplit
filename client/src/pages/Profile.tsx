@@ -327,10 +327,22 @@ export default function Profile() {
       queryClient.invalidateQueries({ queryKey: ['/api/invitations'] });
       setShowInviteDialog(false);
       setInviteEmail('');
-      toast({
-        title: 'Invitation sent',
-        description: data.message || `An invitation has been sent to ${inviteEmail}.`,
-      });
+      
+      if (data.emailSent) {
+        toast({
+          title: 'Invitation sent',
+          description: data.message || `An invitation has been sent to ${inviteEmail}.`,
+        });
+      } else {
+        // Email failed to send - show the direct link
+        toast({
+          title: 'Invitation created',
+          description: data.inviteUrl 
+            ? `Email couldn't be sent. Share this link directly: ${data.inviteUrl}`
+            : data.message,
+          duration: 10000, // Keep visible longer so they can copy the link
+        });
+      }
     },
     onError: (error: Error) => {
       toast({

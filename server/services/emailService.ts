@@ -61,8 +61,12 @@ class ResendEmailService implements EmailService {
         day: 'numeric'
       });
 
+      // Use Resend's test address until domain is verified
+      // Once toddl.health is verified in Resend, change back to: fromEmail || 'Toddl <onboarding@resend.dev>'
+      const senderEmail = 'Toddl <onboarding@resend.dev>';
+      
       const { data, error } = await client.emails.send({
-        from: fromEmail || 'Toddl <onboarding@resend.dev>',
+        from: senderEmail,
         to: params.to,
         subject: `${params.inviterName} invited you to join Toddl`,
         html: `
