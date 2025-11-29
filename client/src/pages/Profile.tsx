@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -31,8 +32,31 @@ import { useActiveChild } from '@/contexts/ActiveChildContext';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { calculateAdjustedAge, formatAge } from '@/lib/age-calculation';
-import { Plus, Trash2, Edit, Check, ChevronRight, Download, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, Edit, Check, ChevronRight, Download, AlertTriangle, UserPlus, Users, Mail, Clock, X, LogOut } from 'lucide-react';
 import type { Child, User } from '@shared/schema';
+
+interface ParentRelationship {
+  id: string;
+  userId: string;
+  childId: string;
+  role: 'primary' | 'secondary';
+  joinedAt: Date | null;
+  user: {
+    id: string;
+    email: string;
+    firstName: string | null;
+    lastName: string | null;
+  };
+}
+
+interface Invitation {
+  id: string;
+  email: string;
+  status: 'pending' | 'accepted' | 'revoked' | 'expired';
+  createdAt: Date | null;
+  expiresAt: Date | null;
+  acceptedAt: Date | null;
+}
 
 const API_BASE_URL = '';
 
@@ -56,6 +80,12 @@ export default function Profile() {
   const [deleteAccountError, setDeleteAccountError] = useState<string | null>(null);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
+  // Parent management states
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [parentToRemove, setParentToRemove] = useState<ParentRelationship | null>(null);
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+
   // Form states for editing/adding child
   const [childName, setChildName] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -66,6 +96,26 @@ export default function Profile() {
     queryKey: ['/api/user'],
     enabled: !!user,
   });
+
+  // Query user role (primary or secondary parent)
+  const { data: userRole } = useQuery<{ role: 'primary' | 'secondary' }>({
+    queryKey: ['/api/user/role'],
+    enabled: !!user,
+  });
+
+  // Query all parents for the family
+  const { data: parents = [] } = useQuery<ParentRelationship[]>({
+    queryKey: ['/api/parents'],
+    enabled: !!user,
+  });
+
+  // Query invitations (only for primary parents)
+  const { data: invitations = [] } = useQuery<Invitation[]>({
+    queryKey: ['/api/invitations'],
+    enabled: !!user && userRole?.role === 'primary',
+  });
+
+  const isPrimaryParent = userRole?.role === 'primary';
 
   useEffect(() => {
     if (!userLoading && !user) {
@@ -259,6 +309,116 @@ export default function Profile() {
       toast({
         title: 'Saved',
         description: 'Parent information has been updated.',
+      });
+    },
+  });
+
+  // Invite a new parent
+  const inviteParentMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const response = await apiRequest('POST', '/api/invitations', { email });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to send invitation');
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/invitations'] });
+      setShowInviteDialog(false);
+      setInviteEmail('');
+      toast({
+        title: 'Invitation sent',
+        description: data.message || `An invitation has been sent to ${inviteEmail}.`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Failed to send invitation',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Revoke an invitation
+  const revokeInvitationMutation = useMutation({
+    mutationFn: async (invitationId: string) => {
+      const response = await apiRequest('DELETE', `/api/invitations/${invitationId}`);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to revoke invitation');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/invitations'] });
+      toast({
+        title: 'Invitation revoked',
+        description: 'The invitation has been cancelled.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Failed to revoke invitation',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Remove a secondary parent (primary parent only)
+  const removeParentMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await apiRequest('DELETE', `/api/parents/${userId}`);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to remove parent');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/parents'] });
+      setParentToRemove(null);
+      toast({
+        title: 'Parent removed',
+        description: 'The parent has been removed from your family.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Failed to remove parent',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Leave family (secondary parent only)
+  const leaveFamilyMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', '/api/parents/leave');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to leave family');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/children'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/parents'] });
+      setShowLeaveDialog(false);
+      toast({
+        title: 'Left family',
+        description: 'You have been removed from this family. You can still access your account.',
+      });
+      setLocation('/');
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Failed to leave family',
+        description: error.message,
+        variant: 'destructive',
       });
     },
   });
@@ -480,6 +640,148 @@ export default function Profile() {
               {updateParentMutation.isPending ? 'Saving...' : 'Save Parent Info'}
             </Button>
           </div>
+        </div>
+
+        {/* Manage Parents Section */}
+        <div className="space-y-4 p-4 bg-card rounded-lg border">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-muted-foreground" />
+              <h3 className="font-semibold">Family Members</h3>
+            </div>
+            {isPrimaryParent && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowInviteDialog(true)}
+                data-testid="button-invite-parent"
+              >
+                <UserPlus className="w-4 h-4 mr-1" />
+                Invite
+              </Button>
+            )}
+          </div>
+
+          <p className="text-sm text-muted-foreground">
+            {isPrimaryParent 
+              ? "Manage who has access to your children's profiles. Invited parents can view and track milestones."
+              : "View other parents who have access to these children."}
+          </p>
+
+          {/* Parents List */}
+          <div className="space-y-2">
+            {parents.length > 0 ? (
+              parents.map((parent) => (
+                <div
+                  key={parent.id}
+                  className="flex items-center justify-between p-3 border rounded-lg"
+                  data-testid={`parent-card-${parent.userId}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback className="bg-accent text-accent-foreground text-sm">
+                        {parent.user.firstName?.[0]?.toUpperCase() || parent.user.email[0].toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">
+                          {parent.user.firstName 
+                            ? `${parent.user.firstName}${parent.user.lastName ? ' ' + parent.user.lastName : ''}`
+                            : parent.user.email}
+                        </p>
+                        <Badge variant={parent.role === 'primary' ? 'default' : 'secondary'} className="text-xs">
+                          {parent.role === 'primary' ? 'Primary' : 'Co-parent'}
+                        </Badge>
+                        {parent.userId === user?.id && (
+                          <span className="text-xs text-muted-foreground">(You)</span>
+                        )}
+                      </div>
+                      {parent.user.firstName && (
+                        <p className="text-sm text-muted-foreground">{parent.user.email}</p>
+                      )}
+                    </div>
+                  </div>
+                  {isPrimaryParent && parent.role === 'secondary' && parent.userId !== user?.id && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => setParentToRemove(parent)}
+                      data-testid={`button-remove-parent-${parent.userId}`}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-4 text-muted-foreground">
+                <p>No parent relationships found.</p>
+                <p className="text-sm">You're the only parent with access.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Pending Invitations (Primary Parent Only) */}
+          {isPrimaryParent && invitations.filter(inv => inv.status === 'pending').length > 0 && (
+            <div className="space-y-2 pt-2 border-t">
+              <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                Pending Invitations
+              </p>
+              {invitations
+                .filter(inv => inv.status === 'pending')
+                .map((invitation) => (
+                  <div
+                    key={invitation.id}
+                    className="flex items-center justify-between p-3 border rounded-lg bg-muted/50"
+                    data-testid={`invitation-card-${invitation.id}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                        <Mail className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{invitation.email}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Expires {invitation.expiresAt 
+                            ? new Date(invitation.expiresAt).toLocaleDateString()
+                            : 'soon'}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => revokeInvitationMutation.mutate(invitation.id)}
+                      disabled={revokeInvitationMutation.isPending}
+                      data-testid={`button-revoke-invitation-${invitation.id}`}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                ))}
+            </div>
+          )}
+
+          {/* Leave Family (Secondary Parent Only) */}
+          {!isPrimaryParent && (
+            <div className="pt-2 border-t">
+              <Button
+                variant="outline"
+                className="text-destructive border-destructive/50 hover:bg-destructive/10"
+                onClick={() => setShowLeaveDialog(true)}
+                data-testid="button-leave-family"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Leave Family
+              </Button>
+              <p className="text-xs text-muted-foreground mt-2">
+                This will remove your access to these children's profiles. Your account will remain active.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Privacy & Data Section */}
@@ -745,6 +1047,141 @@ export default function Profile() {
               data-testid="button-confirm-delete-account"
             >
               {isDeletingAccount ? 'Deleting...' : 'Delete My Account Forever'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Invite Parent Dialog */}
+      <Dialog open={showInviteDialog} onOpenChange={(open) => {
+        if (!open) {
+          setShowInviteDialog(false);
+          setInviteEmail('');
+        }
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5" />
+              Invite a Co-parent
+            </DialogTitle>
+            <DialogDescription>
+              Invite another parent or caregiver to access your children's profiles. 
+              They'll be able to track milestones and view all children's data.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="invite-email">Email Address</Label>
+              <Input
+                id="invite-email"
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="parent@example.com"
+                data-testid="input-invite-email"
+              />
+            </div>
+
+            <div className="p-3 bg-muted rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                <strong>Note:</strong> The invited person will have access to all {children.length} child profile(s):
+              </p>
+              <ul className="text-sm text-muted-foreground list-disc list-inside mt-1">
+                {children.map(child => (
+                  <li key={child.id}>{child.name}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowInviteDialog(false);
+                setInviteEmail('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (!inviteEmail || !inviteEmail.includes('@')) {
+                  toast({
+                    title: 'Invalid email',
+                    description: 'Please enter a valid email address.',
+                    variant: 'destructive',
+                  });
+                  return;
+                }
+                inviteParentMutation.mutate(inviteEmail);
+              }}
+              disabled={inviteParentMutation.isPending}
+              data-testid="button-send-invitation"
+            >
+              {inviteParentMutation.isPending ? 'Sending...' : 'Send Invitation'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Remove Parent Confirmation Dialog */}
+      <AlertDialog open={!!parentToRemove} onOpenChange={(open) => !open && setParentToRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove parent access?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {parentToRemove && (
+                <>
+                  This will remove <strong>{parentToRemove.user.firstName || parentToRemove.user.email}'s</strong> access to all children's profiles. 
+                  They will no longer be able to view or track milestones.
+                  <p className="mt-2">This action can be undone by sending a new invitation.</p>
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setParentToRemove(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => parentToRemove && removeParentMutation.mutate(parentToRemove.userId)}
+              disabled={removeParentMutation.isPending}
+              data-testid="button-confirm-remove-parent"
+            >
+              {removeParentMutation.isPending ? 'Removing...' : 'Remove Access'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Leave Family Confirmation Dialog */}
+      <AlertDialog open={showLeaveDialog} onOpenChange={(open) => !open && setShowLeaveDialog(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <LogOut className="w-5 h-5" />
+              Leave this family?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              You will lose access to all children's profiles and their milestone tracking data.
+              Your account will remain active, but you'll need a new invitation to rejoin.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowLeaveDialog(false)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => leaveFamilyMutation.mutate()}
+              disabled={leaveFamilyMutation.isPending}
+              data-testid="button-confirm-leave-family"
+            >
+              {leaveFamilyMutation.isPending ? 'Leaving...' : 'Leave Family'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
