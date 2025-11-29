@@ -13,6 +13,7 @@ import MilestoneDetail from "@/pages/MilestoneDetail";
 import GrowthDetail from "@/pages/GrowthDetail";
 import Profile from "@/pages/Profile";
 import Settings from "@/pages/Settings";
+import InviteAccept from "@/pages/InviteAccept";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/" component={Login} />
       <Route path="/login" component={Login} />
       <Route path="/onboarding" component={Onboarding} />
+      <Route path="/invite/:token" component={InviteAccept} />
       <Route path="/home" component={Home} />
       <Route path="/milestones" component={Milestones} />
       <Route path="/milestone/:id" component={MilestoneDetail} />
