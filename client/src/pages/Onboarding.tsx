@@ -25,7 +25,6 @@ export default function Onboarding() {
   const [gender, setGender] = useState('');
   const [relationship, setRelationship] = useState('');
   const [dueDate, setDueDate] = useState('');
-  const [birthDate, setBirthDate] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -41,7 +40,6 @@ export default function Onboarding() {
         // Create child profile
         await apiRequest('POST', '/api/children', {
           name: childName,
-          birthDate,
           dueDate,
           gender: gender || undefined,
         });
@@ -69,7 +67,7 @@ export default function Onboarding() {
       case 1: return childName.trim().length > 0;
       case 2: return gender.length > 0;
       case 3: return relationship.length > 0;
-      case 4: return dueDate.length > 0 && birthDate.length > 0;
+      case 4: return dueDate.length > 0;
       default: return true;
     }
   };
@@ -169,7 +167,7 @@ export default function Onboarding() {
         >
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="due-date">Original due date</Label>
+              <Label htmlFor="due-date">Baby's due date</Label>
               <Input
                 id="due-date"
                 type="date"
@@ -188,30 +186,7 @@ export default function Onboarding() {
                 </p>
               )}
               <p className="text-xs text-muted-foreground">
-                The expected delivery date from your doctor
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="birth-date">Actual birth date</Label>
-              <Input
-                id="birth-date"
-                type="date"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                data-testid="input-birth-date"
-                required
-              />
-              {birthDate && (
-                <p className="text-xs font-medium text-primary">
-                  {new Date(birthDate + 'T00:00:00').toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
-                </p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                When your baby was actually born
+                The expected delivery date from your doctor. We'll use this to track milestones.
               </p>
             </div>
           </div>

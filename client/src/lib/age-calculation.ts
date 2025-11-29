@@ -4,28 +4,20 @@ interface AgeResult {
   days: number;
 }
 
-interface CorrectedAgeResult {
-  chronological: AgeResult;
-  corrected: AgeResult;
-  adjustmentWeeks: number;
-  isPremature: boolean;
-  isPostMature: boolean;
-  shouldUseCorrectedAge: boolean;
-}
-
 /**
- * Calculate chronological age from birth date
+ * Calculate adjusted age from due date
+ * Formula: Adjusted Age = Current Date - Due Date
  */
-export function calculateAge(birthDate: Date | string): AgeResult {
+export function calculateAdjustedAge(dueDate: Date | string): AgeResult {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
-  const birth = new Date(birthDate);
-  birth.setHours(0, 0, 0, 0);
+  const due = new Date(dueDate);
+  due.setHours(0, 0, 0, 0);
   
-  let years = today.getFullYear() - birth.getFullYear();
-  let months = today.getMonth() - birth.getMonth();
-  let days = today.getDate() - birth.getDate();
+  let years = today.getFullYear() - due.getFullYear();
+  let months = today.getMonth() - due.getMonth();
+  let days = today.getDate() - due.getDate();
   
   if (days < 0) {
     months--;
@@ -38,82 +30,24 @@ export function calculateAge(birthDate: Date | string): AgeResult {
     months += 12;
   }
   
+  // Handle case where due date is in the future
+  if (years < 0) {
+    return { years: 0, months: 0, days: 0 };
+  }
+  
   return { years, months, days };
 }
 
 /**
- * Calculate corrected age based on due date and birth date
- * Corrected age is used for premature/post-mature babies until age 3
+ * Get total months from adjusted age
  */
-export function calculateCorrectedAge(
-  birthDate: Date | string,
-  dueDate?: Date | string | null
-): CorrectedAgeResult {
-  const chronological = calculateAge(birthDate);
-  
-  // If no due date provided, use chronological age only
-  if (!dueDate) {
-    return {
-      chronological,
-      corrected: chronological,
-      adjustmentWeeks: 0,
-      isPremature: false,
-      isPostMature: false,
-      shouldUseCorrectedAge: false,
-    };
-  }
-  
-  const birth = new Date(birthDate);
-  birth.setHours(0, 0, 0, 0);
-  
-  const due = new Date(dueDate);
-  due.setHours(0, 0, 0, 0);
-  
-  // Calculate adjustment in weeks
-  const diffTime = due.getTime() - birth.getTime();
-  const adjustmentWeeks = Math.round(diffTime / (7 * 24 * 60 * 60 * 1000));
-  
-  const isPremature = adjustmentWeeks > 0; // born before due date
-  const isPostMature = adjustmentWeeks < 0; // born after due date
-  
-  // Stop using corrected age after 3 years (36 months)
-  const totalChronologicalMonths = chronological.years * 12 + chronological.months;
-  const shouldUseCorrectedAge = totalChronologicalMonths < 36;
-  
-  // Calculate corrected age if applicable
-  let corrected = chronological;
-  
-  if (shouldUseCorrectedAge && adjustmentWeeks !== 0) {
-    // Convert adjustment weeks to months (using 4.345 weeks per month)
-    const adjustmentMonths = adjustmentWeeks / 4.345;
-    
-    // Calculate total corrected months
-    const totalCorrectedMonths = totalChronologicalMonths - adjustmentMonths;
-    
-    // Convert back to years, months, days
-    const correctedYears = Math.floor(totalCorrectedMonths / 12);
-    const correctedMonths = Math.floor(totalCorrectedMonths % 12);
-    
-    // Keep days the same as chronological
-    corrected = {
-      years: Math.max(0, correctedYears),
-      months: Math.max(0, correctedMonths),
-      days: chronological.days,
-    };
-  }
-  
-  return {
-    chronological,
-    corrected,
-    adjustmentWeeks: Math.abs(adjustmentWeeks),
-    isPremature,
-    isPostMature,
-    shouldUseCorrectedAge,
-  };
+export function getAdjustedMonths(dueDate: Date | string): number {
+  const age = calculateAdjustedAge(dueDate);
+  return age.years * 12 + age.months;
 }
 
 /**
- * Get age range for milestone filtering based on corrected age
+ * Get age range for milestone filtering based on adjusted age in months
  */
 export function getAgeRange(months: number): { min: number; max: number; label: string } {
   if (months <= 3) return { min: 0, max: 3, label: '0-3 months' };
@@ -141,27 +75,4 @@ export function formatAge(age: AgeResult): string {
   const monthText = age.months === 1 ? 'month' : 'months';
   const dayText = age.days === 1 ? 'day' : 'days';
   return `${age.months} ${monthText}, ${age.days} ${dayText}`;
-}
-
-/**
- * Format adjustment text for display
- */
-export function formatAdjustment(
-  adjustmentWeeks: number,
-  isPremature: boolean,
-  isPostMature: boolean
-): string {
-  if (adjustmentWeeks === 0) return '';
-  
-  const weekText = adjustmentWeeks === 1 ? 'week' : 'weeks';
-  
-  if (isPremature) {
-    return `${adjustmentWeeks} ${weekText} premature`;
-  }
-  
-  if (isPostMature) {
-    return `${adjustmentWeeks} ${weekText} post-mature`;
-  }
-  
-  return '';
 }
