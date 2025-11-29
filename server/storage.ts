@@ -44,6 +44,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUserMedicalHistory(userId: string, medicalHistory: any): Promise<User | undefined>;
   updateUser(userId: string, data: Partial<User>): Promise<User | undefined>;
+  deleteUser(userId: string): Promise<boolean>;
 
   // Child operations
   getChild(id: string): Promise<Child | undefined>;
@@ -137,6 +138,20 @@ export class DbStorage implements IStorage {
       .where(eq(users.id, userId))
       .returning();
     return result[0];
+  }
+
+  async deleteUser(userId: string): Promise<boolean> {
+    // First, get all children belonging to this user
+    const userChildren = await this.getChildrenByParentId(userId);
+    
+    // Delete all children and their related data
+    for (const child of userChildren) {
+      await this.deleteChild(child.id);
+    }
+    
+    // Delete the user record
+    const result = await this.db.delete(users).where(eq(users.id, userId)).returning();
+    return result.length > 0;
   }
 
   // Child operations

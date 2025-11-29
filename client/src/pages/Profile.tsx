@@ -31,8 +31,10 @@ import { useActiveChild } from '@/contexts/ActiveChildContext';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { calculateAdjustedAge, formatAge } from '@/lib/age-calculation';
-import { Plus, Trash2, Edit, Check, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, Edit, Check, ChevronRight, Download, AlertTriangle } from 'lucide-react';
 import type { Child, User } from '@shared/schema';
+
+const API_BASE_URL = '';
 
 export default function Profile() {
   const [, setLocation] = useLocation();
@@ -46,6 +48,13 @@ export default function Profile() {
   const [isAddingChild, setIsAddingChild] = useState(false);
   const [childToDelete, setChildToDelete] = useState<Child | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  
+  // GDPR states
+  const [isExporting, setIsExporting] = useState(false);
+  const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false);
+  const [deleteAccountPassword, setDeleteAccountPassword] = useState('');
+  const [deleteAccountError, setDeleteAccountError] = useState<string | null>(null);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   // Form states for editing/adding child
   const [childName, setChildName] = useState('');
@@ -260,6 +269,80 @@ export default function Profile() {
     if (page === 'milestones') setLocation('/milestones');
   };
 
+  // GDPR: Export all user data as ZIP
+  const handleExportData = async () => {
+    setIsExporting(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/user/export`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `toddl-data-export-${new Date().toISOString().split('T')[0]}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: 'Data exported',
+        description: 'Your data has been downloaded as a ZIP file.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Export failed',
+        description: 'Unable to export your data. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // GDPR: Delete account and all data
+  const handleDeleteAccount = async () => {
+    if (!deleteAccountPassword) {
+      setDeleteAccountError('Please enter your password to confirm.');
+      return;
+    }
+    
+    setIsDeletingAccount(true);
+    setDeleteAccountError(null);
+    
+    try {
+      const response = await apiRequest('DELETE', '/api/user/account', {
+        password: deleteAccountPassword,
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete account');
+      }
+      
+      // Account deleted - redirect to home/login
+      toast({
+        title: 'Account deleted',
+        description: 'Your account and all data have been permanently deleted.',
+      });
+      
+      // Clear local state and redirect
+      queryClient.clear();
+      setLocation('/');
+    } catch (error: any) {
+      setDeleteAccountError(error.message || 'Failed to delete account. Please try again.');
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
+
   if (childrenLoading || userLoading) {
     return (
       <div className="min-h-screen bg-background pb-20">
@@ -398,6 +481,61 @@ export default function Profile() {
             </Button>
           </div>
         </div>
+
+        {/* Privacy & Data Section */}
+        <div className="space-y-4 p-4 bg-card rounded-lg border">
+          <h3 className="font-semibold">Privacy & Data</h3>
+          <p className="text-sm text-muted-foreground">
+            Manage your data and account settings. You can download all your data or permanently delete your account.
+          </p>
+          
+          <div className="space-y-3">
+            {/* Download Data Button */}
+            <div className="flex items-start gap-3 p-3 border rounded-lg">
+              <Download className="w-5 h-5 text-muted-foreground mt-0.5" />
+              <div className="flex-1">
+                <p className="font-medium">Download Your Data</p>
+                <p className="text-sm text-muted-foreground">
+                  Export all your children's milestone progress, growth measurements, and account data as CSV files. Perfect for sharing with your GP or keeping a backup.
+                </p>
+                <Button 
+                  variant="outline" 
+                  className="mt-2"
+                  onClick={handleExportData}
+                  disabled={isExporting}
+                  data-testid="button-export-data"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  {isExporting ? 'Preparing download...' : 'Download My Data'}
+                </Button>
+              </div>
+            </div>
+
+            {/* Delete Account Button */}
+            <div className="flex items-start gap-3 p-3 border border-destructive/20 rounded-lg bg-destructive/5">
+              <AlertTriangle className="w-5 h-5 text-destructive mt-0.5" />
+              <div className="flex-1">
+                <p className="font-medium text-destructive">Delete Account</p>
+                <p className="text-sm text-muted-foreground">
+                  Permanently delete your account and all associated data. This action cannot be undone.
+                </p>
+                <Button 
+                  variant="destructive" 
+                  className="mt-2"
+                  onClick={() => {
+                    setShowDeleteAccountDialog(true);
+                    setDeleteAccountPassword('');
+                    setDeleteAccountError(null);
+                  }}
+                  data-testid="button-delete-account"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete My Account
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Add/Edit Child Dialog */}
@@ -533,6 +671,81 @@ export default function Profile() {
                 {deleteChildMutation.isPending ? 'Deleting...' : 'Delete Profile'}
               </AlertDialogAction>
             )}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Account Confirmation Dialog */}
+      <AlertDialog open={showDeleteAccountDialog} onOpenChange={(open) => {
+        if (!open) {
+          setShowDeleteAccountDialog(false);
+          setDeleteAccountPassword('');
+          setDeleteAccountError(null);
+        }
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="w-5 h-5" />
+              Delete Your Account?
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4">
+                <p>
+                  This will <span className="font-semibold">permanently delete</span> your account and ALL associated data:
+                </p>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>All children's profiles and milestone progress</li>
+                  <li>All growth measurements and health data</li>
+                  <li>All activity and toy recommendations</li>
+                  <li>All medical notes and history</li>
+                </ul>
+                <p className="font-medium text-destructive">
+                  This action cannot be undone. Please download your data first if you need a backup.
+                </p>
+                
+                <div className="space-y-2 pt-2">
+                  <Label htmlFor="delete-password">Enter your password to confirm:</Label>
+                  <Input
+                    id="delete-password"
+                    type="password"
+                    value={deleteAccountPassword}
+                    onChange={(e) => {
+                      setDeleteAccountPassword(e.target.value);
+                      setDeleteAccountError(null);
+                    }}
+                    placeholder="Your password"
+                    data-testid="input-delete-password"
+                  />
+                  {deleteAccountError && (
+                    <p className="text-sm text-destructive">{deleteAccountError}</p>
+                  )}
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              onClick={() => {
+                setShowDeleteAccountDialog(false);
+                setDeleteAccountPassword('');
+                setDeleteAccountError(null);
+              }}
+              data-testid="button-cancel-delete-account"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteAccount();
+              }}
+              disabled={isDeletingAccount || !deleteAccountPassword}
+              data-testid="button-confirm-delete-account"
+            >
+              {isDeletingAccount ? 'Deleting...' : 'Delete My Account Forever'}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

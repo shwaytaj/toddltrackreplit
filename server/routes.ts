@@ -1034,6 +1034,188 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
   // This manual endpoint is no longer needed but kept for emergency use only
   // DEPRECATED: This endpoint will be removed in a future version
 
+  // GDPR Data Export endpoint - downloads all user data as a ZIP file with CSVs
+  app.get("/api/user/export", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+    try {
+      const archiver = (await import("archiver")).default;
+      const userId = req.user.id;
+      
+      // Fetch all user data
+      const user = await storage.getUser(userId);
+      const userChildren = await storage.getChildrenByParentId(userId);
+      const allMilestones = await storage.getAllMilestones();
+      
+      // Create milestone lookup map
+      const milestoneMap = new Map(allMilestones.map(m => [m.id, m]));
+      
+      // Collect all child data
+      const allChildMilestones: Array<{childName: string; milestone: any; childMilestone: any}> = [];
+      const allGrowthMetrics: Array<{childName: string; metric: any}> = [];
+      const allTeeth: Array<{childName: string; tooth: any}> = [];
+      const allCompletedActivities: Array<{childName: string; activity: any}> = [];
+      
+      for (const child of userChildren) {
+        const childMilestones = await storage.getChildMilestones(child.id);
+        const growthMetrics = await storage.getGrowthMetrics(child.id);
+        const teeth = await storage.getTeeth(child.id);
+        const completedRecs = await storage.getCompletedRecommendations(child.id);
+        
+        childMilestones.forEach(cm => {
+          const milestone = milestoneMap.get(cm.milestoneId);
+          allChildMilestones.push({ childName: child.name, milestone, childMilestone: cm });
+        });
+        
+        growthMetrics.forEach(m => allGrowthMetrics.push({ childName: child.name, metric: m }));
+        teeth.forEach(t => allTeeth.push({ childName: child.name, tooth: t }));
+        completedRecs.forEach(a => allCompletedActivities.push({ childName: child.name, activity: a }));
+      }
+      
+      // Helper to escape CSV values
+      const escapeCSV = (value: any): string => {
+        if (value === null || value === undefined) return '';
+        const str = String(value);
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      };
+      
+      // Create CSV content
+      const accountCSV = [
+        'Email,Created At,Milestone Sources',
+        escapeCSV(user?.email) + ',' + 
+        escapeCSV(user?.createdAt?.toISOString() || '') + ',' +
+        escapeCSV(Array.isArray(user?.milestoneSources) ? user.milestoneSources.join('; ') : '')
+      ].join('\n');
+      
+      const childrenCSV = [
+        'Name,Due Date,Sex,Medical History',
+        ...userChildren.map(c => [
+          escapeCSV(c.name),
+          escapeCSV(c.dueDate?.toISOString()?.split('T')[0] || ''),
+          escapeCSV(c.sex || ''),
+          escapeCSV(c.medicalHistory ? JSON.stringify(c.medicalHistory) : '')
+        ].join(','))
+      ].join('\n');
+      
+      const milestonesCSV = [
+        'Child Name,Milestone,Category,Status,Date Achieved,Notes',
+        ...allChildMilestones.map(({ childName, milestone, childMilestone }) => [
+          escapeCSV(childName),
+          escapeCSV(milestone?.title || 'Unknown'),
+          escapeCSV(milestone?.category || ''),
+          escapeCSV(childMilestone.status),
+          escapeCSV(childMilestone.achievedAt?.toISOString()?.split('T')[0] || ''),
+          escapeCSV(childMilestone.notes || '')
+        ].join(','))
+      ].join('\n');
+      
+      const growthCSV = [
+        'Child Name,Date,Type,Value,Unit,Percentile',
+        ...allGrowthMetrics.map(({ childName, metric }) => [
+          escapeCSV(childName),
+          escapeCSV(metric.recordedAt?.toISOString()?.split('T')[0] || ''),
+          escapeCSV(metric.type),
+          escapeCSV(metric.value),
+          escapeCSV(metric.unit || ''),
+          escapeCSV(metric.percentile || '')
+        ].join(','))
+      ].join('\n');
+      
+      const teethCSV = [
+        'Child Name,Tooth Number,Tooth Name,Eruption Date,Status',
+        ...allTeeth.map(({ childName, tooth }) => [
+          escapeCSV(childName),
+          escapeCSV(tooth.toothNumber),
+          escapeCSV(tooth.toothName || ''),
+          escapeCSV(tooth.eruptionDate?.toISOString()?.split('T')[0] || ''),
+          escapeCSV(tooth.status || '')
+        ].join(','))
+      ].join('\n');
+      
+      const activitiesCSV = [
+        'Child Name,Activity Title,Description,Completed At',
+        ...allCompletedActivities.map(({ childName, activity }) => [
+          escapeCSV(childName),
+          escapeCSV(activity.recommendationTitle),
+          escapeCSV(activity.recommendationDescription || ''),
+          escapeCSV(activity.completedAt?.toISOString()?.split('T')[0] || '')
+        ].join(','))
+      ].join('\n');
+      
+      // Create ZIP archive
+      const archive = archiver('zip', { zlib: { level: 9 } });
+      
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition', `attachment; filename="toddl-data-export-${new Date().toISOString().split('T')[0]}.zip"`);
+      
+      archive.pipe(res);
+      
+      archive.append(accountCSV, { name: 'account.csv' });
+      archive.append(childrenCSV, { name: 'children.csv' });
+      archive.append(milestonesCSV, { name: 'milestones.csv' });
+      archive.append(growthCSV, { name: 'growth_metrics.csv' });
+      archive.append(teethCSV, { name: 'teeth.csv' });
+      archive.append(activitiesCSV, { name: 'completed_activities.csv' });
+      
+      await archive.finalize();
+    } catch (error) {
+      console.error("Data export error:", error);
+      res.status(500).json({ error: "Failed to export data" });
+    }
+  });
+
+  // GDPR Delete Account endpoint - permanently deletes all user data
+  app.delete("/api/user/account", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+    try {
+      const { password } = req.body;
+      
+      if (!password) {
+        return res.status(400).json({ error: "Password is required to delete account" });
+      }
+      
+      // Verify password before deletion
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      const bcrypt = await import("bcrypt");
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      
+      if (!isPasswordValid) {
+        return res.status(401).json({ error: "Invalid password" });
+      }
+      
+      // Delete all user data (children cascade to milestones, metrics, etc.)
+      const deleted = await storage.deleteUser(req.user.id);
+      
+      if (!deleted) {
+        return res.status(500).json({ error: "Failed to delete account" });
+      }
+      
+      // Destroy session
+      req.logout((err) => {
+        if (err) {
+          console.error("Logout error during account deletion:", err);
+        }
+        req.session.destroy((sessionErr) => {
+          if (sessionErr) {
+            console.error("Session destruction error:", sessionErr);
+          }
+          res.json({ success: true, message: "Account and all data permanently deleted" });
+        });
+      });
+    } catch (error) {
+      console.error("Account deletion error:", error);
+      res.status(500).json({ error: "Failed to delete account" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
