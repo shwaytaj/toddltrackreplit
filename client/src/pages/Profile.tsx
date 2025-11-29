@@ -172,9 +172,20 @@ export default function Profile() {
           notes: data.notes,
         },
       });
+      
+      return data.childId;
     },
-    onSuccess: () => {
+    onSuccess: (childId) => {
       queryClient.invalidateQueries({ queryKey: ['/api/children'] });
+      // Invalidate recommendation caches for this child so they regenerate with updated medical history
+      queryClient.invalidateQueries({ queryKey: ['/api/children', childId, 'completed-recommendations'] });
+      queryClient.invalidateQueries({ 
+        predicate: (query) => 
+          Array.isArray(query.queryKey) && 
+          query.queryKey[0] === '/api/children' && 
+          query.queryKey[1] === childId &&
+          (query.queryKey.includes('toy-recommendations') || query.queryKey.includes('recommendations'))
+      });
       closeDialog();
       toast({
         title: 'Profile updated',
@@ -234,6 +245,15 @@ export default function Profile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      // Invalidate ALL recommendation caches since parent medical history affects all children
+      queryClient.invalidateQueries({ 
+        predicate: (query) => 
+          Array.isArray(query.queryKey) && 
+          query.queryKey[0] === '/api/children' &&
+          (query.queryKey.includes('toy-recommendations') || 
+           query.queryKey.includes('recommendations') ||
+           query.queryKey.includes('completed-recommendations'))
+      });
       toast({
         title: 'Saved',
         description: 'Parent information has been updated.',

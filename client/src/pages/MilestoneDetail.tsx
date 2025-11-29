@@ -189,7 +189,7 @@ export default function MilestoneDetail() {
     enabled: !!activeChildId,
   });
 
-  const { data: recommendations, mutate: fetchRecommendations, isPending: loadingRecommendations } = useMutation<AIRecommendation[], Error, string[] | undefined>({
+  const { data: recommendations, mutate: fetchRecommendations, isPending: loadingRecommendations, error: recommendationsError } = useMutation<AIRecommendation[], Error, string[] | undefined>({
     mutationFn: async (excludeCompleted?: string[]) => {
       if (!activeChildId || !milestone) return [];
       const response = await apiRequest(
@@ -197,6 +197,13 @@ export default function MilestoneDetail() {
         `/api/children/${activeChildId}/milestones/${milestone.id}/recommendations`,
         excludeCompleted && excludeCompleted.length > 0 ? { excludeCompleted } : undefined
       );
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        if (errorData.error === 'ai_not_configured') {
+          throw new Error('ai_not_configured');
+        }
+        throw new Error('Failed to fetch recommendations');
+      }
       const data = await response.json();
       return data;
     },
@@ -211,6 +218,10 @@ export default function MilestoneDetail() {
         `/api/children/${activeChildId}/milestones/${milestone.id}/toy-recommendations`
       );
       if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        if (errorData.error === 'ai_not_configured') {
+          throw new Error('ai_not_configured');
+        }
         throw new Error('Failed to fetch toy recommendations');
       }
       const data = await response.json();
@@ -218,6 +229,11 @@ export default function MilestoneDetail() {
     },
     enabled: !!activeChildId && !!milestone && activeContentTab === 'tools',
     staleTime: 1000 * 60 * 60, // Cache for 1 hour
+    retry: (failureCount, error) => {
+      // Don't retry if AI is not configured
+      if (error?.message === 'ai_not_configured') return false;
+      return failureCount < 3;
+    },
   });
 
   // Dismiss toy recommendation
@@ -497,6 +513,32 @@ export default function MilestoneDetail() {
                         <Loader2 className="w-4 h-4 animate-spin" />
                         <span>Personalising recommendations based on the provided medical history</span>
                       </div>
+                    ) : recommendationsError ? (
+                      <div className="text-center py-8 space-y-3">
+                        {recommendationsError.message === 'ai_not_configured' ? (
+                          <>
+                            <p className="text-sm text-muted-foreground">
+                              AI recommendations are not available at this time.
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Please contact support to enable personalized recommendations.
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-sm text-muted-foreground">
+                              Failed to load recommendations
+                            </p>
+                            <button
+                              onClick={() => fetchRecommendations(undefined)}
+                              className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover-elevate active-elevate-2"
+                              data-testid="button-retry-recommendations"
+                            >
+                              Try Again
+                            </button>
+                          </>
+                        )}
+                      </div>
                     ) : recommendations && recommendations.length > 0 ? (
                       <div className="max-h-96 overflow-y-auto space-y-4 pr-2">
                         {recommendations
@@ -705,16 +747,29 @@ export default function MilestoneDetail() {
                       </div>
                     ) : toyRecommendationsError ? (
                       <div className="text-center py-8 space-y-3">
-                        <p className="text-sm text-muted-foreground">
-                          Failed to load toy recommendations
-                        </p>
-                        <button
-                          onClick={() => refetchToyRecommendations()}
-                          className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover-elevate active-elevate-2"
-                          data-testid="button-retry-toys"
-                        >
-                          Try Again
-                        </button>
+                        {toyRecommendationsError.message === 'ai_not_configured' ? (
+                          <>
+                            <p className="text-sm text-muted-foreground">
+                              AI recommendations are not available at this time.
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Please contact support to enable personalized recommendations.
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-sm text-muted-foreground">
+                              Failed to load toy recommendations
+                            </p>
+                            <button
+                              onClick={() => refetchToyRecommendations()}
+                              className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover-elevate active-elevate-2"
+                              data-testid="button-retry-toys"
+                            >
+                              Try Again
+                            </button>
+                          </>
+                        )}
                       </div>
                     ) : toyRecommendations && toyRecommendations.length > 0 ? (
                       <div className="space-y-4">

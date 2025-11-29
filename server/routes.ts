@@ -15,9 +15,12 @@ import { z } from "zod";
 import { calculatePercentile } from "./whoPercentiles";
 import { getAgeInMonthsForAI } from "./age-utils";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+// Check if Anthropic API key is configured
+const isAnthropicConfigured = !!process.env.ANTHROPIC_API_KEY;
+
+const anthropic = isAnthropicConfigured 
+  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  : null;
 
 // Helper to parse Postgres array strings like "{HSE,NHS}" into ["HSE", "NHS"]
 function parsePostgresArray(value: string): string[] {
@@ -624,6 +627,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(cached.recommendations);
       }
 
+      // Check if Anthropic API is configured
+      if (!anthropic) {
+        return res.status(503).json({ 
+          error: "ai_not_configured",
+          message: "AI recommendations require an Anthropic API key. Please configure ANTHROPIC_API_KEY in your environment."
+        });
+      }
+
       // Build exclusion text for prompt if there are completed recommendations
       const exclusionText = excludeCompletedTitles.length > 0 
         ? `\n\nIMPORTANT: The parents have already tried the following recommendations. Please provide NEW, DIFFERENT recommendations that build upon or complement these completed activities:\n${excludeCompletedTitles.map((title: string, idx: number) => `${idx + 1}. ${title}`).join('\n')}`
@@ -769,6 +780,14 @@ Each recommendation should be evidence-based and cite at least one authoritative
         // Return only the first 5 non-dismissed toys
         filteredRecommendations = filteredRecommendations.slice(0, 5);
         return res.json(filteredRecommendations);
+      }
+
+      // Check if Anthropic API is configured
+      if (!anthropic) {
+        return res.status(503).json({ 
+          error: "ai_not_configured",
+          message: "AI toy recommendations require an Anthropic API key. Please configure ANTHROPIC_API_KEY in your environment."
+        });
       }
 
       // Generate new toy recommendations with Claude (more recommendations now)
