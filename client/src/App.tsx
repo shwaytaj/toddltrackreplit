@@ -3,6 +3,8 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ActiveChildProvider } from "@/contexts/ActiveChildContext";
+import { useUser } from "@/hooks/use-user";
 import Login from "@/pages/Login";
 import Onboarding from "@/pages/Onboarding";
 import Home from "@/pages/Home";
@@ -30,12 +32,22 @@ function Router() {
   );
 }
 
+function AppContent() {
+  const { user } = useUser();
+  
+  return (
+    <ActiveChildProvider userId={user?.id || null}>
+      <Router />
+    </ActiveChildProvider>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <Router />
+        <AppContent />
       </TooltipProvider>
     </QueryClientProvider>
   );

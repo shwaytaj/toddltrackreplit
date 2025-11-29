@@ -251,6 +251,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete child endpoint with last-child guard
+  app.delete("/api/children/:id", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    
+    const child = await storage.getChild(req.params.id);
+    if (!child) return res.status(404).json({ error: "Child not found" });
+    
+    // Verify parent ownership
+    if (!child.parentIds.includes(req.user.id)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    
+    // Check if this is the last child - prevent deletion
+    const allChildren = await storage.getChildrenByParentId(req.user.id);
+    if (allChildren.length <= 1) {
+      return res.status(400).json({ 
+        error: "Cannot delete last child",
+        message: "You must have at least one child profile. Add another child before deleting this one."
+      });
+    }
+    
+    try {
+      const success = await storage.deleteChild(req.params.id);
+      if (success) {
+        res.json({ success: true, message: "Child profile deleted successfully" });
+      } else {
+        res.status(500).json({ error: "Failed to delete child profile" });
+      }
+    } catch (error) {
+      console.error("Error deleting child:", error);
+      res.status(500).json({ error: "Failed to delete child profile" });
+    }
+  });
+
   // Milestone routes
   app.get("/api/milestones", async (req, res) => {
     // Get user's preferred sources if authenticated

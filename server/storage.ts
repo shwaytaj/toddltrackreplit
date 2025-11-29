@@ -51,6 +51,7 @@ export interface IStorage {
   createChild(child: InsertChild): Promise<Child>;
   updateChild(childId: string, data: Partial<Child>): Promise<Child | undefined>;
   updateChildMedicalHistory(childId: string, medicalHistory: any): Promise<Child | undefined>;
+  deleteChild(childId: string): Promise<boolean>;
 
   // Milestone operations
   getMilestone(id: string): Promise<Milestone | undefined>;
@@ -173,6 +174,21 @@ export class DbStorage implements IStorage {
       .where(eq(children.id, childId))
       .returning();
     return result[0];
+  }
+
+  async deleteChild(childId: string): Promise<boolean> {
+    // Delete all related data first (child milestones, growth metrics, recommendations, etc.)
+    await this.db.delete(childMilestones).where(eq(childMilestones.childId, childId));
+    await this.db.delete(growthMetrics).where(eq(growthMetrics.childId, childId));
+    await this.db.delete(teeth).where(eq(teeth.childId, childId));
+    await this.db.delete(aiRecommendations).where(eq(aiRecommendations.childId, childId));
+    await this.db.delete(completedRecommendations).where(eq(completedRecommendations.childId, childId));
+    await this.db.delete(dismissedToyRecommendations).where(eq(dismissedToyRecommendations.childId, childId));
+    await this.db.delete(aiToyRecommendations).where(eq(aiToyRecommendations.childId, childId));
+    
+    // Delete the child record
+    const result = await this.db.delete(children).where(eq(children.id, childId)).returning();
+    return result.length > 0;
   }
 
   // Milestone operations

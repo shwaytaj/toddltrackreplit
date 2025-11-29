@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import ChildSelector from '@/components/ChildSelector';
 import HighlightCard from '@/components/HighlightCard';
 import MilestoneCard from '@/components/MilestoneCard';
@@ -8,9 +8,10 @@ import { Button } from '@/components/ui/button';
 import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { useUser } from '@/hooks/use-user';
+import { useActiveChild } from '@/contexts/ActiveChildContext';
 import { calculateCorrectedAge, getAgeRange, formatAge, formatAdjustment } from '@/lib/age-calculation';
 import { getMonkeyIcon } from '@/components/MonkeyIcons';
-import type { Child, Milestone, ChildMilestone, GrowthMetric } from '@shared/schema';
+import type { Milestone, ChildMilestone, GrowthMetric } from '@shared/schema';
 
 // Map milestone categories to their Figma design colors
 function getMilestoneColor(milestone: Milestone): string {
@@ -48,30 +49,11 @@ export default function Home() {
   const [, setLocation] = useLocation();
   const [activeNav, setActiveNav] = useState<'home' | 'milestones' | 'profile'>('home');
   const { user, isLoading: userLoading } = useUser();
+  const { children, activeChildId, activeChild: selectedChild, setActiveChildId, isLoading: childrenLoading } = useActiveChild();
 
-  const { data: children = [], isLoading: childrenLoading } = useQuery<Child[]>({
-    queryKey: ['/api/children'],
-    enabled: !!user,
-  });
-
-  const [activeChild, setActiveChild] = useState('');
-
-  useEffect(() => {
-    if (children.length > 0 && !activeChild) {
-      setActiveChild(children[0].id);
-    }
-  }, [children, activeChild]);
-
-  useEffect(() => {
-    if (!userLoading && !user) {
-      setLocation('/');
-    }
-  }, [user, userLoading, setLocation]);
-
-  const selectedChild = useMemo(() => 
-    children.find(c => c.id === activeChild),
-    [children, activeChild]
-  );
+  if (!userLoading && !user) {
+    setLocation('/');
+  }
 
   // Calculate corrected age (accounts for premature/post-mature birth)
   const ageInfo = useMemo(() => {
@@ -97,13 +79,13 @@ export default function Home() {
   });
 
   const { data: childMilestones = [] } = useQuery<ChildMilestone[]>({
-    queryKey: ['/api/children', activeChild, 'milestones'],
-    enabled: !!activeChild && activeChild !== '',
+    queryKey: ['/api/children', activeChildId, 'milestones'],
+    enabled: !!activeChildId,
   });
 
   const { data: growthMetrics = [] } = useQuery<GrowthMetric[]>({
-    queryKey: ['/api/children', activeChild, 'growth-metrics'],
-    enabled: !!activeChild && activeChild !== '',
+    queryKey: ['/api/children', activeChildId, 'growth-metrics'],
+    enabled: !!activeChildId,
   });
 
   const achievedMilestoneIds = new Set(
@@ -168,8 +150,8 @@ export default function Home() {
         <div>
           <ChildSelector
             children={children}
-            activeId={activeChild}
-            onSelect={setActiveChild}
+            activeId={activeChildId || ''}
+            onSelect={setActiveChildId}
           />
         </div>
 

@@ -13,7 +13,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useQuery } from '@tanstack/react-query';
-import type { Child, ChildMilestone, Milestone } from '@shared/schema';
+import { useActiveChild } from '@/contexts/ActiveChildContext';
+import type { ChildMilestone, Milestone } from '@shared/schema';
 import { calculateCorrectedAge } from '@/lib/age-calculation';
 import { getMonkeyIcon } from '@/components/MonkeyIcons';
 
@@ -72,11 +73,7 @@ export default function Milestones() {
   // Trim whitespace from search query
   const trimmedSearchQuery = searchQuery.trim();
 
-  const { data: children = [] } = useQuery<Child[]>({
-    queryKey: ['/api/children'],
-  });
-
-  const selectedChild = children[0];
+  const { activeChild: selectedChild, activeChildId } = useActiveChild();
 
   // Calculate child's corrected age and store age info
   const ageInfo = useMemo(() => {
@@ -130,8 +127,8 @@ export default function Milestones() {
   }, [trimmedSearchQuery, allMilestones, ageRangeMilestones]);
 
   const { data: childMilestones = [] } = useQuery<ChildMilestone[]>({
-    queryKey: ['/api/children', selectedChild?.id, 'milestones'],
-    enabled: !!selectedChild,
+    queryKey: ['/api/children', activeChildId, 'milestones'],
+    enabled: !!activeChildId,
   });
 
   const achievedMilestoneIds = useMemo(() => {

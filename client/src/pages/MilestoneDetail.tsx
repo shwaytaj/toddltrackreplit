@@ -11,8 +11,9 @@ import { X, Check, Lightbulb, AlertTriangle, Loader2, ChevronDown } from 'lucide
 import { SiAmazon, SiTarget, SiWalmart } from 'react-icons/si';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useActiveChild } from '@/contexts/ActiveChildContext';
 import { getToyIcon } from '@/components/ToyIcons';
-import type { Milestone, Child, ChildMilestone, CompletedRecommendation } from '@shared/schema';
+import type { Milestone, ChildMilestone, CompletedRecommendation } from '@shared/schema';
 
 interface AIRecommendation {
   title: string;
@@ -120,24 +121,21 @@ export default function MilestoneDetail() {
   const [activeNav, setActiveNav] = useState<'home' | 'milestones' | 'profile'>('milestones');
   const [loadedMilestoneIds, setLoadedMilestoneIds] = useState<string[]>([]);
 
-  const { data: children = [] } = useQuery<Child[]>({
-    queryKey: ['/api/children'],
-  });
+  const { activeChild: selectedChild, activeChildId } = useActiveChild();
 
   const { data: allMilestones = [] } = useQuery<Milestone[]>({
     queryKey: ['/api/milestones'],
   });
 
   const milestone = allMilestones.find(m => m.id === params?.id);
-  const selectedChild = children[0];
 
   const { data: achievementStatus } = useQuery<ChildMilestone | null>({
-    queryKey: ['/api/children', selectedChild?.id, 'milestones', milestone?.id],
-    enabled: !!selectedChild && !!milestone,
+    queryKey: ['/api/children', activeChildId, 'milestones', milestone?.id],
+    enabled: !!activeChildId && !!milestone,
     queryFn: async () => {
-      if (!selectedChild || !milestone) return null;
+      if (!activeChildId || !milestone) return null;
       try {
-        const response = await fetch(`/api/children/${selectedChild.id}/milestones`);
+        const response = await fetch(`/api/children/${activeChildId}/milestones`);
         if (!response.ok) return null;
         const allChildMilestones: ChildMilestone[] = await response.json();
         return allChildMilestones.find(cm => cm.milestoneId === milestone.id) || null;
@@ -149,7 +147,7 @@ export default function MilestoneDetail() {
 
   const toggleAchievement = useMutation({
     mutationFn: async (newValue: 'achieved' | 'not-achieved') => {
-      if (!selectedChild || !milestone) return;
+      if (!activeChildId || !milestone) return;
       const currentlyAchieved = achievementStatus?.achieved || false;
       const shouldBeAchieved = newValue === 'achieved';
       
@@ -157,24 +155,24 @@ export default function MilestoneDetail() {
       
       const response = await apiRequest(
         'POST',
-        `/api/children/${selectedChild.id}/milestones/${milestone.id}/toggle`
+        `/api/children/${activeChildId}/milestones/${milestone.id}/toggle`
       );
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['/api/children', selectedChild?.id, 'milestones', milestone?.id] 
+        queryKey: ['/api/children', activeChildId, 'milestones', milestone?.id] 
       });
       queryClient.invalidateQueries({ 
-        queryKey: ['/api/children', selectedChild?.id, 'milestones'] 
+        queryKey: ['/api/children', activeChildId, 'milestones'] 
       });
     },
   });
 
   // Fetch all child milestones to find unachieved ones
   const { data: allChildMilestones = [] } = useQuery<ChildMilestone[]>({
-    queryKey: ['/api/children', selectedChild?.id, 'milestones'],
-    enabled: !!selectedChild,
+    queryKey: ['/api/children', activeChildId, 'milestones'],
+    enabled: !!activeChildId,
   });
 
   // Get unachieved milestones
@@ -187,16 +185,16 @@ export default function MilestoneDetail() {
 
   // Fetch completed recommendations for this child
   const { data: completedRecommendations = [] } = useQuery<CompletedRecommendation[]>({
-    queryKey: ['/api/children', selectedChild?.id, 'completed-recommendations'],
-    enabled: !!selectedChild,
+    queryKey: ['/api/children', activeChildId, 'completed-recommendations'],
+    enabled: !!activeChildId,
   });
 
   const { data: recommendations, mutate: fetchRecommendations, isPending: loadingRecommendations } = useMutation<AIRecommendation[], Error, string[] | undefined>({
     mutationFn: async (excludeCompleted?: string[]) => {
-      if (!selectedChild || !milestone) return [];
+      if (!activeChildId || !milestone) return [];
       const response = await apiRequest(
         'POST',
-        `/api/children/${selectedChild.id}/milestones/${milestone.id}/recommendations`,
+        `/api/children/${activeChildId}/milestones/${milestone.id}/recommendations`,
         excludeCompleted && excludeCompleted.length > 0 ? { excludeCompleted } : undefined
       );
       const data = await response.json();
@@ -205,12 +203,12 @@ export default function MilestoneDetail() {
   });
 
   const { data: toyRecommendations, isLoading: loadingToyRecommendations, error: toyRecommendationsError, refetch: refetchToyRecommendations } = useQuery<ToyRecommendation[]>({
-    queryKey: ['/api/children', selectedChild?.id, 'milestones', milestone?.id, 'toy-recommendations'],
+    queryKey: ['/api/children', activeChildId, 'milestones', milestone?.id, 'toy-recommendations'],
     queryFn: async () => {
-      if (!selectedChild || !milestone) return [];
+      if (!activeChildId || !milestone) return [];
       const response = await apiRequest(
         'POST',
-        `/api/children/${selectedChild.id}/milestones/${milestone.id}/toy-recommendations`
+        `/api/children/${activeChildId}/milestones/${milestone.id}/toy-recommendations`
       );
       if (!response.ok) {
         throw new Error('Failed to fetch toy recommendations');
@@ -218,22 +216,22 @@ export default function MilestoneDetail() {
       const data = await response.json();
       return data;
     },
-    enabled: !!selectedChild && !!milestone && activeContentTab === 'tools',
+    enabled: !!activeChildId && !!milestone && activeContentTab === 'tools',
     staleTime: 1000 * 60 * 60, // Cache for 1 hour
   });
 
   // Dismiss toy recommendation
   const dismissToy = useMutation({
     mutationFn: async (toyName: string) => {
-      if (!selectedChild || !milestone) return;
-      await apiRequest('POST', `/api/children/${selectedChild.id}/milestones/${milestone.id}/dismiss-toy`, {
+      if (!activeChildId || !milestone) return;
+      await apiRequest('POST', `/api/children/${activeChildId}/milestones/${milestone.id}/dismiss-toy`, {
         toyName,
       });
     },
     onSuccess: () => {
       // Refetch toy recommendations to get new ones
       queryClient.invalidateQueries({ 
-        queryKey: ['/api/children', selectedChild?.id, 'milestones', milestone?.id, 'toy-recommendations'] 
+        queryKey: ['/api/children', activeChildId, 'milestones', milestone?.id, 'toy-recommendations'] 
       });
     },
   });
@@ -241,15 +239,15 @@ export default function MilestoneDetail() {
   // Toggle recommendation completion
   const toggleRecommendation = useMutation({
     mutationFn: async ({ milestoneId, title, description, citations, isCompleted }: { milestoneId: string; title: string; description: string; citations?: Array<{ source: string; url?: string }>; isCompleted: boolean }) => {
-      if (!selectedChild) return;
+      if (!activeChildId) return;
       
       if (isCompleted) {
-        await apiRequest('DELETE', `/api/children/${selectedChild.id}/completed-recommendations`, {
+        await apiRequest('DELETE', `/api/children/${activeChildId}/completed-recommendations`, {
           milestoneId,
           recommendationTitle: title,
         });
       } else {
-        await apiRequest('POST', `/api/children/${selectedChild.id}/completed-recommendations`, {
+        await apiRequest('POST', `/api/children/${activeChildId}/completed-recommendations`, {
           milestoneId,
           recommendationTitle: title,
           recommendationDescription: description,
@@ -259,16 +257,16 @@ export default function MilestoneDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['/api/children', selectedChild?.id, 'completed-recommendations'] 
+        queryKey: ['/api/children', activeChildId, 'completed-recommendations'] 
       });
     },
   });
 
   useEffect(() => {
-    if (selectedChild && milestone && activeContentTab === 'todo') {
+    if (activeChildId && milestone && activeContentTab === 'todo') {
       fetchRecommendations(undefined);
     }
-  }, [selectedChild, milestone, activeContentTab, fetchRecommendations]);
+  }, [activeChildId, milestone, activeContentTab, fetchRecommendations]);
 
 
   // Check if all current recommendations are completed and fetch new ones
@@ -632,9 +630,9 @@ export default function MilestoneDetail() {
                             <span className="font-medium">Want more personalized recommendations?</span> These to-dos are based on the medical history you've provided.
                           </p>
                         </div>
-                        {selectedChild && (
+                        {activeChildId && (
                           <button
-                            onClick={() => setLocation(`/medical-history/${selectedChild.id}`)}
+                            onClick={() => setLocation(`/medical-history/${activeChildId}`)}
                             className="text-xs text-primary underline hover:no-underline font-medium ml-6"
                             data-testid="link-update-medical-history"
                           >
