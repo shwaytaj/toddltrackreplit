@@ -1405,30 +1405,19 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
       // Get children count for message
       const children = await storage.getChildrenByParentId(req.user.id);
       
-      // Send invitation email
-      const { emailService } = await import("./services/emailService");
+      // Generate invite link (no email - user shares the link directly)
       const inviteUrl = `${process.env.REPLIT_DEV_DOMAIN ? 'https://' + process.env.REPLIT_DEV_DOMAIN : 'http://localhost:5000'}/invite/${token}`;
-      
-      const emailSent = await emailService.sendInvitationEmail({
-        to: email,
-        inviterName,
-        inviteUrl,
-        expiresAt,
-      });
       
       res.json({ 
         success: true,
-        emailSent,
         invitation: {
           id: invitation.id,
           email: invitation.email,
           status: invitation.status,
           expiresAt: invitation.expiresAt,
         },
-        message: emailSent 
-          ? `Invitation sent to ${email}. They will have access to ${children.length} child profile(s).`
-          : `Invitation created for ${email}, but the email could not be sent. You can share the invite link directly: ${inviteUrl}`,
-        inviteUrl: emailSent ? undefined : inviteUrl,
+        inviteUrl,
+        message: `Share this link with ${email} to invite them as a co-parent.`,
       });
     } catch (error) {
       console.error("Error creating invitation:", error);

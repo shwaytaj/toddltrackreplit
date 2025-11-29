@@ -32,7 +32,7 @@ import { useActiveChild } from '@/contexts/ActiveChildContext';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { calculateAdjustedAge, formatAge } from '@/lib/age-calculation';
-import { Plus, Trash2, Edit, Check, ChevronRight, Download, AlertTriangle, UserPlus, Users, Mail, Clock, X, LogOut } from 'lucide-react';
+import { Plus, Trash2, Edit, Check, ChevronRight, Download, AlertTriangle, UserPlus, Users, Mail, Clock, X, LogOut, Copy } from 'lucide-react';
 import type { Child, User } from '@shared/schema';
 
 interface ParentRelationship {
@@ -83,6 +83,7 @@ export default function Profile() {
   // Parent management states
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
+  const [generatedInviteLink, setGeneratedInviteLink] = useState<string | null>(null);
   const [parentToRemove, setParentToRemove] = useState<ParentRelationship | null>(null);
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
 
@@ -325,23 +326,10 @@ export default function Profile() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/invitations'] });
-      setShowInviteDialog(false);
       setInviteEmail('');
-      
-      if (data.emailSent) {
-        toast({
-          title: 'Invitation sent',
-          description: data.message || `An invitation has been sent to ${inviteEmail}.`,
-        });
-      } else {
-        // Email failed to send - show the direct link
-        toast({
-          title: 'Invitation created',
-          description: data.inviteUrl 
-            ? `Email couldn't be sent. Share this link directly: ${data.inviteUrl}`
-            : data.message,
-          duration: 10000, // Keep visible longer so they can copy the link
-        });
+      // Show the generated invite link
+      if (data.inviteUrl) {
+        setGeneratedInviteLink(data.inviteUrl);
       }
     },
     onError: (error: Error) => {
@@ -1124,72 +1112,134 @@ export default function Profile() {
         if (!open) {
           setShowInviteDialog(false);
           setInviteEmail('');
+          setGeneratedInviteLink(null);
         }
       }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserPlus className="w-5 h-5" />
-              Invite a Co-parent
+              {generatedInviteLink ? 'Share Invite Link' : 'Invite a Co-parent'}
             </DialogTitle>
             <DialogDescription>
-              Invite another parent or caregiver to access your children's profiles. 
-              They'll be able to track milestones and view all children's data.
+              {generatedInviteLink 
+                ? 'Share this link with your co-parent. The link expires in 7 days.'
+                : 'Create an invite link to share with another parent or caregiver.'
+              }
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="invite-email">Email Address</Label>
-              <Input
-                id="invite-email"
-                type="email"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                placeholder="parent@example.com"
-                data-testid="input-invite-email"
-              />
+          {generatedInviteLink ? (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Invite Link</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={generatedInviteLink}
+                    readOnly
+                    className="font-mono text-sm"
+                    data-testid="input-invite-link"
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      navigator.clipboard.writeText(generatedInviteLink);
+                      toast({
+                        title: 'Link copied',
+                        description: 'Invite link copied to clipboard.',
+                      });
+                    }}
+                    data-testid="button-copy-invite-link"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  <strong>They will have access to:</strong>
+                </p>
+                <ul className="text-sm text-muted-foreground list-disc list-inside mt-1">
+                  {children.map(child => (
+                    <li key={child.id}>{child.name}</li>
+                  ))}
+                </ul>
+              </div>
             </div>
+          ) : (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="invite-email">Their Email Address</Label>
+                <Input
+                  id="invite-email"
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  placeholder="parent@example.com"
+                  data-testid="input-invite-email"
+                />
+                <p className="text-xs text-muted-foreground">
+                  This helps us identify them when they accept the invitation.
+                </p>
+              </div>
 
-            <div className="p-3 bg-muted rounded-lg">
-              <p className="text-sm text-muted-foreground">
-                <strong>Note:</strong> The invited person will have access to all {children.length} child profile(s):
-              </p>
-              <ul className="text-sm text-muted-foreground list-disc list-inside mt-1">
-                {children.map(child => (
-                  <li key={child.id}>{child.name}</li>
-                ))}
-              </ul>
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  <strong>Note:</strong> The invited person will have access to all {children.length} child profile(s):
+                </p>
+                <ul className="text-sm text-muted-foreground list-disc list-inside mt-1">
+                  {children.map(child => (
+                    <li key={child.id}>{child.name}</li>
+                  ))}
+                </ul>
+              </div>
             </div>
-          </div>
+          )}
 
           <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setShowInviteDialog(false);
-                setInviteEmail('');
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                if (!inviteEmail || !inviteEmail.includes('@')) {
-                  toast({
-                    title: 'Invalid email',
-                    description: 'Please enter a valid email address.',
-                    variant: 'destructive',
-                  });
-                  return;
-                }
-                inviteParentMutation.mutate(inviteEmail);
-              }}
-              disabled={inviteParentMutation.isPending}
-              data-testid="button-send-invitation"
-            >
-              {inviteParentMutation.isPending ? 'Sending...' : 'Send Invitation'}
-            </Button>
+            {generatedInviteLink ? (
+              <Button 
+                onClick={() => {
+                  setShowInviteDialog(false);
+                  setGeneratedInviteLink(null);
+                  setInviteEmail('');
+                }}
+                data-testid="button-done-invite"
+              >
+                Done
+              </Button>
+            ) : (
+              <>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowInviteDialog(false);
+                    setInviteEmail('');
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (!inviteEmail || !inviteEmail.includes('@')) {
+                      toast({
+                        title: 'Invalid email',
+                        description: 'Please enter a valid email address.',
+                        variant: 'destructive',
+                      });
+                      return;
+                    }
+                    inviteParentMutation.mutate(inviteEmail);
+                  }}
+                  disabled={inviteParentMutation.isPending}
+                  data-testid="button-create-invite-link"
+                >
+                  {inviteParentMutation.isPending ? 'Creating...' : 'Create Invite Link'}
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
