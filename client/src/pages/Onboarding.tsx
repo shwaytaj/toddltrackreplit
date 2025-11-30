@@ -20,14 +20,13 @@ export default function Onboarding() {
   const [, setLocation] = useLocation();
   const [step, setStep] = useState(0);
   const [childName, setChildName] = useState('');
-  const [gender, setGender] = useState('');
   const [relationship, setRelationship] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const handleContinue = async () => {
-    if (step < 4) {
+    if (step < 3) {
       setStep(step + 1);
     } else {
       setIsLoading(true);
@@ -36,7 +35,6 @@ export default function Onboarding() {
         await apiRequest('POST', '/api/children', {
           name: childName,
           dueDate,
-          gender: gender || undefined,
         });
         
         // Invalidate user and children queries
@@ -59,9 +57,8 @@ export default function Onboarding() {
   const isStepValid = () => {
     switch (step) {
       case 0: return childName.trim().length > 0;
-      case 1: return gender.length > 0;
-      case 2: return relationship.length > 0;
-      case 3: return dueDate.length > 0;
+      case 1: return relationship.length > 0;
+      case 2: return dueDate.length > 0;
       default: return true;
     }
   };
@@ -71,7 +68,7 @@ export default function Onboarding() {
       {step === 0 && (
         <OnboardingStep
           currentStep={step}
-          totalSteps={4}
+          totalSteps={3}
           onContinue={handleContinue}
           continueDisabled={!isStepValid()}
         >
@@ -93,29 +90,7 @@ export default function Onboarding() {
       {step === 1 && (
         <OnboardingStep
           currentStep={step}
-          totalSteps={4}
-          onContinue={handleContinue}
-          continueDisabled={!isStepValid()}
-        >
-          <div className="space-y-2">
-            <Label>Child's gender</Label>
-            <Select value={gender} onValueChange={setGender}>
-              <SelectTrigger data-testid="select-gender">
-                <SelectValue placeholder="- select -" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="male">Male</SelectItem>
-                <SelectItem value="female">Female</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </OnboardingStep>
-      )}
-
-      {step === 2 && (
-        <OnboardingStep
-          currentStep={step}
-          totalSteps={4}
+          totalSteps={3}
           onContinue={handleContinue}
           continueDisabled={!isStepValid()}
         >
@@ -136,10 +111,10 @@ export default function Onboarding() {
         </OnboardingStep>
       )}
 
-      {step === 3 && (
+      {step === 2 && (
         <OnboardingStep
           currentStep={step}
-          totalSteps={4}
+          totalSteps={3}
           onContinue={handleContinue}
           continueDisabled={!isStepValid()}
         >
@@ -171,7 +146,7 @@ export default function Onboarding() {
         </OnboardingStep>
       )}
 
-      {step === 4 && (
+      {step === 3 && (
         <div className="flex flex-col min-h-screen bg-background p-6 justify-center items-center">
           <div className="max-w-md w-full text-center space-y-6">
             <Logo className="mb-8" />
