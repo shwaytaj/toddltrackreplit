@@ -3,13 +3,6 @@ import { useLocation } from 'wouter';
 import OnboardingStep from '@/components/OnboardingStep';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/Logo';
 import { apiRequest } from '@/lib/queryClient';
@@ -20,13 +13,12 @@ export default function Onboarding() {
   const [, setLocation] = useLocation();
   const [step, setStep] = useState(0);
   const [childName, setChildName] = useState('');
-  const [relationship, setRelationship] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const handleContinue = async () => {
-    if (step < 3) {
+    if (step < 2) {
       setStep(step + 1);
     } else {
       setIsLoading(true);
@@ -57,8 +49,7 @@ export default function Onboarding() {
   const isStepValid = () => {
     switch (step) {
       case 0: return childName.trim().length > 0;
-      case 1: return relationship.length > 0;
-      case 2: return dueDate.length > 0;
+      case 1: return dueDate.length > 0;
       default: return true;
     }
   };
@@ -68,7 +59,7 @@ export default function Onboarding() {
       {step === 0 && (
         <OnboardingStep
           currentStep={step}
-          totalSteps={3}
+          totalSteps={2}
           onContinue={handleContinue}
           continueDisabled={!isStepValid()}
         >
@@ -90,31 +81,7 @@ export default function Onboarding() {
       {step === 1 && (
         <OnboardingStep
           currentStep={step}
-          totalSteps={3}
-          onContinue={handleContinue}
-          continueDisabled={!isStepValid()}
-        >
-          <div className="space-y-2">
-            <Label>Relation with baby</Label>
-            <Select value={relationship} onValueChange={setRelationship}>
-              <SelectTrigger data-testid="select-relationship">
-                <SelectValue placeholder="- select -" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="mother">Mother</SelectItem>
-                <SelectItem value="father">Father</SelectItem>
-                <SelectItem value="guardian">Guardian</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </OnboardingStep>
-      )}
-
-      {step === 2 && (
-        <OnboardingStep
-          currentStep={step}
-          totalSteps={3}
+          totalSteps={2}
           onContinue={handleContinue}
           continueDisabled={!isStepValid()}
         >
@@ -146,7 +113,7 @@ export default function Onboarding() {
         </OnboardingStep>
       )}
 
-      {step === 3 && (
+      {step === 2 && (
         <div className="flex flex-col min-h-screen bg-background p-6 justify-center items-center">
           <div className="max-w-md w-full text-center space-y-6">
             <Logo className="mb-8" />
