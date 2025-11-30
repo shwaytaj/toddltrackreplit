@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useLocation } from 'wouter';
+import { useLocation, useSearch } from 'wouter';
 import BottomNav from '@/components/BottomNav';
 import MilestoneCard from '@/components/MilestoneCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 import {
   Select,
@@ -65,10 +66,27 @@ const getMilestoneColor = (milestone: Milestone): string => {
 
 export default function Milestones() {
   const [, setLocation] = useLocation();
+  const searchString = useSearch();
   const [activeNav, setActiveNav] = useState<'home' | 'milestones' | 'profile'>('milestones');
   const [selectedRangeIndex, setSelectedRangeIndex] = useState(0);
   const [childCorrectedAgeRangeIndex, setChildCorrectedAgeRangeIndex] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  
+  // Read category filter from URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(searchString);
+    const category = params.get('category');
+    if (category) {
+      setCategoryFilter(category);
+    }
+  }, [searchString]);
+  
+  // Clear category filter function
+  const clearCategoryFilter = () => {
+    setCategoryFilter(null);
+    setLocation('/milestones');
+  };
   
   // Trim whitespace from search query
   const trimmedSearchQuery = searchQuery.trim();
@@ -107,16 +125,26 @@ export default function Milestones() {
 
   // Use filtered all milestones when searching, otherwise use age range milestones
   const milestones = useMemo(() => {
+    let filtered: Milestone[];
+    
     if (trimmedSearchQuery.length > 0) {
       const query = trimmedSearchQuery.toLowerCase();
-      return allMilestones.filter(m => 
+      filtered = allMilestones.filter(m => 
         m.title.toLowerCase().includes(query) ||
         m.description.toLowerCase().includes(query) ||
         m.category.toLowerCase().includes(query)
       );
+    } else {
+      filtered = ageRangeMilestones;
     }
-    return ageRangeMilestones;
-  }, [trimmedSearchQuery, allMilestones, ageRangeMilestones]);
+    
+    // Apply category filter if set
+    if (categoryFilter) {
+      filtered = filtered.filter(m => m.category === categoryFilter);
+    }
+    
+    return filtered;
+  }, [trimmedSearchQuery, allMilestones, ageRangeMilestones, categoryFilter]);
 
   const { data: childMilestones = [] } = useQuery<ChildMilestone[]>({
     queryKey: ['/api/children', activeChildId, 'milestones'],
@@ -222,6 +250,22 @@ export default function Milestones() {
             </button>
           )}
         </div>
+
+        {/* Category filter badge */}
+        {categoryFilter && (
+          <div className="flex items-center gap-2" data-testid="category-filter-container">
+            <span className="text-sm text-muted-foreground">Filtered by:</span>
+            <Badge 
+              variant="secondary" 
+              className="flex items-center gap-1 cursor-pointer"
+              onClick={clearCategoryFilter}
+              data-testid="badge-category-filter"
+            >
+              {categoryFilter}
+              <X className="w-3 h-3" />
+            </Badge>
+          </div>
+        )}
 
         {/* Search results indicator */}
         {trimmedSearchQuery.length > 0 && (
