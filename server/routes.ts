@@ -330,6 +330,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Trigger recommendation warmup for a child (used when switching profiles)
+  app.post("/api/children/:id/warmup", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    
+    const child = await storage.getChild(req.params.id);
+    if (!child) return res.status(404).json({ error: "Child not found" });
+    
+    // Verify parent has access to this child
+    if (!child.parentIds.includes(req.user.id)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    
+    // Trigger background warmup - non-blocking
+    triggerWarmupInBackground(child.id, req.user.id);
+    
+    res.json({ success: true, message: "Recommendation warmup started" });
+  });
+
   // Milestone routes
   app.get("/api/milestones", async (req, res) => {
     // Get user's preferred sources if authenticated

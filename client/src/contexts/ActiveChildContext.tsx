@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { Child } from '@shared/schema';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ActiveChildContextType {
   children: Child[];
@@ -43,6 +44,12 @@ export function ActiveChildProvider({ children: childrenProp, userId }: { childr
     pendingSelectionRef.current = { id, timestamp: Date.now() };
     setActiveChildIdState(id);
     localStorage.setItem(STORAGE_KEY, id);
+    
+    // Trigger background warmup for recommendation pre-fetching
+    // Fire-and-forget - don't await, don't block UI
+    apiRequest('POST', `/api/children/${id}/warmup`).catch(() => {
+      // Silently ignore errors - warmup is a performance optimization, not critical
+    });
   }, []);
 
   useEffect(() => {
