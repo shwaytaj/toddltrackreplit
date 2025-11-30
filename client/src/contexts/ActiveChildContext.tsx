@@ -25,14 +25,19 @@ export function ActiveChildProvider({ children: childrenProp, userId }: { childr
 
   const pendingSelectionRef = useRef<{ id: string; timestamp: number } | null>(null);
 
-  const { data: childrenData = [], isLoading: queryLoading, isFetching, dataUpdatedAt } = useQuery<Child[]>({
+  const { data: childrenData = [], isLoading: queryLoading, isFetching, dataUpdatedAt, fetchStatus } = useQuery<Child[]>({
     queryKey: ['/api/children'],
     enabled: !!userId,
   });
   
-  // Consider loading if: query is loading OR we're waiting for userId (query not enabled yet)
-  // This prevents false "0 children" state when query hasn't run yet
-  const isLoading = queryLoading || !userId;
+  // Consider loading if:
+  // 1. No userId yet (waiting for auth)
+  // 2. Query is actively loading
+  // 3. Query has never fetched data yet (dataUpdatedAt === 0 means no successful fetch)
+  // 4. Query is in 'fetching' status
+  // This prevents false "0 children" state when query hasn't completed its first fetch
+  const hasEverFetched = dataUpdatedAt > 0;
+  const isLoading = !userId || queryLoading || !hasEverFetched || fetchStatus === 'fetching';
 
   const setActiveChildId = useCallback((id: string) => {
     pendingSelectionRef.current = { id, timestamp: Date.now() };
