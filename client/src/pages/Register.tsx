@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
 import Logo from '@/components/Logo';
 import { Button } from '@/components/ui/button';
@@ -15,9 +15,10 @@ export default function Register() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { user, isLoading: userLoading } = useUser();
+  const justRegisteredRef = useRef(false);
 
   useEffect(() => {
-    if (!userLoading && user) {
+    if (!userLoading && user && !justRegisteredRef.current) {
       setLocation('/home');
     }
   }, [user, userLoading, setLocation]);
@@ -34,6 +35,7 @@ export default function Register() {
 
     setIsLoading(true);
     try {
+      justRegisteredRef.current = true;
       await apiRequest('POST', '/api/auth/register', { email, password });
       await queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       setLocation('/onboarding');

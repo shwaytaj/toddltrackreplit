@@ -57,6 +57,13 @@ export default function Home() {
     }
   }, [userLoading, user, setLocation]);
 
+  // Redirect to onboarding if user has no children
+  useEffect(() => {
+    if (!childrenLoading && children.length === 0) {
+      setLocation('/onboarding');
+    }
+  }, [childrenLoading, children, setLocation]);
+
   // Calculate adjusted age (based on due date)
   const adjustedAge = useMemo(() => {
     if (!selectedChild) return null;
