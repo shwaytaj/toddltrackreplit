@@ -822,6 +822,38 @@ export default function Profile() {
                   ? "Download your data or manage your account settings."
                   : "Manage your account settings. Only the primary parent can download family data."}
               </p>
+
+              {/* Log Out Button */}
+              <div className="flex items-start gap-3 p-3 border rounded-lg">
+                <LogOut className="w-5 h-5 text-muted-foreground mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-medium">Log Out</p>
+                  <p className="text-sm text-muted-foreground">
+                    Sign out of your account on this device.
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-2"
+                    onClick={async () => {
+                      try {
+                        await apiRequest('POST', '/api/auth/logout');
+                        queryClient.clear();
+                        setLocation('/login');
+                      } catch (error) {
+                        toast({
+                          title: "Error",
+                          description: "Failed to log out. Please try again.",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                    data-testid="button-logout"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Log Out
+                  </Button>
+                </div>
+              </div>
               
               {/* Download Data Button - Only for primary parents */}
               {isPrimaryParent && (
