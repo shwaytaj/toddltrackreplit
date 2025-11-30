@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import OnboardingStep from '@/components/OnboardingStep';
 import { Input } from '@/components/ui/input';
@@ -14,9 +14,18 @@ import Logo from '@/components/Logo';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
+import { useUser } from '@/hooks/use-user';
 
 export default function Onboarding() {
   const [, setLocation] = useLocation();
+  const { user, isLoading: userLoading } = useUser();
+
+  // Redirect to register if not authenticated
+  useEffect(() => {
+    if (!userLoading && !user) {
+      setLocation('/register');
+    }
+  }, [userLoading, user, setLocation]);
   const [step, setStep] = useState(0);
   const [childName, setChildName] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -76,6 +85,15 @@ export default function Onboarding() {
       default: return true;
     }
   };
+
+  // Show loading while checking auth
+  if (userLoading || !user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <>
