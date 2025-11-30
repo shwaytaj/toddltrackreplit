@@ -28,6 +28,7 @@ export async function warmupRecommendationsForChild(
   };
 
   if (!anthropic) {
+    console.warn("[RecommendationWarmup] Skipping warmup: ANTHROPIC_API_KEY not configured");
     result.success = false;
     result.errors.push("Anthropic API not configured");
     return result;
@@ -202,8 +203,14 @@ Each recommendation should be evidence-based and cite at least one authoritative
   if (content.type === "text") {
     const jsonMatch = content.text.match(/\[[\s\S]*\]/);
     if (jsonMatch) {
-      recommendations = JSON.parse(jsonMatch[0]);
+      try {
+        recommendations = JSON.parse(jsonMatch[0]);
+      } catch (parseError) {
+        console.warn(`[RecommendationWarmup] Failed to parse JSON for ${milestone.title}:`, parseError);
+        recommendations = [];
+      }
     } else {
+      console.warn(`[RecommendationWarmup] No JSON array found in response for ${milestone.title}`);
       recommendations = [];
     }
   } else {
