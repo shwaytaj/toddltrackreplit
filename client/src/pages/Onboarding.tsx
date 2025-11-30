@@ -83,6 +83,9 @@ export default function Onboarding() {
               onChange={(e) => setChildName(e.target.value)}
               data-testid="input-child-name"
             />
+            <p className="text-xs text-muted-foreground">
+              Nicknames are better from a privacy perspective. You can still use your child's name if you want. If you have more than one child you can add them later.
+            </p>
           </div>
         </OnboardingStep>
       )}
