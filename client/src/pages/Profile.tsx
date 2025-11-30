@@ -525,11 +525,13 @@ export default function Profile() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">Profile</h1>
+            {/* Settings button hidden - functionality preserved for future use
             <Link href="/settings">
               <Button variant="outline" size="sm" data-testid="button-settings">
                 Settings
               </Button>
             </Link>
+            */}
           </div>
 
           {/* Your Account */}
@@ -691,11 +693,13 @@ export default function Profile() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Profile</h1>
+          {/* Settings button hidden - functionality preserved for future use
           <Link href="/settings">
             <Button variant="outline" size="sm" data-testid="button-settings">
               Settings
             </Button>
           </Link>
+          */}
         </div>
 
         {/* ============================================ */}
