@@ -4,7 +4,6 @@ import BottomNav from '@/components/BottomNav';
 import MilestoneCard from '@/components/MilestoneCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 import {
   Select,
@@ -71,21 +70,30 @@ export default function Milestones() {
   const [selectedRangeIndex, setSelectedRangeIndex] = useState(0);
   const [childCorrectedAgeRangeIndex, setChildCorrectedAgeRangeIndex] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  
+  // Available categories
+  const CATEGORIES = ['Developmental', 'Teeth', 'Vision', 'Hearing', 'Growth'] as const;
   
   // Read category filter from URL on mount
   useEffect(() => {
     const params = new URLSearchParams(searchString);
     const category = params.get('category');
-    if (category) {
+    if (category && CATEGORIES.includes(category as any)) {
       setCategoryFilter(category);
+    } else {
+      setCategoryFilter('all');
     }
   }, [searchString]);
   
-  // Clear category filter function
-  const clearCategoryFilter = () => {
-    setCategoryFilter(null);
-    setLocation('/milestones');
+  // Handle category change
+  const handleCategoryChange = (value: string) => {
+    setCategoryFilter(value);
+    if (value === 'all') {
+      setLocation('/milestones');
+    } else {
+      setLocation(`/milestones?category=${encodeURIComponent(value)}`);
+    }
   };
   
   // Trim whitespace from search query
@@ -138,8 +146,8 @@ export default function Milestones() {
       filtered = ageRangeMilestones;
     }
     
-    // Apply category filter if set
-    if (categoryFilter) {
+    // Apply category filter if not 'all'
+    if (categoryFilter && categoryFilter !== 'all') {
       filtered = filtered.filter(m => m.category === categoryFilter);
     }
     
@@ -251,21 +259,23 @@ export default function Milestones() {
           )}
         </div>
 
-        {/* Category filter badge */}
-        {categoryFilter && (
-          <div className="flex items-center gap-2" data-testid="category-filter-container">
-            <span className="text-sm text-muted-foreground">Filtered by:</span>
-            <Badge 
-              variant="secondary" 
-              className="flex items-center gap-1 cursor-pointer"
-              onClick={clearCategoryFilter}
-              data-testid="badge-category-filter"
-            >
-              {categoryFilter}
-              <X className="w-3 h-3" />
-            </Badge>
-          </div>
-        )}
+        {/* Category filter dropdown */}
+        <div className="flex items-center gap-2" data-testid="category-filter-container">
+          <span className="text-sm text-muted-foreground">Category:</span>
+          <Select value={categoryFilter} onValueChange={handleCategoryChange}>
+            <SelectTrigger className="w-[160px]" data-testid="select-category-filter">
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" data-testid="option-all">All</SelectItem>
+              {CATEGORIES.map(cat => (
+                <SelectItem key={cat} value={cat} data-testid={`option-${cat.toLowerCase()}`}>
+                  {cat}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         {/* Search results indicator */}
         {trimmedSearchQuery.length > 0 && (
