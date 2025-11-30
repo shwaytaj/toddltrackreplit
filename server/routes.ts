@@ -14,6 +14,7 @@ import "./types";
 import { z } from "zod";
 import { calculatePercentile } from "./whoPercentiles";
 import { getAgeInMonthsForAI } from "./age-utils";
+import { triggerWarmupInBackground } from "./services/recommendationWarmup";
 
 // Check if Anthropic API key is configured
 const isAnthropicConfigured = !!process.env.ANTHROPIC_API_KEY;
@@ -209,6 +210,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         childId: child.id,
         role: "primary",
       });
+      
+      // Trigger background warmup for milestone recommendations
+      triggerWarmupInBackground(child.id, req.user.id);
       
       res.json(child);
     } catch (error) {
