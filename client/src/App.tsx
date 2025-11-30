@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ActiveChildProvider } from "@/contexts/ActiveChildContext";
 import { useUser } from "@/hooks/use-user";
 import Login from "@/pages/Login";
+import Register from "@/pages/Register";
 import Onboarding from "@/pages/Onboarding";
 import Home from "@/pages/Home";
 import Milestones from "@/pages/Milestones";
@@ -21,6 +22,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Login} />
       <Route path="/login" component={Login} />
+      <Route path="/register" component={Register} />
       <Route path="/onboarding" component={Onboarding} />
       <Route path="/invite/:token" component={InviteAccept} />
       <Route path="/home" component={Home} />
