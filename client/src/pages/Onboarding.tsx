@@ -10,7 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/Logo';
 import { apiRequest } from '@/lib/queryClient';
@@ -20,7 +19,6 @@ import { queryClient } from '@/lib/queryClient';
 export default function Onboarding() {
   const [, setLocation] = useLocation();
   const [step, setStep] = useState(0);
-  const [parentName, setParentName] = useState('');
   const [childName, setChildName] = useState('');
   const [gender, setGender] = useState('');
   const [relationship, setRelationship] = useState('');
@@ -29,14 +27,11 @@ export default function Onboarding() {
   const { toast } = useToast();
 
   const handleContinue = async () => {
-    if (step < 5) {
+    if (step < 4) {
       setStep(step + 1);
     } else {
       setIsLoading(true);
       try {
-        // Update parent's display name
-        await apiRequest('PATCH', '/api/user/profile', { displayName: parentName });
-        
         // Create child profile
         await apiRequest('POST', '/api/children', {
           name: childName,
@@ -63,11 +58,10 @@ export default function Onboarding() {
 
   const isStepValid = () => {
     switch (step) {
-      case 0: return parentName.trim().length > 0;
-      case 1: return childName.trim().length > 0;
-      case 2: return gender.length > 0;
-      case 3: return relationship.length > 0;
-      case 4: return dueDate.length > 0;
+      case 0: return childName.trim().length > 0;
+      case 1: return gender.length > 0;
+      case 2: return relationship.length > 0;
+      case 3: return dueDate.length > 0;
       default: return true;
     }
   };
@@ -77,26 +71,7 @@ export default function Onboarding() {
       {step === 0 && (
         <OnboardingStep
           currentStep={step}
-          totalSteps={5}
-          onContinue={handleContinue}
-          continueDisabled={!isStepValid()}
-        >
-          <div className="space-y-2">
-            <Label>What do we call you?</Label>
-            <Input
-              placeholder="e.g: Radhika, Mommy ... etc."
-              value={parentName}
-              onChange={(e) => setParentName(e.target.value)}
-              data-testid="input-parent-name"
-            />
-          </div>
-        </OnboardingStep>
-      )}
-
-      {step === 1 && (
-        <OnboardingStep
-          currentStep={step}
-          totalSteps={6}
+          totalSteps={4}
           onContinue={handleContinue}
           continueDisabled={!isStepValid()}
         >
@@ -112,10 +87,10 @@ export default function Onboarding() {
         </OnboardingStep>
       )}
 
-      {step === 2 && (
+      {step === 1 && (
         <OnboardingStep
           currentStep={step}
-          totalSteps={6}
+          totalSteps={4}
           onContinue={handleContinue}
           continueDisabled={!isStepValid()}
         >
@@ -134,10 +109,10 @@ export default function Onboarding() {
         </OnboardingStep>
       )}
 
-      {step === 3 && (
+      {step === 2 && (
         <OnboardingStep
           currentStep={step}
-          totalSteps={6}
+          totalSteps={4}
           onContinue={handleContinue}
           continueDisabled={!isStepValid()}
         >
@@ -158,10 +133,10 @@ export default function Onboarding() {
         </OnboardingStep>
       )}
 
-      {step === 4 && (
+      {step === 3 && (
         <OnboardingStep
           currentStep={step}
-          totalSteps={6}
+          totalSteps={4}
           onContinue={handleContinue}
           continueDisabled={!isStepValid()}
         >
@@ -193,7 +168,7 @@ export default function Onboarding() {
         </OnboardingStep>
       )}
 
-      {step === 5 && (
+      {step === 4 && (
         <div className="flex flex-col min-h-screen bg-background p-6 justify-center items-center">
           <div className="max-w-md w-full text-center space-y-6">
             <Logo className="mb-8" />
