@@ -20,21 +20,30 @@ export default function Onboarding() {
   const [step, setStep] = useState(0);
   const [childName, setChildName] = useState('');
   const [dueDate, setDueDate] = useState('');
-  const [medicalHistory, setMedicalHistory] = useState('');
+  const [childMedicalHistory, setChildMedicalHistory] = useState('');
+  const [parentMedicalHistory, setParentMedicalHistory] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const handleContinue = async () => {
-    if (step < 3) {
+    if (step < 4) {
       setStep(step + 1);
     } else {
       setIsLoading(true);
       try {
-        // Create child profile
+        // Create child profile with both medical histories
+        const medicalHistoryData: { childNotes?: string; parentNotes?: string } = {};
+        if (childMedicalHistory.trim()) {
+          medicalHistoryData.childNotes = childMedicalHistory.trim();
+        }
+        if (parentMedicalHistory.trim()) {
+          medicalHistoryData.parentNotes = parentMedicalHistory.trim();
+        }
+
         await apiRequest('POST', '/api/children', {
           name: childName,
           dueDate,
-          medicalHistory: medicalHistory.trim() ? { notes: medicalHistory.trim() } : undefined,
+          medicalHistory: Object.keys(medicalHistoryData).length > 0 ? medicalHistoryData : undefined,
         });
         
         // Invalidate user and children queries
@@ -62,7 +71,8 @@ export default function Onboarding() {
     switch (step) {
       case 0: return childName.trim().length > 0;
       case 1: return dueDate.length > 0;
-      case 2: return true; // Medical history is optional
+      case 2: return childMedicalHistory.trim().length > 0; // Child's medical history is mandatory
+      case 3: return true; // Parent's medical history is optional
       default: return true;
     }
   };
@@ -72,7 +82,7 @@ export default function Onboarding() {
       {step === 0 && (
         <OnboardingStep
           currentStep={step}
-          totalSteps={3}
+          totalSteps={4}
           onContinue={handleContinue}
           continueDisabled={!isStepValid()}
         >
@@ -94,7 +104,7 @@ export default function Onboarding() {
       {step === 1 && (
         <OnboardingStep
           currentStep={step}
-          totalSteps={3}
+          totalSteps={4}
           onContinue={handleContinue}
           continueDisabled={!isStepValid()}
         >
@@ -129,7 +139,59 @@ export default function Onboarding() {
       {step === 2 && (
         <OnboardingStep
           currentStep={step}
-          totalSteps={3}
+          totalSteps={4}
+          onContinue={handleContinue}
+          continueDisabled={!isStepValid()}
+        >
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-lg font-semibold">Your child's medical history</Label>
+              <p className="text-sm text-muted-foreground">
+                Share as much as you can about your child's medical history like any known genetic disorders, any known developmental diagnosis etc.{' '}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button 
+                      className="text-primary underline underline-offset-2 hover:text-primary/80"
+                      data-testid="button-why-child-medical-history"
+                    >
+                      Why do we need this?
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 text-sm" align="start">
+                    <div className="space-y-3">
+                      <p className="font-semibold">Why your child's health information matters?</p>
+                      <p className="text-muted-foreground">
+                        Every child's development is unique, but certain health factors can influence how they grow, learn, and reach their milestones. By sharing a few key health details about your child, the app can offer hyper-personalised and practical activities that best support their specific developmental milestones.
+                      </p>
+                      <p className="text-muted-foreground">Some examples of useful information include:</p>
+                      <ul className="text-muted-foreground list-disc list-inside space-y-2">
+                        <li><span className="font-medium">Medical conditions:</span> ongoing or past illnesses, hospitalizations, infections (e.g., meningitis, CMV), or metabolic issues such as low blood sugar or thyroid problems.</li>
+                        <li><span className="font-medium">Genetic information:</span> known genetic or chromosomal conditions (e.g., Down syndrome, Fragile X, Prader-Willi, Angelman, Rett syndrome, or other syndromes).</li>
+                        <li><span className="font-medium">Developmental disorders:</span> any diagnosed or suspected concerns such as speech delay, autism spectrum disorder (ASD), intellectual disability, or motor coordination challenges.</li>
+                      </ul>
+                      <p className="text-xs text-muted-foreground italic">
+                        *Note: All information you provide is private, confidential, and used only to personalise your experience and support your child's growth.
+                      </p>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </p>
+            </div>
+            <Textarea
+              placeholder="For eg:&#10;My daughter was born at 36 weeks and spent one week in the NICU due to low birth weight. She has mild hearing loss and takes daily vitamin D supplements. There's a family history of speech delay on her father's side. No known genetic conditions or ongoing medical treatments."
+              value={childMedicalHistory}
+              onChange={(e) => setChildMedicalHistory(e.target.value)}
+              className="min-h-[150px] resize-none"
+              data-testid="textarea-child-medical-history"
+            />
+          </div>
+        </OnboardingStep>
+      )}
+
+      {step === 3 && (
+        <OnboardingStep
+          currentStep={step}
+          totalSteps={4}
           onContinue={handleContinue}
           continueDisabled={false}
           showSkip={true}
@@ -144,7 +206,7 @@ export default function Onboarding() {
                   <PopoverTrigger asChild>
                     <button 
                       className="text-primary underline underline-offset-2 hover:text-primary/80"
-                      data-testid="button-why-medical-history"
+                      data-testid="button-why-parent-medical-history"
                     >
                       Why do we need this?
                     </button>
@@ -170,16 +232,16 @@ export default function Onboarding() {
             </div>
             <Textarea
               placeholder="E.g., First pregnancy. Have ADHD, managed without medication. Had mild anaemia during pregnancy and gestational diabetes controlled with diet. No family history of major genetic conditions or developmental disorders."
-              value={medicalHistory}
-              onChange={(e) => setMedicalHistory(e.target.value)}
+              value={parentMedicalHistory}
+              onChange={(e) => setParentMedicalHistory(e.target.value)}
               className="min-h-[150px] resize-none"
-              data-testid="textarea-medical-history"
+              data-testid="textarea-parent-medical-history"
             />
           </div>
         </OnboardingStep>
       )}
 
-      {step === 3 && (
+      {step === 4 && (
         <div className="flex flex-col min-h-screen bg-background p-6 justify-center items-center">
           <div className="max-w-md w-full text-center space-y-6">
             <Logo className="mb-8" />
