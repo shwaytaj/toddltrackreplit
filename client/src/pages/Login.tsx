@@ -10,8 +10,8 @@ import { useUser } from '@/hooks/use-user';
 
 export default function Login() {
   const [, setLocation] = useLocation();
-  const [showEmailForm, setShowEmailForm] = useState(false);
-  const [isSignup, setIsSignup] = useState(true);
+  const [showEmailForm, setShowEmailForm] = useState(true);
+  const [isSignup, setIsSignup] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -127,10 +127,10 @@ export default function Login() {
             <Button
               variant="ghost"
               className="w-full"
-              onClick={() => setIsSignup(!isSignup)}
+              onClick={() => setLocation('/register')}
               data-testid="button-toggle-mode"
             >
-              {isSignup ? "Already have an account? Sign in" : "Need an account? Sign up"}
+              Need an account? Sign up
             </Button>
 
           </div>
