@@ -19,7 +19,7 @@ import {
   formatMilestoneDescription, 
   normalizeMilestoneTitle 
 } from '../parsers/milestone-description-parser.js';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import path from 'path';
 
 export class DescriptionSeeder {
@@ -55,6 +55,14 @@ export class DescriptionSeeder {
 
       // Step 1: Read and parse the descriptions file
       const filePath = path.join(process.cwd(), 'attached_assets', this.DESCRIPTIONS_FILE);
+      
+      // Check if file exists before attempting to read
+      if (!existsSync(filePath)) {
+        console.log('[DescriptionSeeder] ⚠ Source file not found (expected in production builds)');
+        console.log('[DescriptionSeeder] Server will continue without seeding descriptions');
+        return;
+      }
+      
       const fileContent = readFileSync(filePath, 'utf-8');
       const { milestones: parsedDescriptions, errors } = parseMilestoneDescriptions(fileContent);
 

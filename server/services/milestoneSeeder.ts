@@ -8,6 +8,7 @@ import { storage } from '../storage.js';
 import { parseComprehensiveMilestones } from '../parsers/parse-comprehensive-milestones.js';
 import { normalizeTitleForMatch } from '../parsers/title-normalizer.js';
 import path from 'path';
+import { existsSync } from 'fs';
 
 const EXPECTED_MILESTONE_COUNT = 612; // Total canonical milestones in comprehensive file
 
@@ -32,6 +33,14 @@ export class MilestoneSeeder {
       
       console.log('[MilestoneSeeder] Loading canonical milestones from file...');
       const filePath = path.join(process.cwd(), 'attached_assets', 'dev-milestones-comprehensive_1762125221739.md');
+      
+      // Check if file exists before attempting to parse
+      if (!existsSync(filePath)) {
+        console.log('[MilestoneSeeder] ⚠ Source file not found (expected in production builds)');
+        console.log('[MilestoneSeeder] Server will continue without seeding new milestones');
+        return;
+      }
+      
       const canonicalMilestones = parseComprehensiveMilestones(filePath);
       console.log(`[MilestoneSeeder] Parsed ${canonicalMilestones.length} canonical milestones`);
       
