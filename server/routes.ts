@@ -1379,10 +1379,10 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
         }
       }
       
-      // Check for pending invitation
-      const pendingInvitation = await storage.getPendingInvitationByEmail(email);
+      // Check for pending invitation from THIS user (allow different families to invite the same email)
+      const pendingInvitation = await storage.getPendingInvitationByEmailAndUser(email, req.user.id);
       if (pendingInvitation) {
-        return res.status(400).json({ error: "An invitation is already pending for this email" });
+        return res.status(400).json({ error: "You already have a pending invitation for this email" });
       }
       
       // Generate unique token

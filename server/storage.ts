@@ -115,6 +115,7 @@ export interface IStorage {
   getInvitationByToken(token: string): Promise<Invitation | undefined>;
   getInvitationsByUser(userId: string): Promise<Invitation[]>;
   getPendingInvitationByEmail(email: string): Promise<Invitation | undefined>;
+  getPendingInvitationByEmailAndUser(email: string, userId: string): Promise<Invitation | undefined>;
   createInvitation(invitation: InsertInvitation): Promise<Invitation>;
   updateInvitation(id: string, data: Partial<Invitation>): Promise<Invitation | undefined>;
   revokeInvitation(id: string): Promise<boolean>;
@@ -589,6 +590,20 @@ export class DbStorage implements IStorage {
       .where(
         and(
           eq(invitations.email, email),
+          eq(invitations.status, "pending")
+        )
+      );
+    return result[0];
+  }
+
+  async getPendingInvitationByEmailAndUser(email: string, userId: string): Promise<Invitation | undefined> {
+    const result = await this.db
+      .select()
+      .from(invitations)
+      .where(
+        and(
+          eq(invitations.email, email),
+          eq(invitations.invitedByUserId, userId),
           eq(invitations.status, "pending")
         )
       );
