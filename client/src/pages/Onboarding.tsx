@@ -55,9 +55,9 @@ export default function Onboarding() {
           medicalHistory: Object.keys(medicalHistoryData).length > 0 ? medicalHistoryData : undefined,
         });
         
-        // Invalidate user and children queries
+        // Refetch children query and wait for it to complete before navigating
+        await queryClient.refetchQueries({ queryKey: ['/api/children'] });
         queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/children'] });
         
         setLocation('/home');
       } catch (error) {
