@@ -9,6 +9,8 @@ interface OnboardingStepProps {
   children: ReactNode;
   onContinue: () => void;
   continueDisabled?: boolean;
+  showSkip?: boolean;
+  onSkip?: () => void;
 }
 
 export default function OnboardingStep({
@@ -16,7 +18,9 @@ export default function OnboardingStep({
   totalSteps,
   children,
   onContinue,
-  continueDisabled = false
+  continueDisabled = false,
+  showSkip = false,
+  onSkip
 }: OnboardingStepProps) {
   return (
     <div className="flex flex-col min-h-screen bg-background p-6">
@@ -42,6 +46,16 @@ export default function OnboardingStep({
             >
               Continue
             </Button>
+            
+            {showSkip && onSkip && (
+              <button
+                onClick={onSkip}
+                className="w-full text-center text-sm font-medium text-foreground hover:text-foreground/80 py-2"
+                data-testid="button-skip"
+              >
+                Skip for now
+              </button>
+            )}
             
             <p className="text-xs text-muted-foreground text-center leading-relaxed">
               Toddl is here to support you, but it can make mistakes. Always double-check any advice or actions with a Public Health Nurse, GP, or Paediatrician if you're unsure.
