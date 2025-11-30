@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import Logo from '@/components/Logo';
 import { Button } from '@/components/ui/button';
@@ -6,22 +6,29 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { useUser } from '@/hooks/use-user';
 
 export default function Register() {
   const [, setLocation] = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isClearing, setIsClearing] = useState(true);
   const { toast } = useToast();
-  const { user, isLoading: userLoading } = useUser();
-  const justRegisteredRef = useRef(false);
 
+  // Clear any existing session when visiting the register page
   useEffect(() => {
-    if (!userLoading && user && !justRegisteredRef.current) {
-      setLocation('/home');
-    }
-  }, [user, userLoading, setLocation]);
+    const clearSession = async () => {
+      try {
+        await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+        await queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      } catch (error) {
+        // Ignore errors - user may not be logged in
+      } finally {
+        setIsClearing(false);
+      }
+    };
+    clearSession();
+  }, []);
 
   const handleRegister = async () => {
     if (!email || !password) {
@@ -35,7 +42,6 @@ export default function Register() {
 
     setIsLoading(true);
     try {
-      justRegisteredRef.current = true;
       await apiRequest('POST', '/api/auth/register', { email, password });
       await queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       setLocation('/onboarding');
@@ -59,6 +65,15 @@ export default function Register() {
       setIsLoading(false);
     }
   };
+
+  // Show loading while clearing session
+  if (isClearing) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background p-6">
