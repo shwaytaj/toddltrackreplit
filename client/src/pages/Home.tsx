@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
 import ChildSelector from '@/components/ChildSelector';
-import HighlightCard from '@/components/HighlightCard';
 import MilestoneCard from '@/components/MilestoneCard';
 import GrowthMetricCard from '@/components/GrowthMetricCard';
 import BottomNav from '@/components/BottomNav';
@@ -140,11 +139,6 @@ export default function Home() {
   }
 
   const firstName = selectedChild.name.split(' ')[0];
-  const pronoun = selectedChild.gender === 'female' ? 'She' : selectedChild.gender === 'male' ? 'He' : 'They';
-
-  const achievedCount = childMilestones.filter(cm => cm.achieved).length;
-  const totalInRange = milestones.length;
-  const notAchievedMilestones = milestones.filter(m => !achievedMilestoneIds.has(m.id));
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -168,30 +162,6 @@ export default function Home() {
             </p>
           </div>
         </div>
-
-        {achievedCount > 0 || notAchievedMilestones.length > 0 ? (
-          <div>
-            <h2 className="font-semibold mb-3">Highlights</h2>
-            <div className="space-y-3">
-              {achievedCount > 0 && (
-                <HighlightCard
-                  type="achievement"
-                  title={`Great progress! ${firstName} has achieved ${achievedCount} ${achievedCount === 1 ? 'milestone' : 'milestones'}.`}
-                  description={`${pronoun} ${achievedCount === 1 ? 'is' : 'are'} developing well. Keep up the great work!`}
-                />
-              )}
-              
-              {notAchievedMilestones.length > 0 && notAchievedMilestones.slice(0, 1).map(milestone => (
-                <HighlightCard
-                  key={milestone.id}
-                  type="alert"
-                  title={`${firstName} hasn't achieved "${milestone.title}" yet.`}
-                  description={`This milestone is typically achieved between ${milestone.ageRangeMonthsMin}-${milestone.ageRangeMonthsMax} months. Check our guides for activities to help.`}
-                />
-              ))}
-            </div>
-          </div>
-        ) : null}
 
         <div>
           <div className="mb-3">
