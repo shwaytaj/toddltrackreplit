@@ -108,6 +108,12 @@ export default function Register() {
           >
             Already have an account? Sign in
           </Button>
+
+          <p className="text-xs text-muted-foreground text-center mt-6">
+            Your data is securely stored in the United States with GDPR-compliant protections. 
+            By signing up, you consent to international data transfer under EU Standard 
+            Contractual Clauses.
+          </p>
         </div>
       </div>
     </div>

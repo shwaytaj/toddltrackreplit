@@ -133,6 +133,11 @@ export default function Login() {
               Need an account? Sign up
             </Button>
 
+            <p className="text-xs text-muted-foreground text-center mt-6">
+              Your data is securely stored in the United States with GDPR-compliant protections. 
+              By signing up, you consent to international data transfer under EU Standard 
+              Contractual Clauses.
+            </p>
           </div>
         </div>
       </div>
