@@ -1409,8 +1409,12 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
       // Get children count for message
       const children = await storage.getChildrenByParentId(req.user.id);
       
-      // Generate invite link (no email - user shares the link directly)
-      const inviteUrl = `${process.env.REPLIT_DEV_DOMAIN ? 'https://' + process.env.REPLIT_DEV_DOMAIN : 'http://localhost:5000'}/invite/${token}`;
+      // Generate invite link using the request's origin to ensure correct domain
+      // This works for both development (dev domain) and production (custom domain)
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+      const host = req.headers['x-forwarded-host'] || req.headers.host || req.hostname;
+      const baseUrl = `${protocol}://${host}`;
+      const inviteUrl = `${baseUrl}/invite/${token}`;
       
       res.json({ 
         success: true,
