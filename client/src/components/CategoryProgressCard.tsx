@@ -17,25 +17,21 @@ const categoryConfig = {
     icon: Brain,
     label: 'developmental',
     colorClass: 'text-[hsl(var(--category-gross-motor))]',
-    progressColorClass: '[&>div]:bg-[hsl(var(--category-gross-motor))]',
   },
   Teeth: {
     icon: GiTooth,
     label: 'teething',
     colorClass: 'text-[hsl(var(--category-teeth))]',
-    progressColorClass: '[&>div]:bg-[hsl(var(--category-teeth))]',
   },
   Vision: {
     icon: Eye,
     label: 'vision',
     colorClass: 'text-[hsl(var(--category-vision))]',
-    progressColorClass: '[&>div]:bg-[hsl(var(--category-vision))]',
   },
   Hearing: {
     icon: Ear,
     label: 'hearing',
     colorClass: 'text-[hsl(var(--category-hearing))]',
-    progressColorClass: '[&>div]:bg-[hsl(var(--category-hearing))]',
   },
 };
 
@@ -85,7 +81,7 @@ export default function CategoryProgressCard({
       
       <Progress 
         value={percentage} 
-        className={`h-2 ${config.progressColorClass}`}
+        className="h-2"
         data-testid={`progress-${category.toLowerCase()}`}
       />
     </Card>
