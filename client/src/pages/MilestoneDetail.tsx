@@ -284,6 +284,27 @@ export default function MilestoneDetail() {
     }
   }, [activeChildId, milestone, activeContentTab, fetchRecommendations]);
 
+  // Preload toy recommendations when activity recommendations load successfully
+  useEffect(() => {
+    if (recommendations && recommendations.length > 0 && activeChildId && milestone) {
+      // Prefetch toy recommendations in background so they're ready when user switches tabs
+      queryClient.prefetchQuery({
+        queryKey: ['/api/children', activeChildId, 'milestones', milestone.id, 'toy-recommendations'],
+        queryFn: async () => {
+          const response = await apiRequest(
+            'POST',
+            `/api/children/${activeChildId}/milestones/${milestone.id}/toy-recommendations`
+          );
+          if (!response.ok) {
+            throw new Error('Failed to prefetch toy recommendations');
+          }
+          return response.json();
+        },
+        staleTime: 1000 * 60 * 60, // Cache for 1 hour
+      });
+    }
+  }, [recommendations, activeChildId, milestone]);
+
 
   // Check if all current recommendations are completed and fetch new ones
   useEffect(() => {
