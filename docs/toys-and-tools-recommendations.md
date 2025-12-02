@@ -394,6 +394,200 @@ Simple search URL construction:
 | 49-84 | 2590659011 | 5-7 years |
 | 85+ | 2590660011 | 8-13 years |
 
+### Complete Copy-Paste Example
+
+Here's a complete, standalone example your engineers can copy and adapt:
+
+```typescript
+// =============================================================================
+// TYPES
+// =============================================================================
+
+interface ToyRecommendation {
+  name: string;
+  description: string;
+  howToUse: string;
+  searchQuery: string;  // AI-generated search-friendly query
+  citations?: Array<{
+    source: string;
+    url?: string;
+  }>;
+}
+
+// =============================================================================
+// URL BUILDERS
+// =============================================================================
+
+/**
+ * Builds an Amazon search URL with Toys & Games category filter and age-appropriate filtering.
+ * 
+ * @param searchQuery - The search term (e.g., "Fisher Price Laugh Learn Walker")
+ * @param ageRangeMonthsMin - Child's milestone minimum age in months
+ * @param ageRangeMonthsMax - Child's milestone maximum age in months
+ * @returns Complete Amazon search URL with all filters applied
+ * 
+ * Example output:
+ * https://www.amazon.com/s?k=Fisher+Price+Laugh+Learn+Walker&rh=n%3A165793011%2Cp_n_age_range%3A2590657011&s=review-rank
+ */
+function buildAmazonUrl(
+  searchQuery: string, 
+  ageRangeMonthsMin: number, 
+  ageRangeMonthsMax: number
+): string {
+  const baseUrl = 'https://www.amazon.com/s';
+  const params = new URLSearchParams();
+  
+  // Add search query
+  params.append('k', searchQuery);
+  
+  // Add Toys & Games category (Amazon node ID: 165793011)
+  params.append('rh', 'n:165793011');
+  
+  // Calculate average age and map to Amazon's age filter IDs
+  const avgAgeMonths = (ageRangeMonthsMin + ageRangeMonthsMax) / 2;
+  let ageRangeFilter = '';
+  
+  if (avgAgeMonths <= 6) {
+    ageRangeFilter = 'p_n_age_range:2590655011'; // 0-6 months
+  } else if (avgAgeMonths <= 12) {
+    ageRangeFilter = 'p_n_age_range:2590656011'; // 6-12 months
+  } else if (avgAgeMonths <= 24) {
+    ageRangeFilter = 'p_n_age_range:2590657011'; // 12-24 months
+  } else if (avgAgeMonths <= 48) {
+    ageRangeFilter = 'p_n_age_range:2590658011'; // 2-4 years
+  } else if (avgAgeMonths <= 84) {
+    ageRangeFilter = 'p_n_age_range:2590659011'; // 5-7 years
+  } else {
+    ageRangeFilter = 'p_n_age_range:2590660011'; // 8-13 years
+  }
+  
+  // Append age range filter to existing rh parameter
+  if (ageRangeFilter) {
+    const currentRh = params.get('rh') || '';
+    params.set('rh', currentRh + ',' + ageRangeFilter);
+  }
+  
+  // Sort by customer reviews (best reviewed first)
+  params.append('s', 'review-rank');
+  
+  return `${baseUrl}?${params.toString()}`;
+}
+
+/**
+ * Builds a Target search URL.
+ * 
+ * @param searchQuery - The search term
+ * @returns Complete Target search URL
+ * 
+ * Example output:
+ * https://www.target.com/s?searchTerm=Fisher%20Price%20Laugh%20Learn%20Walker
+ */
+function buildTargetUrl(searchQuery: string): string {
+  return `https://www.target.com/s?searchTerm=${encodeURIComponent(searchQuery)}`;
+}
+
+/**
+ * Builds a Walmart search URL.
+ * 
+ * @param searchQuery - The search term
+ * @returns Complete Walmart search URL
+ * 
+ * Example output:
+ * https://www.walmart.com/search?q=Fisher%20Price%20Laugh%20Learn%20Walker
+ */
+function buildWalmartUrl(searchQuery: string): string {
+  return `https://www.walmart.com/search?q=${encodeURIComponent(searchQuery)}`;
+}
+
+// =============================================================================
+// USAGE EXAMPLE
+// =============================================================================
+
+// Example toy recommendation from Claude API
+const toyRecommendation: ToyRecommendation = {
+  name: "Fisher-Price Laugh & Learn Smart Stages Walker",
+  description: "This walker supports gross motor development by encouraging standing and walking.",
+  howToUse: "Place toys on the tray to motivate baby to push and walk toward them.",
+  searchQuery: "Fisher Price Laugh Learn Walker",
+  citations: [
+    { source: "AAP Guidelines on Play and Development" }
+  ]
+};
+
+// Example milestone age range (12-24 months)
+const milestoneAgeMin = 12;
+const milestoneAgeMax = 24;
+
+// Generate all retailer URLs
+const amazonUrl = buildAmazonUrl(toyRecommendation.searchQuery, milestoneAgeMin, milestoneAgeMax);
+const targetUrl = buildTargetUrl(toyRecommendation.searchQuery);
+const walmartUrl = buildWalmartUrl(toyRecommendation.searchQuery);
+
+console.log('Amazon:', amazonUrl);
+// Output: https://www.amazon.com/s?k=Fisher+Price+Laugh+Learn+Walker&rh=n%3A165793011%2Cp_n_age_range%3A2590657011&s=review-rank
+
+console.log('Target:', targetUrl);
+// Output: https://www.target.com/s?searchTerm=Fisher%20Price%20Laugh%20Learn%20Walker
+
+console.log('Walmart:', walmartUrl);
+// Output: https://www.walmart.com/search?q=Fisher%20Price%20Laugh%20Learn%20Walker
+```
+
+### React Component Example
+
+```tsx
+import { SiAmazon, SiTarget, SiWalmart } from 'react-icons/si';
+
+interface RetailerLinksProps {
+  searchQuery: string;
+  ageRangeMonthsMin: number;
+  ageRangeMonthsMax: number;
+}
+
+function RetailerLinks({ searchQuery, ageRangeMonthsMin, ageRangeMonthsMax }: RetailerLinksProps) {
+  const amazonUrl = buildAmazonUrl(searchQuery, ageRangeMonthsMin, ageRangeMonthsMax);
+  const targetUrl = buildTargetUrl(searchQuery);
+  const walmartUrl = buildWalmartUrl(searchQuery);
+
+  return (
+    <div className="flex gap-2">
+      {/* Amazon Button */}
+      <a
+        href={amazonUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center justify-center w-10 h-10 rounded-md bg-[#FF9900] text-white"
+        title="Search on Amazon"
+      >
+        <SiAmazon className="w-5 h-5" />
+      </a>
+      
+      {/* Target Button */}
+      <a
+        href={targetUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center justify-center w-10 h-10 rounded-md bg-[#CC0000] text-white"
+        title="Search on Target"
+      >
+        <SiTarget className="w-5 h-5" />
+      </a>
+      
+      {/* Walmart Button */}
+      <a
+        href={walmartUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center justify-center w-10 h-10 rounded-md bg-[#0071CE] text-white"
+        title="Search on Walmart"
+      >
+        <SiWalmart className="w-5 h-5" />
+      </a>
+    </div>
+  );
+}
+```
+
 ### User Experience
 
 When users click a retailer button:
