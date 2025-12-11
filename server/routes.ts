@@ -551,6 +551,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ageRange.max
       );
       
+      console.log('[Highlights Debug]', {
+        childName: child.name,
+        adjustedAge,
+        adjustedAgeMonths,
+        ageRange,
+        daysUntilRangeEnds,
+      });
+      
       // Get user's preferred sources
       let preferredSources: string[] | undefined;
       const user = await storage.getUser(req.user.id);
