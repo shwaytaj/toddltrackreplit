@@ -603,6 +603,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         childName
       );
       
+      console.log('[Highlights API]', {
+        childName,
+        ageRange,
+        daysUntilRangeEnds,
+        categoryProgress,
+        highlightsCount: highlights.length,
+      });
+      
       res.json({
         highlights,
         ageRange,
