@@ -9,7 +9,7 @@ import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { useUser } from '@/hooks/use-user';
 import { useActiveChild } from '@/contexts/ActiveChildContext';
-import { calculateAdjustedAge, getAgeRange, getAdjustedMonths, formatAge } from '@/lib/age-calculation';
+import { calculateAdjustedAge, getAgeRange, getAdjustedMonthsForRange, formatAge } from '@/lib/age-calculation';
 import type { Milestone, ChildMilestone, GrowthMetric } from '@shared/schema';
 import type { Highlight } from '@shared/highlights';
 
@@ -38,7 +38,7 @@ export default function Home() {
 
   const adjustedMonths = useMemo(() => {
     if (!selectedChild) return 0;
-    return getAdjustedMonths(selectedChild.dueDate);
+    return getAdjustedMonthsForRange(selectedChild.dueDate);
   }, [selectedChild]);
 
   const ageRange = useMemo(() => 

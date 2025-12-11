@@ -47,6 +47,26 @@ export function getAdjustedMonths(dueDate: Date | string): number {
 }
 
 /**
+ * Get adjusted months accounting for range boundaries.
+ * When a child is at a range boundary (e.g., exactly 30 months) plus additional days,
+ * they've moved into the next range.
+ */
+export function getAdjustedMonthsForRange(dueDate: Date | string): number {
+  const age = calculateAdjustedAge(dueDate);
+  const baseMonths = age.years * 12 + age.months;
+  
+  // Age range boundaries where we need to check for overflow
+  const rangeBoundaries = [3, 6, 9, 12, 18, 24, 30, 36, 49, 60];
+  
+  // If at a range boundary with extra days, child has moved to next range
+  if (rangeBoundaries.includes(baseMonths) && age.days > 0) {
+    return baseMonths + 1;
+  }
+  
+  return baseMonths;
+}
+
+/**
  * Get age range for milestone filtering based on adjusted age in months
  */
 export function getAgeRange(months: number): { min: number; max: number; label: string } {

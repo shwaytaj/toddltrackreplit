@@ -15,7 +15,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useActiveChild } from '@/contexts/ActiveChildContext';
 import type { ChildMilestone, Milestone } from '@shared/schema';
-import { getAdjustedMonths } from '@/lib/age-calculation';
+import { getAdjustedMonthsForRange } from '@/lib/age-calculation';
 import { getMonkeyIcon } from '@/components/MonkeyIcons';
 
 const AGE_RANGES = [
@@ -104,7 +104,7 @@ export default function Milestones() {
   // Calculate child's adjusted age in months and set initial range
   useEffect(() => {
     if (selectedChild) {
-      const ageInMonths = getAdjustedMonths(selectedChild.dueDate);
+      const ageInMonths = getAdjustedMonthsForRange(selectedChild.dueDate);
       
       // Find the age range that contains the child's current age
       const rangeIndex = AGE_RANGES.findIndex(range => 

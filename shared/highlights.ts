@@ -176,3 +176,20 @@ export function getAgeRange(months: number): { min: number; max: number; label: 
   if (months <= 49) return { min: 37, max: 49, label: '37-49 months' };
   return { min: 49, max: 60, label: '49-60 months' };
 }
+
+/**
+ * Get adjusted months accounting for range boundaries.
+ * When a child is at a range boundary (e.g., exactly 30 months) plus additional days,
+ * they've moved into the next range.
+ */
+export function getAdjustedMonthsForRange(baseMonths: number, days: number): number {
+  // Age range boundaries where we need to check for overflow
+  const rangeBoundaries = [3, 6, 9, 12, 18, 24, 30, 36, 49, 60];
+  
+  // If at a range boundary with extra days, child has moved to next range
+  if (rangeBoundaries.includes(baseMonths) && days > 0) {
+    return baseMonths + 1;
+  }
+  
+  return baseMonths;
+}

@@ -20,6 +20,7 @@ import {
   calculateCategoryPercentage, 
   calculateDaysUntilRangeEnds,
   getAgeRange,
+  getAdjustedMonthsForRange,
   type CategoryProgress,
   type Highlight
 } from "@shared/highlights";
@@ -539,7 +540,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Calculate child's adjusted age
       const adjustedAge = calculateAdjustedAge(child.dueDate);
-      const adjustedAgeMonths = adjustedAge.years * 12 + adjustedAge.months;
+      const baseMonths = adjustedAge.years * 12 + adjustedAge.months;
+      
+      // Get adjusted months accounting for range boundaries
+      const adjustedAgeMonths = getAdjustedMonthsForRange(baseMonths, adjustedAge.days);
       
       // Get current age range
       const ageRange = getAgeRange(adjustedAgeMonths);
@@ -551,13 +555,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ageRange.max
       );
       
-      console.log('[Highlights Debug]', {
-        childName: child.name,
-        adjustedAge,
-        adjustedAgeMonths,
-        ageRange,
-        daysUntilRangeEnds,
-      });
       
       // Get user's preferred sources
       let preferredSources: string[] | undefined;
