@@ -97,14 +97,7 @@ export function calculateHighlights(
 ): Highlight[] {
   const highlights: Highlight[] = [];
   
-  // Only show highlights if within the configured window before range ends
-  // Must be between 0 and daysBeforeRangeEnd (e.g., 0-15 days remaining)
-  // Negative values mean child has already moved past the range
-  if (daysUntilRangeEnds < 0 || daysUntilRangeEnds > config.daysBeforeRangeEnd) {
-    return highlights;
-  }
-  
-  // Check for celebration highlights (any category ≥80%)
+  // Celebration highlights show anytime a category reaches the threshold (no timing restriction)
   const celebrationCategories = categoryProgress.filter(
     cp => cp.percentage >= config.celebrationThreshold && cp.total > 0
   );
@@ -121,27 +114,33 @@ export function calculateHighlights(
     });
   }
   
-  // Check for GP consultation highlights
-  const concernCategories = categoryProgress.filter(cp => {
-    if (cp.total === 0) return false;
-    const threshold = getConsultThreshold(cp.category, config);
-    return cp.percentage < threshold;
-  });
+  // GP consultation highlights only show within the 15-day window before range ends
+  // Must be between 0 and daysBeforeRangeEnd (e.g., 0-15 days remaining)
+  // Negative values mean child has already moved past the range
+  const withinGPWindow = daysUntilRangeEnds >= 0 && daysUntilRangeEnds <= config.daysBeforeRangeEnd;
   
-  if (concernCategories.length > 0) {
-    // Group concerns for a single, compassionate message
-    const categoryNames = concernCategories.map(c => c.category.toLowerCase());
-    const categoryList = categoryNames.length === 1 
-      ? categoryNames[0]
-      : categoryNames.slice(0, -1).join(', ') + ' and ' + categoryNames[categoryNames.length - 1];
-    
-    highlights.push({
-      type: 'gp_consultation',
-      categories: concernCategories.map(c => c.category),
-      message: `Consider chatting with your GP`,
-      detail: `${childName} is approaching a new developmental stage. A quick chat with your GP about ${categoryList} milestones could be helpful to ensure everything is on track.`,
-      daysUntilRangeEnds,
+  if (withinGPWindow) {
+    const concernCategories = categoryProgress.filter(cp => {
+      if (cp.total === 0) return false;
+      const threshold = getConsultThreshold(cp.category, config);
+      return cp.percentage < threshold;
     });
+    
+    if (concernCategories.length > 0) {
+      // Group concerns for a single, compassionate message
+      const categoryNames = concernCategories.map(c => c.category.toLowerCase());
+      const categoryList = categoryNames.length === 1 
+        ? categoryNames[0]
+        : categoryNames.slice(0, -1).join(', ') + ' and ' + categoryNames[categoryNames.length - 1];
+      
+      highlights.push({
+        type: 'gp_consultation',
+        categories: concernCategories.map(c => c.category),
+        message: `Consider chatting with your GP`,
+        detail: `${childName} is approaching a new developmental stage. A quick chat with your GP about ${categoryList} milestones could be helpful to ensure everything is on track.`,
+        daysUntilRangeEnds,
+      });
+    }
   }
   
   return highlights;
