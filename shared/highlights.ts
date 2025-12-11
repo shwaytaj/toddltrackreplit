@@ -151,8 +151,8 @@ export function calculateHighlights(
       highlights.push({
         type: 'gp_consultation',
         categories: concernCategories.map(c => c.category),
-        message: `Consider chatting with your GP`,
-        detail: `${childName} is approaching a new developmental stage. A quick chat with your GP about ${categoryList} milestones could be helpful to ensure everything is on track.`,
+        message: `A few milestones still to go 😊`,
+        detail: `${childName} hasn't hit all the ${categoryList} milestones yet, but that's completely normal! Try out some of the activities we've recommended. If you've already worked through them and want some extra reassurance, a quick chat with your GP could be helpful.`,
         daysUntilRangeEnds,
       });
     }
