@@ -98,18 +98,33 @@ export function calculateHighlights(
   const highlights: Highlight[] = [];
   
   // Celebration highlights show anytime a category reaches the threshold (no timing restriction)
-  const celebrationCategories = categoryProgress.filter(
-    cp => cp.percentage >= config.celebrationThreshold && cp.total > 0
-  );
+  const celebrationCategories = categoryProgress
+    .filter(cp => cp.percentage >= config.celebrationThreshold && cp.total > 0)
+    .sort((a, b) => b.percentage - a.percentage);
   
   if (celebrationCategories.length > 0) {
-    const topCategory = celebrationCategories.sort((a, b) => b.percentage - a.percentage)[0];
+    // Build message for single or multiple categories
+    const categoryNames = celebrationCategories.map(c => c.category);
+    const categoryList = categoryNames.length === 1 
+      ? categoryNames[0]
+      : categoryNames.slice(0, -1).join(', ') + ' and ' + categoryNames[categoryNames.length - 1];
+    
+    // Build detail with percentages for each category
+    const categoryDetails = celebrationCategories
+      .map(c => `${c.category} (${c.percentage}%)`)
+      .join(', ');
+    
     highlights.push({
       type: 'celebration',
-      category: topCategory.category,
-      percentage: topCategory.percentage,
-      message: `Amazing progress in ${topCategory.category}!`,
-      detail: `${childName} has completed ${topCategory.percentage}% of ${topCategory.category.toLowerCase()} milestones for this age range. Keep up the great work!`,
+      categories: categoryNames,
+      category: celebrationCategories[0].category, // Keep for backwards compatibility
+      percentage: celebrationCategories[0].percentage, // Show highest percentage in badge
+      message: celebrationCategories.length === 1 
+        ? `Amazing progress in ${categoryList}!`
+        : `Amazing progress across ${celebrationCategories.length} categories!`,
+      detail: celebrationCategories.length === 1
+        ? `${childName} has completed ${celebrationCategories[0].percentage}% of ${categoryList.toLowerCase()} milestones for this age range. Keep up the great work!`
+        : `${childName} is doing brilliantly in ${categoryDetails}. Keep up the great work!`,
       daysUntilRangeEnds,
     });
   }
