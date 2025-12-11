@@ -1,34 +1,60 @@
 import { Card } from '@/components/ui/card';
-import { Crown, Bell } from 'lucide-react';
+import { Sparkles, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { Highlight } from '@shared/highlights';
 
 interface HighlightCardProps {
-  type: 'achievement' | 'alert';
-  title: string;
-  description: string;
+  highlight: Highlight;
 }
 
-export default function HighlightCard({ type, title, description }: HighlightCardProps) {
-  const isAchievement = type === 'achievement';
+export default function HighlightCard({ highlight }: HighlightCardProps) {
+  const isCelebration = highlight.type === 'celebration';
   
   return (
     <Card
       className={cn(
-        "p-4",
-        isAchievement ? "bg-accent/30" : "bg-destructive/10"
+        "p-4 border-l-4",
+        isCelebration 
+          ? "border-l-green-500 bg-green-50 dark:bg-green-950/20" 
+          : "border-l-amber-500 bg-amber-50 dark:bg-amber-950/20"
       )}
-      data-testid={`card-highlight-${type}`}
+      data-testid={`highlight-card-${highlight.type}`}
     >
       <div className="flex gap-3">
         <div className={cn(
-          "mt-1",
-          isAchievement ? "text-accent-foreground" : "text-destructive-foreground"
+          "flex-shrink-0 p-2 rounded-full",
+          isCelebration 
+            ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400" 
+            : "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
         )}>
-          {isAchievement ? <Crown className="w-5 h-5" /> : <Bell className="w-5 h-5" />}
+          {isCelebration ? <Sparkles className="w-5 h-5" /> : <MessageCircle className="w-5 h-5" />}
         </div>
         <div className="flex-1">
-          <h3 className="font-semibold text-sm mb-1">{title}</h3>
-          <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
+          <div className="flex items-center gap-2">
+            <h3 className={cn(
+              "font-semibold text-sm",
+              isCelebration 
+                ? "text-green-800 dark:text-green-300" 
+                : "text-amber-800 dark:text-amber-300"
+            )}>
+              {highlight.message}
+            </h3>
+            {isCelebration && highlight.percentage && (
+              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-200">
+                {highlight.percentage}%
+              </span>
+            )}
+          </div>
+          {highlight.detail && (
+            <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
+              {highlight.detail}
+            </p>
+          )}
+          {highlight.daysUntilRangeEnds > 0 && (
+            <p className="mt-2 text-xs text-muted-foreground italic">
+              {highlight.daysUntilRangeEnds} days until next developmental stage
+            </p>
+          )}
         </div>
       </div>
     </Card>

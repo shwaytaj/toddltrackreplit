@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import ChildSelector from '@/components/ChildSelector';
 import CategoryProgressCard from '@/components/CategoryProgressCard';
 import GrowthMetricCard from '@/components/GrowthMetricCard';
+import HighlightCard from '@/components/HighlightCard';
 import BottomNav from '@/components/BottomNav';
 import { Button } from '@/components/ui/button';
 import { useLocation } from 'wouter';
@@ -10,6 +11,7 @@ import { useUser } from '@/hooks/use-user';
 import { useActiveChild } from '@/contexts/ActiveChildContext';
 import { calculateAdjustedAge, getAgeRange, getAdjustedMonths, formatAge } from '@/lib/age-calculation';
 import type { Milestone, ChildMilestone, GrowthMetric } from '@shared/schema';
+import type { Highlight } from '@shared/highlights';
 
 export default function Home() {
   const [, setLocation] = useLocation();
@@ -56,6 +58,16 @@ export default function Home() {
 
   const { data: growthMetrics = [] } = useQuery<GrowthMetric[]>({
     queryKey: ['/api/children', activeChildId, 'growth-metrics'],
+    enabled: !!activeChildId,
+  });
+
+  // Fetch highlights for the active child
+  const { data: highlightsData } = useQuery<{
+    highlights: Highlight[];
+    ageRange: { min: number; max: number; label: string };
+    daysUntilRangeEnds: number;
+  }>({
+    queryKey: ['/api/children', activeChildId, 'highlights'],
     enabled: !!activeChildId,
   });
 
@@ -139,6 +151,14 @@ export default function Home() {
             </p>
           </div>
         </div>
+
+        {highlightsData?.highlights && highlightsData.highlights.length > 0 && (
+          <div className="space-y-3" data-testid="section-highlights">
+            {highlightsData.highlights.map((highlight, index) => (
+              <HighlightCard key={`${highlight.type}-${index}`} highlight={highlight} />
+            ))}
+          </div>
+        )}
 
         <div>
           <h2 className="text-xl font-bold mb-4" data-testid="heading-milestone-range">

@@ -15,6 +15,15 @@ import { z } from "zod";
 import { calculatePercentile } from "./whoPercentiles";
 import { getAgeInMonthsForAI } from "./age-utils";
 import { triggerWarmupInBackground } from "./services/recommendationWarmup";
+import { 
+  calculateHighlights, 
+  calculateCategoryPercentage, 
+  calculateDaysUntilRangeEnds,
+  getAgeRange,
+  type CategoryProgress,
+  type Highlight
+} from "@shared/highlights";
+import { calculateAdjustedAge } from "./age-utils";
 
 // Check if Anthropic API key is configured
 const isAnthropicConfigured = !!process.env.ANTHROPIC_API_KEY;
@@ -513,6 +522,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Toggle milestone error:", error);
       res.status(500).json({ error: "Failed to toggle milestone" });
+    }
+  });
+
+  // Highlights endpoint - calculates celebration and GP consultation highlights
+  app.get("/api/children/:childId/highlights", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    
+    const child = await storage.getChild(req.params.childId);
+    if (!child) return res.status(404).json({ error: "Child not found" });
+    
+    if (!child.parentIds.includes(req.user.id)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    
+    try {
+      // Calculate child's adjusted age
+      const adjustedAge = calculateAdjustedAge(child.dueDate);
+      const adjustedAgeMonths = adjustedAge.years * 12 + adjustedAge.months;
+      
+      // Get current age range
+      const ageRange = getAgeRange(adjustedAgeMonths);
+      
+      // Calculate days until range ends
+      const daysUntilRangeEnds = calculateDaysUntilRangeEnds(
+        adjustedAgeMonths,
+        adjustedAge.days,
+        ageRange.max
+      );
+      
+      // Get user's preferred sources
+      let preferredSources: string[] | undefined;
+      const user = await storage.getUser(req.user.id);
+      const rawSources = user?.preferredMilestoneSources;
+      if (rawSources && Array.isArray(rawSources)) {
+        preferredSources = rawSources;
+      } else if (rawSources && typeof rawSources === 'string') {
+        preferredSources = parsePostgresArray(rawSources);
+      }
+      
+      // Get milestones for current age range
+      const milestones = await storage.getMilestonesByAgeRange(
+        ageRange.min, 
+        ageRange.max, 
+        preferredSources
+      );
+      
+      // Get child's achieved milestones
+      const childMilestones = await storage.getChildMilestones(req.params.childId);
+      const achievedMilestoneIds = new Set(
+        childMilestones.filter(cm => cm.achieved).map(cm => cm.milestoneId)
+      );
+      
+      // Calculate progress per category
+      const categories = ['Developmental', 'Teeth', 'Vision', 'Hearing'] as const;
+      const categoryProgress: CategoryProgress[] = categories.map(category => {
+        const categoryMilestones = milestones.filter(m => m.category === category);
+        const achievedCount = categoryMilestones.filter(m => achievedMilestoneIds.has(m.id)).length;
+        const totalCount = categoryMilestones.length;
+        return {
+          category,
+          total: totalCount,
+          achieved: achievedCount,
+          percentage: calculateCategoryPercentage(achievedCount, totalCount),
+        };
+      }).filter(c => c.total > 0);
+      
+      // Get child's first name for personalized messages
+      const childName = child.name.split(' ')[0];
+      
+      // Calculate highlights
+      const highlights = calculateHighlights(
+        categoryProgress,
+        daysUntilRangeEnds,
+        childName
+      );
+      
+      res.json({
+        highlights,
+        ageRange,
+        daysUntilRangeEnds,
+        categoryProgress,
+      });
+    } catch (error) {
+      console.error("Highlights calculation error:", error);
+      res.status(500).json({ error: "Failed to calculate highlights" });
     }
   });
 
