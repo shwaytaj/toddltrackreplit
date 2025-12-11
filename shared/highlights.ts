@@ -31,14 +31,14 @@ export interface Highlight {
 
 export interface HighlightConfig {
   daysBeforeRangeEnd: number;  // Show highlights when within X days of range ending
-  celebrationThreshold: number;  // ≥80% triggers celebration
+  celebrationThreshold: number;  // ≥75% triggers celebration
   developmentalConsultThreshold: number;  // <70% triggers GP consult for Developmental
   otherConsultThreshold: number;  // <90% triggers GP consult for Teeth, Vision, Hearing
 }
 
 export const DEFAULT_HIGHLIGHT_CONFIG: HighlightConfig = {
   daysBeforeRangeEnd: 15,
-  celebrationThreshold: 80,
+  celebrationThreshold: 75,
   developmentalConsultThreshold: 70,
   otherConsultThreshold: 90,
 };
