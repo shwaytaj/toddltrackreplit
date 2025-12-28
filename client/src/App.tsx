@@ -14,6 +14,7 @@ import MilestoneDetail from "@/pages/MilestoneDetail";
 import GrowthDetail from "@/pages/GrowthDetail";
 import Profile from "@/pages/Profile";
 import Settings from "@/pages/Settings";
+import Reports from "@/pages/Reports";
 import InviteAccept from "@/pages/InviteAccept";
 import NotFound from "@/pages/not-found";
 
@@ -31,6 +32,7 @@ function Router() {
       <Route path="/growth/:type" component={GrowthDetail} />
       <Route path="/profile" component={Profile} />
       <Route path="/settings" component={Settings} />
+      <Route path="/reports" component={Reports} />
       <Route component={NotFound} />
     </Switch>
   );

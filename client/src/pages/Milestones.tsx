@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useLocation, useSearch } from 'wouter';
-import BottomNav from '@/components/BottomNav';
+import BottomNav, { type NavPage } from '@/components/BottomNav';
 import MilestoneCard from '@/components/MilestoneCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -66,7 +66,7 @@ const getMilestoneColor = (milestone: Milestone): string => {
 export default function Milestones() {
   const [, setLocation] = useLocation();
   const searchString = useSearch();
-  const [activeNav, setActiveNav] = useState<'home' | 'milestones' | 'profile'>('milestones');
+  const [activeNav, setActiveNav] = useState<NavPage>('milestones');
   const [selectedRangeIndex, setSelectedRangeIndex] = useState(0);
   const [childCorrectedAgeRangeIndex, setChildCorrectedAgeRangeIndex] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -171,7 +171,7 @@ export default function Milestones() {
     return achievedMilestoneIds.has(milestoneId);
   };
 
-  const handleNavigation = (page: 'home' | 'milestones' | 'profile') => {
+  const handleNavigation = (page: NavPage) => {
     setActiveNav(page);
     if (page === 'home') setLocation('/home');
     if (page === 'profile') setLocation('/profile');

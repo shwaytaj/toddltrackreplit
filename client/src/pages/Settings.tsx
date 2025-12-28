@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import BottomNav from "@/components/BottomNav";
+import BottomNav, { type NavPage } from "@/components/BottomNav";
 import type { User } from "@shared/schema";
 
 const MILESTONE_SOURCES = [
@@ -24,7 +24,7 @@ const MILESTONE_SOURCES = [
 export default function Settings() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const [activeNav, setActiveNav] = useState<'home' | 'milestones' | 'profile'>('profile');
+  const [activeNav, setActiveNav] = useState<NavPage>('profile');
   
   const { data: user, isLoading } = useQuery<User>({
     queryKey: ["/api/user"],
@@ -92,7 +92,7 @@ export default function Settings() {
     updatePreferencesMutation.mutate(selectedSources);
   };
 
-  const handleNavigation = (page: 'home' | 'milestones' | 'profile') => {
+  const handleNavigation = (page: NavPage) => {
     setActiveNav(page);
     if (page === 'home') setLocation('/home');
     if (page === 'milestones') setLocation('/milestones');

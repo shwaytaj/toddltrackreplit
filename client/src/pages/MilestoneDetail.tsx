@@ -3,7 +3,7 @@ import { useLocation, useRoute } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import ProductCard from '@/components/ProductCard';
-import BottomNav from '@/components/BottomNav';
+import BottomNav, { type NavPage } from '@/components/BottomNav';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -118,7 +118,7 @@ export default function MilestoneDetail() {
   const [, params] = useRoute('/milestone/:id');
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [activeContentTab, setActiveContentTab] = useState<'todo' | 'tools'>('todo');
-  const [activeNav, setActiveNav] = useState<'home' | 'milestones' | 'profile'>('milestones');
+  const [activeNav, setActiveNav] = useState<NavPage>('milestones');
   const [loadedMilestoneIds, setLoadedMilestoneIds] = useState<string[]>([]);
 
   const { activeChild: selectedChild, activeChildId } = useActiveChild();
@@ -334,7 +334,7 @@ export default function MilestoneDetail() {
     );
   };
 
-  const handleNavigation = (page: 'home' | 'milestones' | 'profile') => {
+  const handleNavigation = (page: NavPage) => {
     setActiveNav(page);
     if (page === 'home') setLocation('/home');
     if (page === 'milestones') setLocation('/milestones');

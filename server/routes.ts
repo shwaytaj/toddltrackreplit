@@ -25,6 +25,7 @@ import {
   type Highlight
 } from "@shared/highlights";
 import { calculateAdjustedAge } from "./age-utils";
+import PDFDocument from "pdfkit";
 
 // Check if Anthropic API key is configured
 const isAnthropicConfigured = !!process.env.ANTHROPIC_API_KEY;
@@ -602,14 +603,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         daysUntilRangeEnds,
         childName
       );
-      
-      console.log('[Highlights API]', {
-        childName,
-        ageRange,
-        daysUntilRangeEnds,
-        categoryProgress,
-        highlightsCount: highlights.length,
-      });
       
       res.json({
         highlights,
@@ -1803,6 +1796,228 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
     } catch (error) {
       console.error("Account deletion error:", error);
       res.status(500).json({ error: "Failed to delete account" });
+    }
+  });
+
+  // PDF Report Generation endpoint
+  app.post("/api/reports/pdf", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+    try {
+      const { childIds } = req.body;
+      
+      if (!Array.isArray(childIds) || childIds.length === 0) {
+        return res.status(400).json({ error: "childIds array is required" });
+      }
+
+      // Verify user has access to all requested children
+      const userChildren = await storage.getChildrenByParentId(req.user.id);
+      const userChildIds = new Set(userChildren.map(c => c.id));
+      
+      for (const childId of childIds) {
+        if (!userChildIds.has(childId)) {
+          return res.status(403).json({ error: "Access denied to one or more children" });
+        }
+      }
+
+      // Get children data
+      const childrenToReport = await Promise.all(
+        childIds.map(async (childId: string) => {
+          const child = await storage.getChild(childId);
+          if (!child) return null;
+          
+          const adjustedAge = calculateAdjustedAge(child.dueDate);
+          const adjustedMonths = getAdjustedMonthsForRange(
+            adjustedAge.years * 12 + adjustedAge.months,
+            adjustedAge.days
+          );
+          const ageRange = getAgeRange(adjustedMonths);
+          
+          const milestones = await storage.getMilestonesByAgeRange(ageRange.min, ageRange.max);
+          const childMilestones = await storage.getChildMilestones(childId);
+          const growthMetrics = await storage.getGrowthMetrics(childId);
+          
+          const achievedMilestoneIds = new Set(
+            childMilestones.filter(cm => cm.achieved).map(cm => cm.milestoneId)
+          );
+
+          const categories = ['Developmental', 'Teeth', 'Vision', 'Hearing', 'Growth'] as const;
+          const categoryProgress = categories.map(category => {
+            const categoryMilestones = milestones.filter(m => m.category === category);
+            const achievedCount = categoryMilestones.filter(m => achievedMilestoneIds.has(m.id)).length;
+            return {
+              category,
+              total: categoryMilestones.length,
+              achieved: achievedCount,
+              percentage: categoryMilestones.length > 0 ? Math.round((achievedCount / categoryMilestones.length) * 100) : 0,
+            };
+          }).filter(c => c.total > 0);
+
+          const achievedMilestones = milestones.filter(m => achievedMilestoneIds.has(m.id));
+          const pendingMilestones = milestones.filter(m => !achievedMilestoneIds.has(m.id));
+
+          return {
+            child,
+            adjustedAge,
+            ageRange,
+            categoryProgress,
+            achievedMilestones,
+            pendingMilestones,
+            childMilestones,
+            growthMetrics,
+          };
+        })
+      );
+
+      const validChildren = childrenToReport.filter(c => c !== null);
+
+      if (validChildren.length === 0) {
+        return res.status(404).json({ error: "No valid children found" });
+      }
+
+      // Create PDF
+      const doc = new PDFDocument({ margin: 50, size: 'A4' });
+      
+      // Set response headers for PDF download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="toddl-report-${new Date().toISOString().split('T')[0]}.pdf"`);
+      
+      doc.pipe(res);
+
+      // Brand colors (from design)
+      const primaryColor = '#30334d';
+      const accentColor = '#7c6aaa';
+      const mutedColor = '#6b7280';
+      const successColor = '#059669';
+      const warningColor = '#d97706';
+
+      // Title Page / Header
+      doc.fontSize(24).fillColor(primaryColor).text('Toddl', { align: 'center' });
+      doc.fontSize(10).fillColor(mutedColor).text('Child Development Tracker', { align: 'center' });
+      doc.moveDown(0.5);
+      
+      doc.fontSize(18).fillColor(primaryColor).text('Developmental Progress Report', { align: 'center' });
+      doc.fontSize(10).fillColor(mutedColor).text(`Generated on ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`, { align: 'center' });
+      doc.moveDown(1);
+
+      // Disclaimer Box
+      doc.rect(50, doc.y, 495, 80).fillAndStroke('#fef3c7', '#f59e0b');
+      const disclaimerY = doc.y + 10;
+      doc.fontSize(9).fillColor('#92400e');
+      doc.text('IMPORTANT DISCLAIMER', 60, disclaimerY, { width: 475 });
+      doc.fontSize(8).fillColor('#78350f');
+      doc.text(
+        'This report is a summary of what has been entered and tracked in Toddl. It is intended solely for sharing with your GP or paediatrician as a reference. Please do not use this report for self-diagnosis or to make medical decisions. Always consult a qualified healthcare professional for medical advice.',
+        60, disclaimerY + 15, { width: 475 }
+      );
+      doc.y = disclaimerY + 75;
+      doc.moveDown(1);
+
+      // Generate report for each child
+      for (let i = 0; i < validChildren.length; i++) {
+        const data = validChildren[i]!;
+        
+        if (i > 0) {
+          doc.addPage();
+        }
+
+        // Child Header
+        doc.fontSize(16).fillColor(primaryColor).text(data.child.name);
+        
+        const ageText = data.adjustedAge.years > 0
+          ? `${data.adjustedAge.years} year${data.adjustedAge.years > 1 ? 's' : ''}, ${data.adjustedAge.months} month${data.adjustedAge.months !== 1 ? 's' : ''}`
+          : `${data.adjustedAge.months} month${data.adjustedAge.months !== 1 ? 's' : ''}, ${data.adjustedAge.days} day${data.adjustedAge.days !== 1 ? 's' : ''}`;
+        
+        doc.fontSize(10).fillColor(mutedColor).text(`Adjusted Age: ${ageText}`);
+        doc.fontSize(10).fillColor(mutedColor).text(`Due Date: ${new Date(data.child.dueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`);
+        if (data.child.gender) {
+          doc.text(`Gender: ${data.child.gender.charAt(0).toUpperCase() + data.child.gender.slice(1)}`);
+        }
+        doc.text(`Current Milestone Range: ${data.ageRange.label}`);
+        doc.moveDown(0.5);
+
+        // Growth Metrics
+        if (data.growthMetrics.length > 0) {
+          doc.fontSize(12).fillColor(primaryColor).text('Latest Growth Measurements');
+          doc.moveDown(0.3);
+          
+          const latestWeight = data.growthMetrics
+            .filter(m => m.type === 'weight')
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+          const latestHeight = data.growthMetrics
+            .filter(m => m.type === 'height')
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+          const latestHead = data.growthMetrics
+            .filter(m => m.type === 'head_circumference')
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+
+          doc.fontSize(9).fillColor(mutedColor);
+          if (latestWeight) {
+            doc.text(`Weight: ${latestWeight.value} kg${latestWeight.percentile ? ` (${Math.round(latestWeight.percentile)}th percentile)` : ''}`);
+          }
+          if (latestHeight) {
+            doc.text(`Height: ${latestHeight.value} cm${latestHeight.percentile ? ` (${Math.round(latestHeight.percentile)}th percentile)` : ''}`);
+          }
+          if (latestHead) {
+            doc.text(`Head Circumference: ${latestHead.value} cm${latestHead.percentile ? ` (${Math.round(latestHead.percentile)}th percentile)` : ''}`);
+          }
+          doc.moveDown(0.5);
+        }
+
+        // Progress Summary
+        doc.fontSize(12).fillColor(primaryColor).text('Progress Summary');
+        doc.moveDown(0.3);
+        
+        for (const progress of data.categoryProgress) {
+          doc.fontSize(9).fillColor(mutedColor);
+          doc.text(`${progress.category}: ${progress.achieved}/${progress.total} (${progress.percentage}%)`);
+        }
+        doc.moveDown(0.5);
+
+        // Achieved Milestones
+        doc.fontSize(12).fillColor(successColor).text(`Achieved Milestones (${data.achievedMilestones.length})`);
+        doc.moveDown(0.3);
+        
+        if (data.achievedMilestones.length > 0) {
+          doc.fontSize(8).fillColor(mutedColor);
+          for (const milestone of data.achievedMilestones) {
+            const childMilestone = data.childMilestones.find(cm => cm.milestoneId === milestone.id && cm.achieved);
+            let text = `✓ ${milestone.title} (${milestone.category})`;
+            if (childMilestone?.achievedAt) {
+              text += ` - ${new Date(childMilestone.achievedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+            }
+            doc.text(text, { continued: false });
+          }
+        } else {
+          doc.fontSize(8).fillColor(mutedColor).text('No milestones achieved yet in this age range.');
+        }
+        doc.moveDown(0.5);
+
+        // Pending Milestones
+        doc.fontSize(12).fillColor(warningColor).text(`Pending Milestones (${data.pendingMilestones.length})`);
+        doc.moveDown(0.3);
+        
+        if (data.pendingMilestones.length > 0) {
+          doc.fontSize(8).fillColor(mutedColor);
+          for (const milestone of data.pendingMilestones) {
+            doc.text(`○ ${milestone.title} (${milestone.category})`, { continued: false });
+          }
+        } else {
+          doc.fontSize(8).fillColor(successColor).text('All milestones achieved for this age range!');
+        }
+      }
+
+      // Footer on last page
+      doc.moveDown(2);
+      doc.fontSize(8).fillColor(mutedColor);
+      doc.text('—', { align: 'center' });
+      doc.text('Report generated by Toddl - Child Development Tracker', { align: 'center' });
+      doc.text('toddl.health', { align: 'center' });
+
+      doc.end();
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      res.status(500).json({ error: "Failed to generate PDF report" });
     }
   });
 

@@ -1,16 +1,19 @@
-import { Home, Star, User } from 'lucide-react';
+import { Home, Star, User, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+export type NavPage = 'home' | 'milestones' | 'reports' | 'profile';
+
 interface BottomNavProps {
-  active: 'home' | 'milestones' | 'profile';
-  onNavigate: (page: 'home' | 'milestones' | 'profile') => void;
+  active: NavPage;
+  onNavigate: (page: NavPage) => void;
 }
 
 export default function BottomNav({ active, onNavigate }: BottomNavProps) {
-  const navItems = [
-    { id: 'home' as const, label: 'Home', icon: Home },
-    { id: 'milestones' as const, label: 'Milestones', icon: Star },
-    { id: 'profile' as const, label: 'Profile', icon: User },
+  const navItems: { id: NavPage; label: string; icon: typeof Home }[] = [
+    { id: 'home', label: 'Home', icon: Home },
+    { id: 'milestones', label: 'Milestones', icon: Star },
+    { id: 'reports', label: 'Reports', icon: FileText },
+    { id: 'profile', label: 'Profile', icon: User },
   ];
 
   return (

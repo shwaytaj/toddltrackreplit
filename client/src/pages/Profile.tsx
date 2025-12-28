@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useLocation, Link } from 'wouter';
-import BottomNav from '@/components/BottomNav';
+import BottomNav, { type NavPage } from '@/components/BottomNav';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -62,7 +62,7 @@ const API_BASE_URL = '';
 
 export default function Profile() {
   const [, setLocation] = useLocation();
-  const [activeNav, setActiveNav] = useState<'home' | 'milestones' | 'profile'>('profile');
+  const [activeNav, setActiveNav] = useState<NavPage>('profile');
   const { user, isLoading: userLoading } = useUser();
   const { children, activeChildId, activeChild, setActiveChildId, isLoading: childrenLoading } = useActiveChild();
   const { toast } = useToast();
@@ -423,7 +423,7 @@ export default function Profile() {
     },
   });
 
-  const handleNavigation = (page: 'home' | 'milestones' | 'profile') => {
+  const handleNavigation = (page: NavPage) => {
     setActiveNav(page);
     if (page === 'home') setLocation('/home');
     if (page === 'milestones') setLocation('/milestones');

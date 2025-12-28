@@ -3,7 +3,7 @@ import { useLocation, useRoute } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import BottomNav from '@/components/BottomNav';
+import BottomNav, { type NavPage } from '@/components/BottomNav';
 import { X, TrendingUp } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -14,7 +14,7 @@ export default function GrowthDetail() {
   const [, setLocation] = useLocation();
   const [, params] = useRoute('/growth/:type');
   const [activeTab, setActiveTab] = useState<'tracking' | 'help'>('tracking');
-  const [activeNav, setActiveNav] = useState<'home' | 'milestones' | 'profile'>('home');
+  const [activeNav, setActiveNav] = useState<NavPage>('home');
   const [showAddForm, setShowAddForm] = useState(false);
   const { toast } = useToast();
 
@@ -52,7 +52,7 @@ export default function GrowthDetail() {
     head: 'cm',
   };
 
-  const handleNavigation = (page: 'home' | 'milestones' | 'profile') => {
+  const handleNavigation = (page: NavPage) => {
     setActiveNav(page);
     if (page === 'home') setLocation('/home');
     if (page === 'milestones') setLocation('/milestones');

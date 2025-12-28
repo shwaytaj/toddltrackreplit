@@ -3,7 +3,7 @@ import ChildSelector from '@/components/ChildSelector';
 import CategoryProgressCard from '@/components/CategoryProgressCard';
 import GrowthMetricCard from '@/components/GrowthMetricCard';
 import HighlightCard from '@/components/HighlightCard';
-import BottomNav from '@/components/BottomNav';
+import BottomNav, { type NavPage } from '@/components/BottomNav';
 import { Button } from '@/components/ui/button';
 import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
@@ -15,7 +15,7 @@ import type { Highlight } from '@shared/highlights';
 
 export default function Home() {
   const [, setLocation] = useLocation();
-  const [activeNav, setActiveNav] = useState<'home' | 'milestones' | 'profile'>('home');
+  const [activeNav, setActiveNav] = useState<NavPage>('home');
   const { user, isLoading: userLoading } = useUser();
   const { children, activeChildId, activeChild: selectedChild, setActiveChildId, isLoading: childrenLoading } = useActiveChild();
 
@@ -105,10 +105,11 @@ export default function Home() {
     return { weight, height, head };
   }, [growthMetrics]);
 
-  const handleNavigation = (page: 'home' | 'milestones' | 'profile') => {
+  const handleNavigation = (page: NavPage) => {
     setActiveNav(page);
     if (page === 'milestones') setLocation('/milestones');
     if (page === 'profile') setLocation('/profile');
+    if (page === 'reports') setLocation('/reports');
   };
 
   const handleViewCategory = (category: string) => {
