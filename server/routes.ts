@@ -7,6 +7,7 @@ import {
   insertChildMilestoneSchema,
   insertGrowthMetricSchema,
   insertToothSchema,
+  insertDailyStreakSchema,
 } from "@shared/schema";
 import Anthropic from "@anthropic-ai/sdk";
 import passport, { hashPassword } from "./auth";
@@ -2018,6 +2019,158 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
     } catch (error) {
       console.error("PDF generation error:", error);
       res.status(500).json({ error: "Failed to generate PDF report" });
+    }
+  });
+
+  // Streak routes
+  app.get("/api/streaks/activities", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      const ageMonths = req.query.ageMonths ? parseInt(req.query.ageMonths as string) : undefined;
+      const activities = await storage.getStreakActivities(ageMonths);
+      res.json(activities);
+    } catch (error) {
+      console.error("Get streak activities error:", error);
+      res.status(500).json({ error: "Failed to get activities" });
+    }
+  });
+
+  app.get("/api/children/:childId/streaks", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      const child = await storage.getChild(req.params.childId);
+      if (!child || !child.parentIds.includes(req.user.id)) {
+        return res.status(404).json({ error: "Child not found" });
+      }
+
+      const startDate = req.query.startDate as string | undefined;
+      const endDate = req.query.endDate as string | undefined;
+      
+      const dailyStreaks = await storage.getDailyStreaks(req.params.childId, startDate, endDate);
+      
+      // Calculate streak statistics
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = today.toISOString().split('T')[0];
+      
+      // Sort streaks by date ascending for calculation
+      const sortedStreaks = [...dailyStreaks].sort((a, b) => 
+        new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+      
+      // Calculate current streak
+      let currentStreak = 0;
+      let checkDate = new Date(today);
+      
+      while (true) {
+        const dateStr = checkDate.toISOString().split('T')[0];
+        const hasStreak = sortedStreaks.some(s => s.date === dateStr);
+        
+        if (hasStreak) {
+          currentStreak++;
+          checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+      
+      // Calculate longest streak
+      let longestStreak = 0;
+      let tempStreak = 0;
+      let prevDate: Date | null = null;
+      
+      for (const streak of sortedStreaks) {
+        const streakDate = new Date(streak.date);
+        
+        if (prevDate) {
+          const diffDays = Math.round((streakDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+          if (diffDays === 1) {
+            tempStreak++;
+          } else {
+            longestStreak = Math.max(longestStreak, tempStreak);
+            tempStreak = 1;
+          }
+        } else {
+          tempStreak = 1;
+        }
+        prevDate = streakDate;
+      }
+      longestStreak = Math.max(longestStreak, tempStreak);
+      
+      res.json({
+        currentStreak,
+        longestStreak,
+        totalDays: dailyStreaks.length,
+        streaks: dailyStreaks,
+      });
+    } catch (error) {
+      console.error("Get streaks error:", error);
+      res.status(500).json({ error: "Failed to get streaks" });
+    }
+  });
+
+  app.post("/api/children/:childId/streaks", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      const child = await storage.getChild(req.params.childId);
+      if (!child || !child.parentIds.includes(req.user.id)) {
+        return res.status(404).json({ error: "Child not found" });
+      }
+
+      const schema = z.object({
+        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        activityId: z.string().optional().nullable(),
+        activityTitle: z.string().optional().nullable(),
+        notes: z.string().optional().nullable(),
+      });
+      
+      const data = schema.parse(req.body);
+      
+      // Check if streak already exists for this date
+      const existing = await storage.getDailyStreakByDate(req.params.childId, data.date);
+      if (existing) {
+        return res.status(400).json({ error: "Streak already recorded for this date" });
+      }
+      
+      const streak = await storage.createDailyStreak({
+        childId: req.params.childId,
+        date: data.date,
+        activityId: data.activityId || null,
+        activityTitle: data.activityTitle || null,
+        notes: data.notes || null,
+      });
+      
+      res.status(201).json(streak);
+    } catch (error) {
+      console.error("Create streak error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid input", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create streak" });
+    }
+  });
+
+  app.delete("/api/children/:childId/streaks/:date", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      const child = await storage.getChild(req.params.childId);
+      if (!child || !child.parentIds.includes(req.user.id)) {
+        return res.status(404).json({ error: "Child not found" });
+      }
+
+      const deleted = await storage.deleteDailyStreak(req.params.childId, req.params.date);
+      if (!deleted) {
+        return res.status(404).json({ error: "Streak not found" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete streak error:", error);
+      res.status(500).json({ error: "Failed to delete streak" });
     }
   });
 
