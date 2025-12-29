@@ -2186,7 +2186,8 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
 
       // Calculate child's age to get relevant milestones
       const adjustedAge = calculateAdjustedAge(child.dueDate);
-      const ageInMonths = getAdjustedMonthsForRange(adjustedAge.months, adjustedAge.days);
+      const baseMonths = adjustedAge.years * 12 + adjustedAge.months;
+      const ageInMonths = getAdjustedMonthsForRange(baseMonths, adjustedAge.days);
       const ageRange = getAgeRange(ageInMonths);
       
       if (!ageRange) {
