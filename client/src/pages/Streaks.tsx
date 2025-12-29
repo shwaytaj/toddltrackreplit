@@ -233,10 +233,13 @@ export default function Streaks() {
         )}
 
         <div>
-          <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-foreground mb-1 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-primary" />
             Activity Recommendations
           </h2>
+          <p className="text-sm text-muted-foreground mb-3">
+            Complete one or more of these activities today to maintain your streak.
+          </p>
           
           {activitiesLoading ? (
             <div className="space-y-3">
@@ -249,10 +252,10 @@ export default function Streaks() {
               <CardContent className="p-6 text-center">
                 <Sparkles className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
                 <p className="text-muted-foreground">
-                  Loading activity recommendations...
+                  No activity recommendations available yet.
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  This may take a moment as we personalize activities for your child.
+                  Visit the Milestones page to explore activities for your child's milestones!
                 </p>
               </CardContent>
             </Card>
