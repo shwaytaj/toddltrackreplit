@@ -30,6 +30,10 @@ import {
   type Invitation,
   type InsertInvitation,
   type ParentRole,
+  type StreakActivity,
+  type InsertStreakActivity,
+  type DailyStreak,
+  type InsertDailyStreak,
   users,
   children,
   milestones,
@@ -42,6 +46,8 @@ import {
   aiToyRecommendations,
   parentChildRelationships,
   invitations,
+  streakActivities,
+  dailyStreaks,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -119,6 +125,14 @@ export interface IStorage {
   createInvitation(invitation: InsertInvitation): Promise<Invitation>;
   updateInvitation(id: string, data: Partial<Invitation>): Promise<Invitation | undefined>;
   revokeInvitation(id: string): Promise<boolean>;
+
+  // Streak operations
+  getStreakActivities(ageMonths?: number): Promise<StreakActivity[]>;
+  createStreakActivity(activity: InsertStreakActivity): Promise<StreakActivity>;
+  getDailyStreaks(childId: string, startDate?: string, endDate?: string): Promise<DailyStreak[]>;
+  getDailyStreakByDate(childId: string, date: string): Promise<DailyStreak | undefined>;
+  createDailyStreak(streak: InsertDailyStreak): Promise<DailyStreak>;
+  deleteDailyStreak(childId: string, date: string): Promise<boolean>;
 }
 
 export class DbStorage implements IStorage {
@@ -629,6 +643,75 @@ export class DbStorage implements IStorage {
       .update(invitations)
       .set({ status: "revoked" })
       .where(eq(invitations.id, id))
+      .returning();
+    return result.length > 0;
+  }
+
+  // Streak operations
+  async getStreakActivities(ageMonths?: number): Promise<StreakActivity[]> {
+    const result = await this.db
+      .select()
+      .from(streakActivities)
+      .where(eq(streakActivities.isActive, true));
+    
+    if (ageMonths !== undefined) {
+      return result.filter(activity => {
+        const minAge = activity.ageRangeMonthsMin ?? 0;
+        const maxAge = activity.ageRangeMonthsMax ?? 72;
+        return ageMonths >= minAge && ageMonths <= maxAge;
+      });
+    }
+    return result;
+  }
+
+  async createStreakActivity(activity: InsertStreakActivity): Promise<StreakActivity> {
+    const result = await this.db.insert(streakActivities).values(activity).returning();
+    return result[0];
+  }
+
+  async getDailyStreaks(childId: string, startDate?: string, endDate?: string): Promise<DailyStreak[]> {
+    const result = await this.db
+      .select()
+      .from(dailyStreaks)
+      .where(eq(dailyStreaks.childId, childId))
+      .orderBy(desc(dailyStreaks.date));
+    
+    if (startDate && endDate) {
+      return result.filter(streak => {
+        const date = streak.date;
+        return date >= startDate && date <= endDate;
+      });
+    }
+    return result;
+  }
+
+  async getDailyStreakByDate(childId: string, date: string): Promise<DailyStreak | undefined> {
+    const result = await this.db
+      .select()
+      .from(dailyStreaks)
+      .where(
+        and(
+          eq(dailyStreaks.childId, childId),
+          eq(dailyStreaks.date, date)
+        )
+      );
+    return result[0];
+  }
+
+  async createDailyStreak(streak: InsertDailyStreak): Promise<DailyStreak> {
+    const result = await this.db.insert(dailyStreaks).values(streak as any).returning();
+    return result[0];
+  }
+
+  async deleteDailyStreak(childId: string, date: string): Promise<boolean> {
+    const result = await this.db
+      .delete(dailyStreaks)
+      .where(
+        and(
+          eq(dailyStreaks.childId, childId),
+          eq(dailyStreaks.date, date)
+        )
+      )
       .returning();
     return result.length > 0;
   }

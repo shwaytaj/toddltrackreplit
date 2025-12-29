@@ -257,3 +257,41 @@ export type Invitation = typeof invitations.$inferSelect;
 
 export type ParentRole = "primary" | "secondary";
 export type InvitationStatus = "pending" | "accepted" | "expired" | "revoked";
+
+// Streak Activities - predefined activities parents can do with their children
+export const streakActivities = pgTable("streak_activities", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  category: text("category").notNull(), // 'reading', 'play', 'learning', 'outdoor', 'creative'
+  icon: text("icon").notNull(), // icon name from lucide-react
+  ageRangeMonthsMin: integer("age_range_months_min").default(0),
+  ageRangeMonthsMax: integer("age_range_months_max").default(72),
+  isActive: boolean("is_active").default(true),
+});
+
+// Daily Streaks - tracks daily activity completion per child
+export const dailyStreaks = pgTable("daily_streaks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  childId: varchar("child_id").notNull().references(() => children.id, { onDelete: "cascade" }),
+  date: date("date").notNull(),
+  activityId: varchar("activity_id").references(() => streakActivities.id, { onDelete: "set null" }),
+  activityTitle: text("activity_title"), // Stored for history even if activity is deleted
+  notes: text("notes"),
+  completedAt: timestamp("completed_at").defaultNow(),
+});
+
+export const insertStreakActivitySchema = createInsertSchema(streakActivities).omit({
+  id: true,
+});
+
+export const insertDailyStreakSchema = createInsertSchema(dailyStreaks).omit({
+  id: true,
+  completedAt: true,
+});
+
+export type InsertStreakActivity = z.infer<typeof insertStreakActivitySchema>;
+export type StreakActivity = typeof streakActivities.$inferSelect;
+
+export type InsertDailyStreak = z.infer<typeof insertDailyStreakSchema>;
+export type DailyStreak = typeof dailyStreaks.$inferSelect;
