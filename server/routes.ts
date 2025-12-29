@@ -2143,7 +2143,7 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
       const streak = await storage.createDailyStreak({
         childId: req.params.childId,
         date: data.date,
-        activityId: data.activityId || null,
+        activityId: null, // Don't use milestoneId as activityId - it references streak_activities table
         activityTitle: data.activityTitle || null,
         notes: data.notes || null,
       });
