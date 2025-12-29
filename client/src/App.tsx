@@ -15,7 +15,6 @@ import GrowthDetail from "@/pages/GrowthDetail";
 import Profile from "@/pages/Profile";
 import Settings from "@/pages/Settings";
 import Reports from "@/pages/Reports";
-import Streaks from "@/pages/Streaks";
 import InviteAccept from "@/pages/InviteAccept";
 import NotFound from "@/pages/not-found";
 
@@ -34,7 +33,6 @@ function Router() {
       <Route path="/profile" component={Profile} />
       <Route path="/settings" component={Settings} />
       <Route path="/reports" component={Reports} />
-      <Route path="/streaks" component={Streaks} />
       <Route component={NotFound} />
     </Switch>
   );
