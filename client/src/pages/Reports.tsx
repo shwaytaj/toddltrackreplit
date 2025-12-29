@@ -341,6 +341,7 @@ export default function Reports() {
     setActiveNav(page);
     if (page === 'home') setLocation('/home');
     if (page === 'milestones') setLocation('/milestones');
+    if (page === 'streaks') setLocation('/streaks');
     if (page === 'profile') setLocation('/profile');
   };
 

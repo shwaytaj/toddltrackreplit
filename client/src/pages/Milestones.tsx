@@ -174,6 +174,7 @@ export default function Milestones() {
   const handleNavigation = (page: NavPage) => {
     setActiveNav(page);
     if (page === 'home') setLocation('/home');
+    if (page === 'streaks') setLocation('/streaks');
     if (page === 'profile') setLocation('/profile');
   };
 

@@ -108,6 +108,7 @@ export default function Home() {
   const handleNavigation = (page: NavPage) => {
     setActiveNav(page);
     if (page === 'milestones') setLocation('/milestones');
+    if (page === 'streaks') setLocation('/streaks');
     if (page === 'profile') setLocation('/profile');
     if (page === 'reports') setLocation('/reports');
   };

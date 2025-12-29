@@ -427,6 +427,7 @@ export default function Profile() {
     setActiveNav(page);
     if (page === 'home') setLocation('/home');
     if (page === 'milestones') setLocation('/milestones');
+    if (page === 'streaks') setLocation('/streaks');
   };
 
   // GDPR: Export all user data as ZIP
