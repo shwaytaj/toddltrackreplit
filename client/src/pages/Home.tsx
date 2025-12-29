@@ -330,210 +330,207 @@ export default function Home() {
           </div>
         )}
 
-        <div data-testid="section-streaks">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <Flame className="w-5 h-5 text-primary" />
+        <Card className="overflow-hidden" data-testid="section-streaks">
+          <div className="bg-gradient-to-br from-primary/5 to-primary/10 p-4 border-b border-primary/10">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                <Flame className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">Daily Streaks</h2>
+                <p className="text-sm text-muted-foreground">
+                  Build daily habits with {firstName}
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-xl font-semibold text-foreground">Daily Streaks</h2>
-              <p className="text-sm text-muted-foreground">
-                Build daily habits with {firstName}
-              </p>
+
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Flame className={cn(
+                  "w-8 h-8",
+                  (streakData?.currentStreak || 0) > 0 ? "text-orange-500" : "text-muted-foreground"
+                )} />
+                <div>
+                  <div className="text-3xl font-bold text-foreground">
+                    {streakData?.currentStreak || 0}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Current Streak</div>
+                </div>
+              </div>
+              
+              <div className="flex gap-4">
+                <div className="text-center">
+                  <div className="flex items-center gap-1 text-amber-500">
+                    <Trophy className="w-4 h-4" />
+                    <span className="font-semibold">{streakData?.longestStreak || 0}</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">Best</div>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center gap-1 text-primary">
+                    <Target className="w-4 h-4" />
+                    <span className="font-semibold">{streakData?.totalDays || 0}</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">Total</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-between gap-1">
+              {weekDays.map((day) => (
+                <div
+                  key={day.date}
+                  className={cn(
+                    "flex flex-col items-center py-2 px-2 rounded-lg flex-1",
+                    day.isToday && "bg-primary/15"
+                  )}
+                  data-testid={`streak-day-${day.date}`}
+                >
+                  <span className="text-xs text-muted-foreground">{day.dayName}</span>
+                  <div className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center mt-1",
+                    day.isCompleted 
+                      ? "bg-green-500 text-white" 
+                      : day.isToday 
+                        ? "bg-primary/20 text-primary border-2 border-primary/40"
+                        : "bg-muted text-muted-foreground"
+                  )}>
+                    {day.isCompleted ? (
+                      <Check className="w-4 h-4" />
+                    ) : (
+                      <span className="text-sm font-medium">{day.dayNum}</span>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
-          <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 mb-4">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Flame className={cn(
-                    "w-8 h-8",
-                    (streakData?.currentStreak || 0) > 0 ? "text-orange-500" : "text-muted-foreground"
-                  )} />
-                  <div>
-                    <div className="text-3xl font-bold text-foreground">
-                      {streakData?.currentStreak || 0}
-                    </div>
-                    <div className="text-xs text-muted-foreground">Current Streak</div>
-                  </div>
+          <CardContent className="p-4">
+            {todayCompleted && (
+              <div className="flex items-center gap-3 p-3 mb-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center shrink-0">
+                  <Check className="w-5 h-5 text-white" />
                 </div>
-                
-                <div className="flex gap-4">
-                  <div className="text-center">
-                    <div className="flex items-center gap-1 text-amber-500">
-                      <Trophy className="w-4 h-4" />
-                      <span className="font-semibold">{streakData?.longestStreak || 0}</span>
-                    </div>
-                    <div className="text-xs text-muted-foreground">Best</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="flex items-center gap-1 text-primary">
-                      <Target className="w-4 h-4" />
-                      <span className="font-semibold">{streakData?.totalDays || 0}</span>
-                    </div>
-                    <div className="text-xs text-muted-foreground">Total</div>
-                  </div>
+                <div>
+                  <p className="font-medium text-green-700 dark:text-green-400">Today is complete!</p>
+                  <p className="text-sm text-muted-foreground">Great work! See you tomorrow.</p>
                 </div>
               </div>
+            )}
 
-              <div className="flex justify-between gap-1">
-                {weekDays.map((day) => (
-                  <div
-                    key={day.date}
-                    className={cn(
-                      "flex flex-col items-center py-2 px-2 rounded-lg flex-1",
-                      day.isToday && "bg-primary/10"
-                    )}
-                    data-testid={`streak-day-${day.date}`}
-                  >
-                    <span className="text-xs text-muted-foreground">{day.dayName}</span>
-                    <div className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center mt-1",
-                      day.isCompleted 
-                        ? "bg-green-500 text-white" 
-                        : day.isToday 
-                          ? "bg-primary/20 text-primary border-2 border-primary/40"
-                          : "bg-muted text-muted-foreground"
-                    )}>
-                      {day.isCompleted ? (
-                        <Check className="w-4 h-4" />
-                      ) : (
-                        <span className="text-sm font-medium">{day.dayNum}</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {todayCompleted && (
-            <Card className="border-green-500/30 bg-green-500/5 mb-4">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
-                    <Check className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-green-700 dark:text-green-400">Today is complete!</p>
-                    <p className="text-sm text-muted-foreground">Great work! See you tomorrow.</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <div>
-            <h3 className="text-lg font-semibold text-foreground mb-1 flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-primary" />
-              Activity Recommendations
-            </h3>
-            <p className="text-sm text-muted-foreground mb-3">
-              Complete one or more of these activities today to maintain your streak.
+            <div className="flex items-center gap-2 mb-1">
+              <Calendar className="w-4 h-4 text-primary" />
+              <h3 className="font-semibold text-foreground">Today's Activities</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Complete an activity to maintain your streak
             </p>
             
             {activitiesLoading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-24 bg-muted animate-pulse rounded-xl" />
+                  <div key={i} className="h-20 bg-muted animate-pulse rounded-lg" />
                 ))}
               </div>
             ) : streakActivities.length === 0 ? (
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <Sparkles className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground">
-                    No activity recommendations available yet.
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Visit the Milestones page to explore activities for your child's milestones!
-                  </p>
-                </CardContent>
-              </Card>
+              <div className="text-center py-6 px-4 rounded-lg bg-muted/50">
+                <Sparkles className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground">
+                  No activity recommendations available yet.
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Visit the Milestones page to explore activities!
+                </p>
+              </div>
             ) : (
               <div className="space-y-3">
                 {streakActivities.map((item, idx) => (
-                  <Card 
+                  <div 
                     key={`${item.milestoneId}-${idx}`}
                     className={cn(
-                      "transition-all",
+                      "p-3 rounded-lg border bg-card transition-all",
                       todayCompleted && "opacity-60"
                     )}
                     data-testid={`activity-card-${item.milestoneId}`}
                   >
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <Checkbox
-                          id={`activity-${idx}`}
-                          className="mt-1"
-                          checked={todayCompleted}
-                          disabled={todayCompleted || markDoneMutation.isPending}
-                          onCheckedChange={(checked) => {
-                            if (checked && !todayCompleted) {
-                              markDoneMutation.mutate({
-                                milestoneId: item.milestoneId,
-                                title: item.activity.title,
-                                description: item.activity.description,
-                                citations: item.activity.citations,
-                              });
-                            }
-                          }}
-                          data-testid={`checkbox-activity-${idx}`}
-                        />
-                        <div className="flex-1">
-                          <label 
-                            htmlFor={`activity-${idx}`} 
-                            className={cn(
-                              "font-semibold cursor-pointer block text-foreground",
-                              todayCompleted && "line-through text-muted-foreground"
-                            )}
-                          >
-                            {item.activity.title}
-                          </label>
-                          <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                            {item.activity.description}
-                          </p>
-                          <div className="flex items-center gap-2 mt-2 text-xs text-primary/70">
-                            <span>For: {item.milestoneTitle}</span>
-                            {item.milestoneSubcategory && (
-                              <span className="px-2 py-0.5 bg-primary/10 rounded-full text-primary">
-                                {item.milestoneSubcategory}
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        id={`activity-${idx}`}
+                        className="mt-0.5"
+                        checked={todayCompleted}
+                        disabled={todayCompleted || markDoneMutation.isPending}
+                        onCheckedChange={(checked) => {
+                          if (checked && !todayCompleted) {
+                            markDoneMutation.mutate({
+                              milestoneId: item.milestoneId,
+                              title: item.activity.title,
+                              description: item.activity.description,
+                              citations: item.activity.citations,
+                            });
+                          }
+                        }}
+                        data-testid={`checkbox-activity-${idx}`}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <label 
+                          htmlFor={`activity-${idx}`} 
+                          className={cn(
+                            "font-medium cursor-pointer block text-foreground text-sm",
+                            todayCompleted && "line-through text-muted-foreground"
+                          )}
+                        >
+                          {item.activity.title}
+                        </label>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                          {item.activity.description}
+                        </p>
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                          <span className="text-[10px] text-muted-foreground truncate max-w-[150px]">
+                            {item.milestoneTitle}
+                          </span>
+                          {item.milestoneSubcategory && (
+                            <span className="px-1.5 py-0.5 bg-primary/10 rounded text-[10px] text-primary">
+                              {item.milestoneSubcategory}
+                            </span>
+                          )}
+                        </div>
+                        {item.activity.citations && item.activity.citations.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {item.activity.citations.slice(0, 2).map((citation, citIdx) => (
+                              <span 
+                                key={citIdx} 
+                                className="inline-flex items-center text-[9px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded"
+                              >
+                                {citation.url ? (
+                                  <a 
+                                    href={citation.url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="hover:underline"
+                                  >
+                                    {citation.source}
+                                  </a>
+                                ) : (
+                                  citation.source
+                                )}
+                              </span>
+                            ))}
+                            {item.activity.citations.length > 2 && (
+                              <span className="text-[9px] text-muted-foreground">
+                                +{item.activity.citations.length - 2} more
                               </span>
                             )}
                           </div>
-                          {item.activity.citations && item.activity.citations.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              {item.activity.citations.map((citation, citIdx) => (
-                                <span 
-                                  key={citIdx} 
-                                  className="inline-flex items-center text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full border border-border"
-                                >
-                                  {citation.url ? (
-                                    <a 
-                                      href={citation.url} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="hover:underline"
-                                    >
-                                      {citation.source}
-                                    </a>
-                                  ) : (
-                                    citation.source
-                                  )}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                        )}
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
       <BottomNav active={activeNav} onNavigate={handleNavigation} />
