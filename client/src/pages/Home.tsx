@@ -112,10 +112,13 @@ export default function Home() {
     enabled: !!activeChildId,
   });
 
-  const todayCompleted = useMemo(() => {
-    if (!streakData?.streaks) return false;
-    return streakData.streaks.some(s => s.date === today);
+  const todayStreak = useMemo(() => {
+    if (!streakData?.streaks) return null;
+    return streakData.streaks.find(s => s.date === today) || null;
   }, [streakData, today]);
+
+  const todayCompleted = !!todayStreak;
+  const completedActivityTitle = todayStreak?.activityTitle || null;
 
   const markDoneMutation = useMutation({
     mutationFn: async (activity: { 
@@ -450,7 +453,7 @@ export default function Home() {
                     key={`${item.milestoneId}-${idx}`}
                     className={cn(
                       "p-3 rounded-lg border bg-card transition-all",
-                      todayCompleted && "opacity-60"
+                      completedActivityTitle === item.activity.title && "opacity-60"
                     )}
                     data-testid={`activity-card-${item.milestoneId}`}
                   >
@@ -458,7 +461,7 @@ export default function Home() {
                       <Checkbox
                         id={`activity-${idx}`}
                         className="mt-0.5"
-                        checked={todayCompleted}
+                        checked={completedActivityTitle === item.activity.title}
                         disabled={todayCompleted || markDoneMutation.isPending}
                         onCheckedChange={(checked) => {
                           if (checked && !todayCompleted) {
@@ -477,7 +480,7 @@ export default function Home() {
                           htmlFor={`activity-${idx}`} 
                           className={cn(
                             "font-medium cursor-pointer block text-foreground text-sm",
-                            todayCompleted && "line-through text-muted-foreground"
+                            completedActivityTitle === item.activity.title && "line-through text-muted-foreground"
                           )}
                         >
                           {item.activity.title}
