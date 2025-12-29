@@ -60,17 +60,25 @@ export default function Streaks() {
   }, [streakData, today]);
 
   const markDoneMutation = useMutation({
-    mutationFn: async (activity: { milestoneId: string; title: string }) => {
+    mutationFn: async (activity: { 
+      milestoneId: string; 
+      title: string; 
+      description: string;
+      citations?: Array<{ source: string; url?: string }>;
+    }) => {
       if (!activeChildId) throw new Error('No child selected');
       
       return apiRequest('POST', `/api/children/${activeChildId}/streaks`, {
         date: today,
         activityId: activity.milestoneId,
         activityTitle: activity.title,
+        activityDescription: activity.description,
+        activityCitations: activity.citations,
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/children', activeChildId, 'streaks'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/children', activeChildId, 'completed-recommendations'] });
       toast({
         title: 'Day Complete!',
         description: 'Great job! Keep up the streak!',
@@ -241,10 +249,10 @@ export default function Streaks() {
               <CardContent className="p-6 text-center">
                 <Sparkles className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
                 <p className="text-muted-foreground">
-                  Activity recommendations will appear here once milestone data is available.
+                  Loading activity recommendations...
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Visit the Milestones page to explore activities!
+                  This may take a moment as we personalize activities for your child.
                 </p>
               </CardContent>
             </Card>
@@ -271,6 +279,8 @@ export default function Streaks() {
                             markDoneMutation.mutate({
                               milestoneId: item.milestoneId,
                               title: item.activity.title,
+                              description: item.activity.description,
+                              citations: item.activity.citations,
                             });
                           }
                         }}
@@ -289,9 +299,14 @@ export default function Streaks() {
                         <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
                           {item.activity.description}
                         </p>
-                        <p className="text-xs text-primary/70 mt-2">
-                          For: {item.milestoneTitle}
-                        </p>
+                        <div className="flex items-center gap-2 mt-2 text-xs text-primary/70">
+                          <span>For: {item.milestoneTitle}</span>
+                          {item.milestoneSubcategory && (
+                            <span className="px-2 py-0.5 bg-primary/10 rounded-full text-primary">
+                              {item.milestoneSubcategory}
+                            </span>
+                          )}
+                        </div>
                         {item.activity.citations && item.activity.citations.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-1">
                             {item.activity.citations.map((citation, citIdx) => (

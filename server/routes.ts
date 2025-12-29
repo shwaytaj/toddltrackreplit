@@ -2122,8 +2122,13 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
 
       const schema = z.object({
         date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-        activityId: z.string().optional().nullable(),
+        activityId: z.string().optional().nullable(), // This is the milestoneId
         activityTitle: z.string().optional().nullable(),
+        activityDescription: z.string().optional().nullable(),
+        activityCitations: z.array(z.object({
+          source: z.string(),
+          url: z.string().optional(),
+        })).optional().nullable(),
         notes: z.string().optional().nullable(),
       });
       
@@ -2142,6 +2147,28 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
         activityTitle: data.activityTitle || null,
         notes: data.notes || null,
       });
+      
+      // Also mark the activity as completed in milestone recommendations
+      if (data.activityId && data.activityTitle && data.activityDescription) {
+        try {
+          // Check if already marked as complete to avoid duplicates
+          const existingCompleted = await storage.getCompletedRecommendations(req.params.childId, data.activityId);
+          const alreadyCompleted = existingCompleted.some(c => c.recommendationTitle === data.activityTitle);
+          
+          if (!alreadyCompleted) {
+            await storage.createCompletedRecommendation({
+              childId: req.params.childId,
+              milestoneId: data.activityId,
+              recommendationTitle: data.activityTitle,
+              recommendationDescription: data.activityDescription,
+              citations: data.activityCitations || [],
+            });
+          }
+        } catch (syncError) {
+          // Don't fail the streak creation if sync fails
+          console.log("Note: Could not sync to completed recommendations:", syncError);
+        }
+      }
       
       res.status(201).json(streak);
     } catch (error) {
@@ -2173,6 +2200,85 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
       res.status(500).json({ error: "Failed to delete streak" });
     }
   });
+
+  // Helper function to generate AI recommendations for a milestone
+  async function generateRecommendationsForMilestone(
+    childId: string,
+    milestoneId: string,
+    userId: string
+  ): Promise<Array<{ title: string; description: string; citations?: Array<{ source: string; url?: string }> }>> {
+    if (!anthropic) return [];
+    
+    try {
+      const child = await storage.getChild(childId);
+      const milestone = await storage.getMilestone(milestoneId);
+      const parent = await storage.getUser(userId);
+      
+      if (!child || !milestone || !parent) return [];
+      
+      const childAgeInMonths = getAgeInMonthsForAI(child.dueDate);
+      const prompt = `You are a pediatric development expert. Based on the following information, provide 3-4 practical, personalized recommendations for how parents can help their child achieve this milestone.
+
+Child Information:
+- Age: ${childAgeInMonths} months (adjusted for prematurity/post-maturity if applicable)
+- Medical History: ${JSON.stringify(child.medicalHistory || {})}
+
+Parent Information:
+- Medical History: ${JSON.stringify(parent.medicalHistory || {})}
+
+Milestone:
+- Title: ${milestone.title}
+- Category: ${milestone.category}
+- Description: ${milestone.description}
+
+IMPORTANT: Base your recommendations on established pediatric guidelines from authoritative sources such as:
+- CDC (Centers for Disease Control and Prevention) developmental milestone guidelines
+- AAP (American Academy of Pediatrics) recommendations
+- WHO (World Health Organization) child development standards
+
+Provide your response as a JSON array with objects containing:
+- "title": Short recommendation title (5-7 words)
+- "description": Specific, actionable guidance (2-3 sentences)
+- "citations": Array of sources that informed this recommendation, each containing:
+  - "source": Name of the authoritative source (e.g., "CDC Developmental Milestones", "AAP Guidelines")
+  - "url": (optional) Direct link to the guideline if applicable
+
+Each recommendation should be evidence-based and cite at least one authoritative source.`;
+
+      const message = await anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 2048,
+        messages: [{ role: "user", content: prompt }],
+      });
+
+      const content = message.content[0];
+      let recommendations: Array<{ title: string; description: string; citations?: Array<{ source: string; url?: string }> }> = [];
+      
+      if (content.type === "text") {
+        const jsonMatch = content.text.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          recommendations = JSON.parse(jsonMatch[0]);
+        }
+      }
+
+      // Cache the recommendations
+      const childDataVersion = child.medicalHistoryUpdatedAt || new Date(0);
+      const parentDataVersion = parent.medicalHistoryUpdatedAt || new Date(0);
+      
+      await storage.createAiRecommendation({
+        childId,
+        milestoneId,
+        recommendations,
+        childDataVersion,
+        parentDataVersion,
+      });
+
+      return recommendations;
+    } catch (error) {
+      console.error("Error generating recommendations:", error);
+      return [];
+    }
+  }
 
   // Get streak activity recommendations from incomplete milestones
   app.get("/api/children/:childId/streak-activities", async (req, res) => {
@@ -2239,6 +2345,39 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
         }
       }
       
+      // If no cached activities, generate for a few random milestones
+      if (allActivities.length === 0 && incompleteMilestones.length > 0) {
+        // Pick up to 3 random milestones from different subcategories
+        const bySubcat = new Map<string, typeof incompleteMilestones[0]>();
+        for (const m of incompleteMilestones) {
+          const key = m.subcategory || m.category || 'General';
+          if (!bySubcat.has(key)) {
+            bySubcat.set(key, m);
+          }
+        }
+        
+        const milestonesToGenerate = Array.from(bySubcat.values()).slice(0, 3);
+        
+        for (const milestone of milestonesToGenerate) {
+          const recommendations = await generateRecommendationsForMilestone(
+            req.params.childId,
+            milestone.id,
+            req.user.id
+          );
+          
+          for (const rec of recommendations) {
+            if (rec && rec.title && rec.description) {
+              allActivities.push({
+                milestoneId: milestone.id,
+                milestoneTitle: milestone.title,
+                milestoneSubcategory: milestone.subcategory || null,
+                activity: rec,
+              });
+            }
+          }
+        }
+      }
+      
       // If we have activities, pick 5 from different subcategories for variety
       if (allActivities.length > 0) {
         // Group by subcategory
@@ -2278,7 +2417,7 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
         return;
       }
       
-      // Fallback: if no cached recommendations, return empty (user needs to visit milestone pages first)
+      // No milestones available
       res.json([]);
     } catch (error) {
       console.error("Get streak activities error:", error);
