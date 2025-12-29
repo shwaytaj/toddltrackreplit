@@ -2222,8 +2222,8 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
         };
       }> = [];
       
-      // Get recommendations from cache (no AI calls)
-      for (const milestone of incompleteMilestones.slice(0, 10)) {
+      // Get recommendations from cache first
+      for (const milestone of incompleteMilestones.slice(0, 15)) {
         const cached = await storage.getAiRecommendation(req.params.childId, milestone.id);
         if (cached?.recommendations && Array.isArray(cached.recommendations)) {
           // Take first recommendation from each milestone
@@ -2238,6 +2238,49 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
             });
           }
         }
+      }
+      
+      // If no cached recommendations found, create activities from milestone descriptions
+      if (activitiesWithMilestones.length === 0) {
+        // Group milestones by subcategory for variety
+        const bySubcategory = new Map<string, typeof incompleteMilestones[0]>();
+        for (const m of incompleteMilestones) {
+          const key = m.subcategory || m.category || 'Developmental';
+          if (!bySubcategory.has(key)) {
+            bySubcategory.set(key, m);
+          }
+        }
+        
+        // Create activity suggestions from milestone descriptions
+        const milestonesForActivities = Array.from(bySubcategory.values()).slice(0, 5);
+        for (const milestone of milestonesForActivities) {
+          // Parse the description to get the "What to look for" section if available
+          let activityDescription = `Practice and encourage: ${milestone.title}`;
+          if (milestone.description) {
+            // Try to extract "What to look for" section
+            const whatToLookForMatch = milestone.description.match(/\*\*What to look for\*\*[:\s]*([^*]+)/i);
+            if (whatToLookForMatch && whatToLookForMatch[1]) {
+              activityDescription = whatToLookForMatch[1].trim().slice(0, 300);
+            } else {
+              // Use first part of description
+              activityDescription = milestone.description.slice(0, 300);
+            }
+          }
+          
+          activitiesWithMilestones.push({
+            milestoneId: milestone.id,
+            milestoneTitle: milestone.title,
+            milestoneCategory: milestone.category || 'Developmental',
+            milestoneSubcategory: milestone.subcategory || null,
+            activity: {
+              title: `Work on: ${milestone.title}`,
+              description: activityDescription,
+            },
+          });
+        }
+        
+        res.json(activitiesWithMilestones);
+        return;
       }
       
       // Group by subcategory and pick one from each to ensure variety
