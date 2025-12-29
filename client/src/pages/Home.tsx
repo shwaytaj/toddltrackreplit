@@ -112,13 +112,10 @@ export default function Home() {
     enabled: !!activeChildId,
   });
 
-  const todayStreak = useMemo(() => {
-    if (!streakData?.streaks) return null;
-    return streakData.streaks.find(s => s.date === today) || null;
+  const todayCompleted = useMemo(() => {
+    if (!streakData?.streaks) return false;
+    return streakData.streaks.some(s => s.date === today);
   }, [streakData, today]);
-
-  const todayCompleted = !!todayStreak;
-  const completedActivityTitle = todayStreak?.activityTitle || null;
 
   const markDoneMutation = useMutation({
     mutationFn: async (activity: { 
@@ -422,115 +419,115 @@ export default function Home() {
               </div>
             )}
 
-            <div className="flex items-center gap-2 mb-1">
-              <Calendar className="w-4 h-4 text-primary" />
-              <h3 className="font-semibold text-foreground">Today's Activities</h3>
-            </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              Complete an activity to maintain your streak
-            </p>
+            {!todayCompleted && (
+              <>
+                <div className="flex items-center gap-2 mb-1">
+                  <Calendar className="w-4 h-4 text-primary" />
+                  <h3 className="font-semibold text-foreground">Today's Activities</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Complete an activity to maintain your streak
+                </p>
+              </>
+            )}
             
-            {activitiesLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-20 bg-muted animate-pulse rounded-lg" />
-                ))}
-              </div>
-            ) : streakActivities.length === 0 ? (
-              <div className="text-center py-6 px-4 rounded-lg bg-muted/50">
-                <Sparkles className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground">
-                  No activity recommendations available yet.
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Visit the Milestones page to explore activities!
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {streakActivities.map((item, idx) => (
-                  <div 
-                    key={`${item.milestoneId}-${idx}`}
-                    className={cn(
-                      "p-3 rounded-lg border bg-card transition-all",
-                      completedActivityTitle === item.activity.title && "opacity-60"
-                    )}
-                    data-testid={`activity-card-${item.milestoneId}`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <Checkbox
-                        id={`activity-${idx}`}
-                        className="mt-0.5"
-                        checked={completedActivityTitle === item.activity.title}
-                        disabled={todayCompleted || markDoneMutation.isPending}
-                        onCheckedChange={(checked) => {
-                          if (checked && !todayCompleted) {
-                            markDoneMutation.mutate({
-                              milestoneId: item.milestoneId,
-                              title: item.activity.title,
-                              description: item.activity.description,
-                              citations: item.activity.citations,
-                            });
-                          }
-                        }}
-                        data-testid={`checkbox-activity-${idx}`}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <label 
-                          htmlFor={`activity-${idx}`} 
-                          className={cn(
-                            "font-medium cursor-pointer block text-foreground text-sm",
-                            completedActivityTitle === item.activity.title && "line-through text-muted-foreground"
-                          )}
-                        >
-                          {item.activity.title}
-                        </label>
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                          {item.activity.description}
-                        </p>
-                        <div className="flex items-center gap-2 mt-2 flex-wrap">
-                          <span className="text-[10px] text-muted-foreground truncate max-w-[150px]">
-                            {item.milestoneTitle}
-                          </span>
-                          {item.milestoneSubcategory && (
-                            <span className="px-1.5 py-0.5 bg-primary/10 rounded text-[10px] text-primary">
-                              {item.milestoneSubcategory}
+            {!todayCompleted && (
+              activitiesLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-20 bg-muted animate-pulse rounded-lg" />
+                  ))}
+                </div>
+              ) : streakActivities.length === 0 ? (
+                <div className="text-center py-6 px-4 rounded-lg bg-muted/50">
+                  <Sparkles className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground">
+                    No activity recommendations available yet.
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Visit the Milestones page to explore activities!
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {streakActivities.map((item, idx) => (
+                    <div 
+                      key={`${item.milestoneId}-${idx}`}
+                      className="p-3 rounded-lg border bg-card transition-all"
+                      data-testid={`activity-card-${item.milestoneId}`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <Checkbox
+                          id={`activity-${idx}`}
+                          className="mt-0.5"
+                          checked={false}
+                          disabled={markDoneMutation.isPending}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              markDoneMutation.mutate({
+                                milestoneId: item.milestoneId,
+                                title: item.activity.title,
+                                description: item.activity.description,
+                                citations: item.activity.citations,
+                              });
+                            }
+                          }}
+                          data-testid={`checkbox-activity-${idx}`}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <label 
+                            htmlFor={`activity-${idx}`} 
+                            className="font-medium cursor-pointer block text-foreground text-sm"
+                          >
+                            {item.activity.title}
+                          </label>
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                            {item.activity.description}
+                          </p>
+                          <div className="flex items-center gap-2 mt-2 flex-wrap">
+                            <span className="text-[10px] text-muted-foreground truncate max-w-[150px]">
+                              {item.milestoneTitle}
                             </span>
-                          )}
-                        </div>
-                        {item.activity.citations && item.activity.citations.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-1">
-                            {item.activity.citations.slice(0, 2).map((citation, citIdx) => (
-                              <span 
-                                key={citIdx} 
-                                className="inline-flex items-center text-[9px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded"
-                              >
-                                {citation.url ? (
-                                  <a 
-                                    href={citation.url} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="hover:underline"
-                                  >
-                                    {citation.source}
-                                  </a>
-                                ) : (
-                                  citation.source
-                                )}
-                              </span>
-                            ))}
-                            {item.activity.citations.length > 2 && (
-                              <span className="text-[9px] text-muted-foreground">
-                                +{item.activity.citations.length - 2} more
+                            {item.milestoneSubcategory && (
+                              <span className="px-1.5 py-0.5 bg-primary/10 rounded text-[10px] text-primary">
+                                {item.milestoneSubcategory}
                               </span>
                             )}
                           </div>
-                        )}
+                          {item.activity.citations && item.activity.citations.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              {item.activity.citations.slice(0, 2).map((citation, citIdx) => (
+                                <span 
+                                  key={citIdx} 
+                                  className="inline-flex items-center text-[9px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded"
+                                >
+                                  {citation.url ? (
+                                    <a 
+                                      href={citation.url} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="hover:underline"
+                                    >
+                                      {citation.source}
+                                    </a>
+                                  ) : (
+                                    citation.source
+                                  )}
+                                </span>
+                              ))}
+                              {item.activity.citations.length > 2 && (
+                                <span className="text-[9px] text-muted-foreground">
+                                  +{item.activity.citations.length - 2} more
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )
             )}
           </CardContent>
         </Card>
