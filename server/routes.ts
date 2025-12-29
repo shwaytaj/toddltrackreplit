@@ -2174,6 +2174,90 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
     }
   });
 
+  // Get streak activity recommendations from incomplete milestones
+  app.get("/api/children/:childId/streak-activities", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      const child = await storage.getChild(req.params.childId);
+      if (!child || !child.parentIds.includes(req.user.id)) {
+        return res.status(404).json({ error: "Child not found" });
+      }
+
+      // Calculate child's age to get relevant milestones
+      const adjustedAge = calculateAdjustedAge(child.dueDate);
+      const ageInMonths = getAdjustedMonthsForRange(adjustedAge.months, adjustedAge.days);
+      const ageRange = getAgeRange(ageInMonths);
+      
+      if (!ageRange) {
+        return res.json([]);
+      }
+
+      // Get milestones in the child's age range
+      const allMilestones = await storage.getMilestonesByAgeRange(ageRange.min, ageRange.max);
+      
+      // Get child's completed milestones
+      const childMilestones = await storage.getChildMilestones(req.params.childId);
+      const completedMilestoneIds = new Set(
+        childMilestones.filter(cm => cm.achieved).map(cm => cm.milestoneId)
+      );
+      
+      // Filter to incomplete developmental milestones only
+      const incompleteMilestones = allMilestones.filter(m => 
+        !completedMilestoneIds.has(m.id) && 
+        m.category?.toLowerCase() === 'developmental'
+      );
+      
+      // Get cached recommendations for incomplete milestones
+      const activitiesWithMilestones: Array<{
+        milestoneId: string;
+        milestoneTitle: string;
+        milestoneCategory: string;
+        milestoneSubcategory: string | null;
+        activity: {
+          title: string;
+          description: string;
+          citations?: Array<{ source: string; url?: string }>;
+        };
+      }> = [];
+      
+      // Get recommendations from cache (no AI calls)
+      for (const milestone of incompleteMilestones.slice(0, 10)) {
+        const cached = await storage.getAiRecommendation(req.params.childId, milestone.id);
+        if (cached?.recommendations && Array.isArray(cached.recommendations)) {
+          // Take first recommendation from each milestone
+          const firstRec = cached.recommendations[0];
+          if (firstRec) {
+            activitiesWithMilestones.push({
+              milestoneId: milestone.id,
+              milestoneTitle: milestone.title,
+              milestoneCategory: milestone.category || 'Developmental',
+              milestoneSubcategory: milestone.subcategory || null,
+              activity: firstRec,
+            });
+          }
+        }
+      }
+      
+      // Group by subcategory and pick one from each to ensure variety
+      const bySubcategory = new Map<string, typeof activitiesWithMilestones[0]>();
+      for (const item of activitiesWithMilestones) {
+        const key = item.milestoneSubcategory || item.milestoneCategory;
+        if (!bySubcategory.has(key)) {
+          bySubcategory.set(key, item);
+        }
+      }
+      
+      // Return up to 5 activities from different subcategories
+      const result = Array.from(bySubcategory.values()).slice(0, 5);
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Get streak activities error:", error);
+      res.status(500).json({ error: "Failed to get streak activities" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

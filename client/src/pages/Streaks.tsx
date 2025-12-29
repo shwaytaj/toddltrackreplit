@@ -1,16 +1,16 @@
 import { useState, useMemo } from 'react';
 import { useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Flame, Check, Calendar, Trophy, Target, Sparkles, BookOpen, Palette, TreeDeciduous, Gamepad2, GraduationCap } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Flame, Check, Calendar, Trophy, Target, Sparkles } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useActiveChild } from '@/contexts/ActiveChildContext';
 import { useUser } from '@/hooks/use-user';
 import BottomNav, { type NavPage } from '@/components/BottomNav';
 import { cn } from '@/lib/utils';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import type { StreakActivity, DailyStreak } from '@shared/schema';
+import type { DailyStreak } from '@shared/schema';
 
 interface StreakData {
   currentStreak: number;
@@ -19,21 +19,17 @@ interface StreakData {
   streaks: DailyStreak[];
 }
 
-const categoryIcons: Record<string, typeof Flame> = {
-  reading: BookOpen,
-  creative: Palette,
-  outdoor: TreeDeciduous,
-  play: Gamepad2,
-  learning: GraduationCap,
-};
-
-const defaultActivities = [
-  { title: 'Read a Story', description: 'Read a picture book together', category: 'reading', icon: 'BookOpen' },
-  { title: 'Outdoor Play', description: 'Spend 15+ minutes playing outside', category: 'outdoor', icon: 'TreeDeciduous' },
-  { title: 'Creative Time', description: 'Draw, paint, or craft together', category: 'creative', icon: 'Palette' },
-  { title: 'Learning Activity', description: 'Practice counting, colors, or shapes', category: 'learning', icon: 'GraduationCap' },
-  { title: 'Imaginative Play', description: 'Role play or build with blocks', category: 'play', icon: 'Gamepad2' },
-];
+interface StreakActivity {
+  milestoneId: string;
+  milestoneTitle: string;
+  milestoneCategory: string;
+  milestoneSubcategory: string | null;
+  activity: {
+    title: string;
+    description: string;
+    citations?: Array<{ source: string; url?: string }>;
+  };
+}
 
 export default function Streaks() {
   const [, setLocation] = useLocation();
@@ -53,9 +49,9 @@ export default function Streaks() {
     enabled: !!activeChildId,
   });
 
-  const { data: activities = [] } = useQuery<StreakActivity[]>({
-    queryKey: ['/api/streaks/activities'],
-    enabled: !!user,
+  const { data: streakActivities = [], isLoading: activitiesLoading } = useQuery<StreakActivity[]>({
+    queryKey: ['/api/children', activeChildId, 'streak-activities'],
+    enabled: !!activeChildId,
   });
 
   const todayCompleted = useMemo(() => {
@@ -64,13 +60,13 @@ export default function Streaks() {
   }, [streakData, today]);
 
   const markDoneMutation = useMutation({
-    mutationFn: async (activity?: { id: string; title: string }) => {
+    mutationFn: async (activity: { milestoneId: string; title: string }) => {
       if (!activeChildId) throw new Error('No child selected');
       
       return apiRequest('POST', `/api/children/${activeChildId}/streaks`, {
         date: today,
-        activityId: activity?.id || null,
-        activityTitle: activity?.title || 'General Activity',
+        activityId: activity.milestoneId,
+        activityTitle: activity.title,
       });
     },
     onSuccess: () => {
@@ -131,13 +127,6 @@ export default function Streaks() {
   }
 
   const weekDays = getWeekDays();
-  const displayActivities = activities.length > 0 ? activities : defaultActivities.map((a, i) => ({
-    ...a,
-    id: `default-${i}`,
-    ageRangeMonthsMin: 0,
-    ageRangeMonthsMax: 72,
-    isActive: true,
-  })) as unknown as StreakActivity[];
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -219,30 +208,6 @@ export default function Streaks() {
           </CardContent>
         </Card>
 
-        {!todayCompleted && (
-          <Card className="border-green-500/30 bg-green-500/5">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Sparkles className="w-5 h-5 text-green-500" />
-                  <div>
-                    <p className="font-medium text-foreground">Ready to mark today?</p>
-                    <p className="text-sm text-muted-foreground">Pick an activity or just mark it done!</p>
-                  </div>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={() => markDoneMutation.mutate(undefined)}
-                  disabled={markDoneMutation.isPending}
-                  data-testid="button-mark-done-quick"
-                >
-                  {markDoneMutation.isPending ? 'Saving...' : 'Done!'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {todayCompleted && (
           <Card className="border-green-500/30 bg-green-500/5">
             <CardContent className="p-4">
@@ -262,55 +227,101 @@ export default function Streaks() {
         <div>
           <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-primary" />
-            Activity Ideas
+            Activity Recommendations
           </h2>
           
-          <div className="space-y-3">
-            {displayActivities.map((activity) => {
-              const IconComponent = categoryIcons[activity.category] || Sparkles;
-              
-              return (
+          {activitiesLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-24 bg-muted animate-pulse rounded-xl" />
+              ))}
+            </div>
+          ) : streakActivities.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <Sparkles className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground">
+                  Activity recommendations will appear here once milestone data is available.
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Visit the Milestones page to explore activities!
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {streakActivities.map((item, idx) => (
                 <Card 
-                  key={activity.id} 
-                  className="hover-elevate cursor-pointer"
-                  onClick={() => {
-                    if (!todayCompleted) {
-                      markDoneMutation.mutate({ id: activity.id, title: activity.title });
-                    }
-                  }}
-                  data-testid={`activity-card-${activity.id}`}
+                  key={`${item.milestoneId}-${idx}`}
+                  className={cn(
+                    "transition-all",
+                    todayCompleted && "opacity-60"
+                  )}
+                  data-testid={`activity-card-${item.milestoneId}`}
                 >
                   <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <IconComponent className="w-5 h-5 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-foreground">{activity.title}</p>
-                          <p className="text-sm text-muted-foreground">{activity.description}</p>
-                        </div>
-                      </div>
-                      {!todayCompleted && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={markDoneMutation.isPending}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            markDoneMutation.mutate({ id: activity.id, title: activity.title });
-                          }}
-                          data-testid={`button-activity-${activity.id}`}
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        id={`activity-${idx}`}
+                        className="mt-1"
+                        checked={todayCompleted}
+                        disabled={todayCompleted || markDoneMutation.isPending}
+                        onCheckedChange={(checked) => {
+                          if (checked && !todayCompleted) {
+                            markDoneMutation.mutate({
+                              milestoneId: item.milestoneId,
+                              title: item.activity.title,
+                            });
+                          }
+                        }}
+                        data-testid={`checkbox-activity-${idx}`}
+                      />
+                      <div className="flex-1">
+                        <label 
+                          htmlFor={`activity-${idx}`} 
+                          className={cn(
+                            "font-semibold cursor-pointer block text-foreground",
+                            todayCompleted && "line-through text-muted-foreground"
+                          )}
                         >
-                          Do This
-                        </Button>
-                      )}
+                          {item.activity.title}
+                        </label>
+                        <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                          {item.activity.description}
+                        </p>
+                        <p className="text-xs text-primary/70 mt-2">
+                          For: {item.milestoneTitle}
+                        </p>
+                        {item.activity.citations && item.activity.citations.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {item.activity.citations.map((citation, citIdx) => (
+                              <span 
+                                key={citIdx} 
+                                className="inline-flex items-center text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full border border-border"
+                              >
+                                {citation.url ? (
+                                  <a 
+                                    href={citation.url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="hover:underline"
+                                  >
+                                    {citation.source}
+                                  </a>
+                                ) : (
+                                  citation.source
+                                )}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
