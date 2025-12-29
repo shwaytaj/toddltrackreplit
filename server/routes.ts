@@ -2209,11 +2209,10 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
         m.category?.toLowerCase() === 'developmental'
       );
       
-      // Get cached recommendations for incomplete milestones
-      const activitiesWithMilestones: Array<{
+      // Collect ALL individual activities from cached recommendations
+      const allActivities: Array<{
         milestoneId: string;
         milestoneTitle: string;
-        milestoneCategory: string;
         milestoneSubcategory: string | null;
         activity: {
           title: string;
@@ -2222,80 +2221,65 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
         };
       }> = [];
       
-      // Get recommendations from cache first
-      for (const milestone of incompleteMilestones.slice(0, 15)) {
+      // Get recommendations from cache - collect all individual activities
+      for (const milestone of incompleteMilestones.slice(0, 20)) {
         const cached = await storage.getAiRecommendation(req.params.childId, milestone.id);
         if (cached?.recommendations && Array.isArray(cached.recommendations)) {
-          // Take first recommendation from each milestone
-          const firstRec = cached.recommendations[0];
-          if (firstRec) {
-            activitiesWithMilestones.push({
-              milestoneId: milestone.id,
-              milestoneTitle: milestone.title,
-              milestoneCategory: milestone.category || 'Developmental',
-              milestoneSubcategory: milestone.subcategory || null,
-              activity: firstRec,
-            });
+          // Add ALL recommendations from this milestone
+          for (const rec of cached.recommendations) {
+            if (rec && rec.title && rec.description) {
+              allActivities.push({
+                milestoneId: milestone.id,
+                milestoneTitle: milestone.title,
+                milestoneSubcategory: milestone.subcategory || null,
+                activity: rec,
+              });
+            }
           }
         }
       }
       
-      // If no cached recommendations found, create activities from milestone descriptions
-      if (activitiesWithMilestones.length === 0) {
-        // Group milestones by subcategory for variety
-        const bySubcategory = new Map<string, typeof incompleteMilestones[0]>();
-        for (const m of incompleteMilestones) {
-          const key = m.subcategory || m.category || 'Developmental';
+      // If we have activities, pick 5 from different subcategories for variety
+      if (allActivities.length > 0) {
+        // Group by subcategory
+        const bySubcategory = new Map<string, typeof allActivities>();
+        for (const item of allActivities) {
+          const key = item.milestoneSubcategory || 'General';
           if (!bySubcategory.has(key)) {
-            bySubcategory.set(key, m);
+            bySubcategory.set(key, []);
           }
+          bySubcategory.get(key)!.push(item);
         }
         
-        // Create activity suggestions from milestone descriptions
-        const milestonesForActivities = Array.from(bySubcategory.values()).slice(0, 5);
-        for (const milestone of milestonesForActivities) {
-          // Parse the description to get the "What to look for" section if available
-          let activityDescription = `Practice and encourage: ${milestone.title}`;
-          if (milestone.description) {
-            // Try to extract "What to look for" section
-            const whatToLookForMatch = milestone.description.match(/\*\*What to look for\*\*[:\s]*([^*]+)/i);
-            if (whatToLookForMatch && whatToLookForMatch[1]) {
-              activityDescription = whatToLookForMatch[1].trim().slice(0, 300);
-            } else {
-              // Use first part of description
-              activityDescription = milestone.description.slice(0, 300);
-            }
+        // Pick activities round-robin from each subcategory
+        const result: typeof allActivities = [];
+        const subcategories = Array.from(bySubcategory.keys());
+        let subcatIndex = 0;
+        
+        while (result.length < 5 && subcategories.length > 0) {
+          const key = subcategories[subcatIndex % subcategories.length];
+          const activities = bySubcategory.get(key)!;
+          
+          if (activities.length > 0) {
+            // Pick a random activity from this subcategory
+            const randomIndex = Math.floor(Math.random() * activities.length);
+            result.push(activities.splice(randomIndex, 1)[0]);
           }
           
-          activitiesWithMilestones.push({
-            milestoneId: milestone.id,
-            milestoneTitle: milestone.title,
-            milestoneCategory: milestone.category || 'Developmental',
-            milestoneSubcategory: milestone.subcategory || null,
-            activity: {
-              title: `Work on: ${milestone.title}`,
-              description: activityDescription,
-            },
-          });
+          // Remove empty subcategories
+          if (activities.length === 0) {
+            subcategories.splice(subcatIndex % subcategories.length, 1);
+          } else {
+            subcatIndex++;
+          }
         }
         
-        res.json(activitiesWithMilestones);
+        res.json(result);
         return;
       }
       
-      // Group by subcategory and pick one from each to ensure variety
-      const bySubcategory = new Map<string, typeof activitiesWithMilestones[0]>();
-      for (const item of activitiesWithMilestones) {
-        const key = item.milestoneSubcategory || item.milestoneCategory;
-        if (!bySubcategory.has(key)) {
-          bySubcategory.set(key, item);
-        }
-      }
-      
-      // Return up to 5 activities from different subcategories
-      const result = Array.from(bySubcategory.values()).slice(0, 5);
-      
-      res.json(result);
+      // Fallback: if no cached recommendations, return empty (user needs to visit milestone pages first)
+      res.json([]);
     } catch (error) {
       console.error("Get streak activities error:", error);
       res.status(500).json({ error: "Failed to get streak activities" });
