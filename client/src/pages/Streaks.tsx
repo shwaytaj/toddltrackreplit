@@ -232,7 +232,7 @@ export default function Streaks() {
                 </div>
                 <Button
                   size="sm"
-                  onClick={() => markDoneMutation.mutate()}
+                  onClick={() => markDoneMutation.mutate(undefined)}
                   disabled={markDoneMutation.isPending}
                   data-testid="button-mark-done-quick"
                 >
