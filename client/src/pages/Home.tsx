@@ -265,18 +265,6 @@ export default function Home() {
           />
         </div>
 
-        <div>
-          <h1 className="text-3xl font-bold mb-2" data-testid="heading-overview">Overview</h1>
-          <div className="space-y-1">
-            <p className="font-medium" data-testid="text-child-age">
-              {firstName}'s adjusted age is {formatAge(adjustedAge)}!
-            </p>
-            <p className="text-sm text-muted-foreground">
-              We calculate the developmental milestone range based on due date and not the birth date of the child.
-            </p>
-          </div>
-        </div>
-
         {highlightsData?.highlights && highlightsData.highlights.length > 0 && (
           <div className="space-y-3" data-testid="section-highlights">
             {highlightsData.highlights.map((highlight, index) => (
@@ -525,6 +513,15 @@ export default function Home() {
               />
             ))}
           </div>
+        </div>
+
+        <div className="space-y-1" data-testid="section-adjusted-age">
+          <p className="font-medium" data-testid="text-child-age">
+            {firstName}'s adjusted age is {formatAge(adjustedAge)}!
+          </p>
+          <p className="text-sm text-muted-foreground">
+            We calculate the developmental milestone range based on due date and not the birth date of the child.
+          </p>
         </div>
 
         {(latestMetrics.weight || latestMetrics.height || latestMetrics.head) && (
