@@ -263,73 +263,6 @@ export default function Home() {
           </div>
         )}
 
-        <div>
-          <h2 className="text-xl font-bold mb-4" data-testid="heading-milestone-range">
-            {ageRange?.label} Milestones
-          </h2>
-
-          <div className="space-y-4">
-            {categoryProgress.map(({ category, total, achieved }) => (
-              <CategoryProgressCard
-                key={category}
-                category={category}
-                childName={selectedChild.name}
-                achievedCount={achieved}
-                totalCount={total}
-                onViewAll={() => handleViewCategory(category)}
-              />
-            ))}
-          </div>
-        </div>
-
-        {(latestMetrics.weight || latestMetrics.height || latestMetrics.head) && (
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold">Growth</h2>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                data-testid="button-view-growth-details"
-                onClick={() => setLocation('/growth/weight')}
-              >
-                View details →
-              </Button>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              {latestMetrics.weight && (
-                <GrowthMetricCard
-                  type="weight"
-                  value={latestMetrics.weight.value.toString()}
-                  unit="kg"
-                  percentile={latestMetrics.weight.percentile || 0}
-                  onClick={() => setLocation('/growth/weight')}
-                  data-testid="card-growth-weight"
-                />
-              )}
-              {latestMetrics.height && (
-                <GrowthMetricCard
-                  type="height"
-                  value={latestMetrics.height.value.toString()}
-                  unit="cm"
-                  percentile={latestMetrics.height.percentile || 0}
-                  onClick={() => setLocation('/growth/height')}
-                  data-testid="card-growth-height"
-                />
-              )}
-              {latestMetrics.head && (
-                <GrowthMetricCard
-                  type="head"
-                  value={latestMetrics.head.value.toString()}
-                  unit="cm"
-                  percentile={latestMetrics.head.percentile || 0}
-                  onClick={() => setLocation('/growth/head')}
-                  data-testid="card-growth-head"
-                />
-              )}
-            </div>
-          </div>
-        )}
-
         <Card className="overflow-hidden" data-testid="section-streaks">
           <div className="bg-gradient-to-br from-primary/5 to-primary/10 p-4 border-b border-primary/10">
             <div className="flex items-center gap-3 mb-4">
@@ -531,6 +464,73 @@ export default function Home() {
             )}
           </CardContent>
         </Card>
+
+        <div>
+          <h2 className="text-xl font-bold mb-4" data-testid="heading-milestone-range">
+            {ageRange?.label} Milestones
+          </h2>
+
+          <div className="space-y-4">
+            {categoryProgress.map(({ category, total, achieved }) => (
+              <CategoryProgressCard
+                key={category}
+                category={category}
+                childName={selectedChild.name}
+                achievedCount={achieved}
+                totalCount={total}
+                onViewAll={() => handleViewCategory(category)}
+              />
+            ))}
+          </div>
+        </div>
+
+        {(latestMetrics.weight || latestMetrics.height || latestMetrics.head) && (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold">Growth</h2>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                data-testid="button-view-growth-details"
+                onClick={() => setLocation('/growth/weight')}
+              >
+                View details →
+              </Button>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {latestMetrics.weight && (
+                <GrowthMetricCard
+                  type="weight"
+                  value={latestMetrics.weight.value.toString()}
+                  unit="kg"
+                  percentile={latestMetrics.weight.percentile || 0}
+                  onClick={() => setLocation('/growth/weight')}
+                  data-testid="card-growth-weight"
+                />
+              )}
+              {latestMetrics.height && (
+                <GrowthMetricCard
+                  type="height"
+                  value={latestMetrics.height.value.toString()}
+                  unit="cm"
+                  percentile={latestMetrics.height.percentile || 0}
+                  onClick={() => setLocation('/growth/height')}
+                  data-testid="card-growth-height"
+                />
+              )}
+              {latestMetrics.head && (
+                <GrowthMetricCard
+                  type="head"
+                  value={latestMetrics.head.value.toString()}
+                  unit="cm"
+                  percentile={latestMetrics.head.percentile || 0}
+                  onClick={() => setLocation('/growth/head')}
+                  data-testid="card-growth-head"
+                />
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <BottomNav active={activeNav} onNavigate={handleNavigation} />
