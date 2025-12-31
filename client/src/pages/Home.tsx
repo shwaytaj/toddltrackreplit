@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
-import { Flame, Check, Calendar, Trophy, Target, Sparkles } from 'lucide-react';
+import { Flame, Check, Calendar, Trophy, Target, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import ChildSelector from '@/components/ChildSelector';
 import CategoryProgressCard from '@/components/CategoryProgressCard';
 import GrowthMetricCard from '@/components/GrowthMetricCard';
@@ -41,6 +41,7 @@ interface StreakActivity {
 export default function Home() {
   const [, setLocation] = useLocation();
   const [activeNav, setActiveNav] = useState<NavPage>('home');
+  const [weekOffset, setWeekOffset] = useState(0);
   const { user, isLoading: userLoading } = useUser();
   const { children, activeChildId, activeChild: selectedChild, setActiveChildId, isLoading: childrenLoading } = useActiveChild();
   const { toast } = useToast();
@@ -185,13 +186,17 @@ export default function Home() {
     return { weight, height, head };
   }, [growthMetrics]);
 
-  const getWeekDays = () => {
+  const getWeekDays = (offset: number) => {
     const days = [];
     const now = new Date();
     now.setHours(0, 0, 0, 0);
+    const todayStr = now.toISOString().split('T')[0];
+    
+    const baseDate = new Date(now);
+    baseDate.setDate(baseDate.getDate() + (offset * 7));
     
     for (let i = 6; i >= 0; i--) {
-      const d = new Date(now);
+      const d = new Date(baseDate);
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().split('T')[0];
       const isCompleted = streakData?.streaks.some(s => s.date === dateStr) || false;
@@ -199,11 +204,27 @@ export default function Home() {
         date: dateStr,
         dayName: d.toLocaleDateString('en-US', { weekday: 'short' }),
         dayNum: d.getDate(),
-        isToday: i === 0,
+        isToday: dateStr === todayStr,
         isCompleted,
       });
     }
     return days;
+  };
+
+  const getWeekLabel = (offset: number) => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const baseDate = new Date(now);
+    baseDate.setDate(baseDate.getDate() + (offset * 7));
+    
+    const startOfWeek = new Date(baseDate);
+    startOfWeek.setDate(startOfWeek.getDate() - 6);
+    
+    const formatDate = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    
+    if (offset === 0) return 'This Week';
+    if (offset === -1) return 'Last Week';
+    return `${formatDate(startOfWeek)} - ${formatDate(baseDate)}`;
   };
 
   const handleNavigation = (page: NavPage) => {
@@ -230,7 +251,8 @@ export default function Home() {
   }
 
   const firstName = selectedChild.name.split(' ')[0];
-  const weekDays = getWeekDays();
+  const weekDays = getWeekDays(weekOffset);
+  const weekLabel = getWeekLabel(weekOffset);
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -307,6 +329,27 @@ export default function Home() {
                   <div className="text-xs text-muted-foreground">Total</div>
                 </div>
               </div>
+            </div>
+
+            <div className="flex items-center justify-between mb-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setWeekOffset(prev => prev - 1)}
+                data-testid="button-prev-week"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <span className="text-sm font-medium text-foreground">{weekLabel}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setWeekOffset(prev => prev + 1)}
+                disabled={weekOffset >= 0}
+                data-testid="button-next-week"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
             </div>
 
             <div className="flex justify-between gap-1">
