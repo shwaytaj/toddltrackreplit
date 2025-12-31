@@ -497,9 +497,17 @@ export default function Home() {
         </Card>
 
         <div>
-          <h2 className="text-xl font-bold mb-4" data-testid="heading-milestone-range">
+          <h2 className="text-xl font-bold mb-2" data-testid="heading-milestone-range">
             {ageRange?.label} Milestones
           </h2>
+          <div className="space-y-1 mb-4" data-testid="section-adjusted-age">
+            <p className="font-medium" data-testid="text-child-age">
+              {firstName}'s adjusted age is {formatAge(adjustedAge)}!
+            </p>
+            <p className="text-sm text-muted-foreground">
+              We calculate the developmental milestone range based on due date and not the birth date of the child.
+            </p>
+          </div>
 
           <div className="space-y-4">
             {categoryProgress.map(({ category, total, achieved }) => (
@@ -512,18 +520,6 @@ export default function Home() {
                 onViewAll={() => handleViewCategory(category)}
               />
             ))}
-          </div>
-        </div>
-
-        <div data-testid="section-adjusted-age">
-          <h2 className="text-xl font-bold mb-2" data-testid="heading-overview">Overview</h2>
-          <div className="space-y-1">
-            <p className="font-medium" data-testid="text-child-age">
-              {firstName}'s adjusted age is {formatAge(adjustedAge)}!
-            </p>
-            <p className="text-sm text-muted-foreground">
-              We calculate the developmental milestone range based on due date and not the birth date of the child.
-            </p>
           </div>
         </div>
 
