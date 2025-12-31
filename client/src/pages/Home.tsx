@@ -294,7 +294,7 @@ export default function Home() {
               <div>
                 <h2 className="text-xl font-semibold text-foreground">Daily Streaks</h2>
                 <p className="text-sm text-muted-foreground">
-                  Build daily habits with {firstName}
+                  Complete one activity each day to build your streak
                 </p>
               </div>
             </div>
