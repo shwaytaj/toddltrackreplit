@@ -515,13 +515,16 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="space-y-1" data-testid="section-adjusted-age">
-          <p className="font-medium" data-testid="text-child-age">
-            {firstName}'s adjusted age is {formatAge(adjustedAge)}!
-          </p>
-          <p className="text-sm text-muted-foreground">
-            We calculate the developmental milestone range based on due date and not the birth date of the child.
-          </p>
+        <div data-testid="section-adjusted-age">
+          <h2 className="text-xl font-bold mb-2" data-testid="heading-overview">Overview</h2>
+          <div className="space-y-1">
+            <p className="font-medium" data-testid="text-child-age">
+              {firstName}'s adjusted age is {formatAge(adjustedAge)}!
+            </p>
+            <p className="text-sm text-muted-foreground">
+              We calculate the developmental milestone range based on due date and not the birth date of the child.
+            </p>
+          </div>
         </div>
 
         {(latestMetrics.weight || latestMetrics.height || latestMetrics.head) && (
