@@ -349,60 +349,7 @@ export default function VideoAnalysis() {
                 </div>
               )}
 
-              {analysis.recommendations.length > 0 && (
-                <>
-                  <Separator />
-                  <div className="space-y-3">
-                    <h2 className="text-lg font-semibold">Recommended Activities</h2>
-                    {analysis.recommendations.map((rec, idx) => (
-                      <Card key={idx} className="p-4">
-                        <div className="flex items-start gap-2">
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              "mt-0.5",
-                              rec.priority === 'high' && "border-red-500 text-red-500",
-                              rec.priority === 'medium' && "border-amber-500 text-amber-500",
-                              rec.priority === 'low' && "border-blue-500 text-blue-500"
-                            )}
-                          >
-                            {rec.priority}
-                          </Badge>
-                          <div className="flex-1">
-                            <h3 className="font-medium">{rec.title}</h3>
-                            <p className="text-sm text-muted-foreground mt-1">{rec.description}</p>
-                          </div>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {analysis.detectedActivities.length > 0 && (
-                <>
-                  <Separator />
-                  <div className="space-y-3">
-                    <h2 className="text-lg font-semibold">All Detected Activities</h2>
-                    {analysis.detectedActivities.map((activity, idx) => (
-                      <div key={idx} className="flex items-start gap-3 text-sm">
-                        <span className="text-muted-foreground w-16 flex-shrink-0">{activity.timestamp}</span>
-                        <div className="flex-1">
-                          <p>{activity.activity}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="secondary" className="text-xs">{activity.category}</Badge>
-                            <span className={cn("text-xs", getConfidenceColor(activity.confidence))}>
-                              {Math.round(activity.confidence * 100)}% confident
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {analysis.matchedMilestones.length === 0 && analysis.detectedActivities.length === 0 && (
+              {analysis.matchedMilestones.length === 0 && (
                 <Card className="p-6 text-center">
                   <AlertCircle className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
                   <h3 className="font-medium">No activities detected</h3>
