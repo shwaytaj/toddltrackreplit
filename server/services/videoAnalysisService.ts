@@ -51,7 +51,16 @@ export async function analyzeVideoWithGemini(
 ): Promise<DetectedActivity[]> {
   const prompt = `Analyze this video of a ${childAgeMonths}-month-old child.
 
-Identify ALL developmental activities you observe, including:
+CRITICAL RULES - READ CAREFULLY:
+1. ONLY report activities you can CLEARLY and DEFINITIVELY see happening in the video
+2. Do NOT assume, infer, or guess activities that might be happening off-screen
+3. Do NOT report activities based on objects visible unless you see the child actively doing them
+4. If you see a crayon but the child isn't drawing, do NOT report "drawing"
+5. If something is unclear or partially visible, do NOT include it
+6. It is BETTER to report fewer activities than to include uncertain ones
+7. Only include activities with confidence 0.75 or higher
+
+Look for these types of developmental activities ONLY if clearly visible:
 - Motor skills (crawling, walking, reaching, grasping, sitting, standing, jumping)
 - Communication (babbling, words, gestures, pointing, waving)
 - Social/emotional (eye contact, smiling, playing, sharing)
@@ -59,11 +68,11 @@ Identify ALL developmental activities you observe, including:
 - Hearing (responding to sounds, turning toward voices)
 - Vision (tracking objects, recognizing faces)
 
-For each activity observed, provide:
+For each activity you can CLEARLY SEE, provide:
 1. Timestamp (approximate time range like "0:05-0:10")
-2. Description of the activity (be specific)
+2. Description of what you ACTUALLY SEE the child doing (be specific and factual)
 3. Developmental category (Motor, Communication, Social, Cognitive, Hearing, Vision)
-4. Confidence score (0.0 to 1.0, where 1.0 is very confident)
+4. Confidence score (0.75 to 1.0 only - if below 0.75, do not include it)
 
 Return ONLY a valid JSON array with no additional text. Example format:
 [
@@ -75,7 +84,8 @@ Return ONLY a valid JSON array with no additional text. Example format:
   }
 ]
 
-If no clear developmental activities are visible, return an empty array: []`;
+If no activities are CLEARLY visible, return an empty array: []
+Remember: When in doubt, leave it out.`;
 
   try {
     const response = await ai.models.generateContent({
@@ -104,15 +114,19 @@ If no clear developmental activities are visible, return an empty array: []`;
     }
 
     const activities: DetectedActivity[] = JSON.parse(jsonMatch[0]);
-    return activities.filter(
+    // Filter to only high-confidence activities (0.75+) to reduce hallucinations
+    const filteredActivities = activities.filter(
       (a) =>
         a.timestamp &&
         a.activity &&
         a.category &&
         typeof a.confidence === "number" &&
-        a.confidence >= 0 &&
+        a.confidence >= 0.75 &&
         a.confidence <= 1
     );
+    
+    console.log(`[VideoAnalysis] Gemini detected ${activities.length} activities, ${filteredActivities.length} passed confidence threshold (0.75+)`);
+    return filteredActivities;
   } catch (error) {
     console.error("Error analyzing video with Gemini:", error);
     throw error;
