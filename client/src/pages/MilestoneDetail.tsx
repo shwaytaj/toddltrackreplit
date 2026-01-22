@@ -365,6 +365,11 @@ export default function MilestoneDetail() {
             {milestone.category}{milestone.subcategory && ` • ${milestone.subcategory}`}
           </p>
           <h1 className="text-2xl font-bold mt-1 pr-12">{milestone.title}</h1>
+          {selectedChild && (
+            <p className="text-sm text-muted-foreground mt-2" data-testid="milestone-detail-child-name">
+              Viewing for: <span className="font-medium">{selectedChild.name}</span>
+            </p>
+          )}
         </div>
       </div>
 
