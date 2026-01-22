@@ -205,9 +205,26 @@ Return ONLY valid JSON in this exact format:
     }
 
     const result = JSON.parse(jsonMatch[0]);
+    
+    // Validate that all returned milestone IDs actually exist in our database
+    const validMilestoneIds = new Set(relevantMilestones.map(m => m.id));
+    const validatedMatches = (result.matches || []).filter((match: MilestoneMatch) => {
+      if (!validMilestoneIds.has(match.milestoneId)) {
+        console.warn(`Filtering out hallucinated milestone ID: ${match.milestoneId}`);
+        return false;
+      }
+      return true;
+    });
+    
+    // Also validate recommendation milestone references
+    const validatedRecommendations = (result.recommendations || []).map((rec: VideoRecommendation) => ({
+      ...rec,
+      relatedMilestones: (rec.relatedMilestones || []).filter(id => validMilestoneIds.has(id))
+    }));
+    
     return {
-      matches: result.matches || [],
-      recommendations: result.recommendations || [],
+      matches: validatedMatches,
+      recommendations: validatedRecommendations,
     };
   } catch (error) {
     console.error("Error matching milestones with Claude:", error);
