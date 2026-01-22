@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
-import { Flame, Check, Calendar, Trophy, Target, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Flame, Check, Calendar, Trophy, Target, Sparkles, ChevronLeft, ChevronRight, Video } from 'lucide-react';
 import ChildSelector from '@/components/ChildSelector';
 import CategoryProgressCard from '@/components/CategoryProgressCard';
 import GrowthMetricCard from '@/components/GrowthMetricCard';
@@ -272,6 +272,25 @@ export default function Home() {
             ))}
           </div>
         )}
+
+        <Card 
+          className="p-4 cursor-pointer hover-elevate border-primary/20 bg-gradient-to-r from-primary/5 to-violet-500/5"
+          onClick={() => setLocation('/video-analysis')}
+          data-testid="card-video-analysis"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+              <Video className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-foreground">Auto Milestone Detection</h3>
+              <p className="text-sm text-muted-foreground">
+                Upload a video and let AI detect your child's developmental milestones
+              </p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          </div>
+        </Card>
 
         <h1 className="text-3xl font-bold" data-testid="heading-overview">Overview</h1>
 

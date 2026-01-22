@@ -16,6 +16,7 @@ import Profile from "@/pages/Profile";
 import Settings from "@/pages/Settings";
 import Reports from "@/pages/Reports";
 import InviteAccept from "@/pages/InviteAccept";
+import VideoAnalysis from "@/pages/VideoAnalysis";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -33,6 +34,8 @@ function Router() {
       <Route path="/profile" component={Profile} />
       <Route path="/settings" component={Settings} />
       <Route path="/reports" component={Reports} />
+      <Route path="/video-analysis" component={VideoAnalysis} />
+      <Route path="/video-analysis/:id" component={VideoAnalysis} />
       <Route component={NotFound} />
     </Switch>
   );

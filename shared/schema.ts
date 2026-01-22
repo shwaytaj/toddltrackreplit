@@ -258,6 +258,72 @@ export type Invitation = typeof invitations.$inferSelect;
 export type ParentRole = "primary" | "secondary";
 export type InvitationStatus = "pending" | "accepted" | "expired" | "revoked";
 
+// Video Analyses - stores AI analysis results from uploaded videos
+export const videoAnalyses = pgTable("video_analyses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  childId: varchar("child_id").notNull().references(() => children.id, { onDelete: "cascade" }),
+  originalFilename: text("original_filename").notNull(),
+  videoDuration: integer("video_duration"),
+  status: text("status").notNull().default("processing"),
+  errorMessage: text("error_message"),
+  geminiAnalysis: jsonb("gemini_analysis").$type<{
+    rawResponse?: string;
+    model?: string;
+  }>(),
+  detectedActivities: jsonb("detected_activities").$type<Array<{
+    timestamp: string;
+    activity: string;
+    category: string;
+    confidence: number;
+  }>>(),
+  matchedMilestones: jsonb("matched_milestones").$type<Array<{
+    milestoneId: string;
+    milestoneTitle: string;
+    confidence: number;
+    matchReason: string;
+    videoTimestamp: string;
+  }>>(),
+  recommendations: jsonb("recommendations").$type<Array<{
+    title: string;
+    description: string;
+    relatedMilestones: string[];
+    priority: "high" | "medium" | "low";
+  }>>(),
+  uploadedAt: timestamp("uploaded_at").notNull().defaultNow(),
+  analyzedAt: timestamp("analyzed_at"),
+  videoDeletedAt: timestamp("video_deleted_at"),
+});
+
+// Video Milestone Matches - individual milestone matches from video analysis
+export const videoMilestoneMatches = pgTable("video_milestone_matches", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  videoAnalysisId: varchar("video_analysis_id").notNull().references(() => videoAnalyses.id, { onDelete: "cascade" }),
+  milestoneId: varchar("milestone_id").notNull().references(() => milestones.id),
+  confidence: real("confidence").notNull(),
+  videoTimestamp: text("video_timestamp"),
+  activityDescription: text("activity_description"),
+  autoAchieved: boolean("auto_achieved").default(false),
+  parentConfirmed: boolean("parent_confirmed"),
+  confirmedAt: timestamp("confirmed_at"),
+});
+
+export const insertVideoAnalysisSchema = createInsertSchema(videoAnalyses).omit({
+  id: true,
+  uploadedAt: true,
+});
+
+export const insertVideoMilestoneMatchSchema = createInsertSchema(videoMilestoneMatches).omit({
+  id: true,
+});
+
+export type InsertVideoAnalysis = z.infer<typeof insertVideoAnalysisSchema>;
+export type VideoAnalysis = typeof videoAnalyses.$inferSelect;
+
+export type InsertVideoMilestoneMatch = z.infer<typeof insertVideoMilestoneMatchSchema>;
+export type VideoMilestoneMatch = typeof videoMilestoneMatches.$inferSelect;
+
+export type VideoAnalysisStatus = "processing" | "analyzing" | "matching" | "completed" | "failed";
+
 // Streak Activities - predefined activities parents can do with their children
 export const streakActivities = pgTable("streak_activities", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -295,3 +361,6 @@ export type StreakActivity = typeof streakActivities.$inferSelect;
 
 export type InsertDailyStreak = z.infer<typeof insertDailyStreakSchema>;
 export type DailyStreak = typeof dailyStreaks.$inferSelect;
+
+// Re-export chat schema for Gemini integration
+export * from "./models/chat";

@@ -8,6 +8,7 @@ import {
   insertGrowthMetricSchema,
   insertToothSchema,
   insertDailyStreakSchema,
+  videoAnalyses,
 } from "@shared/schema";
 import Anthropic from "@anthropic-ai/sdk";
 import passport, { hashPassword } from "./auth";
@@ -27,6 +28,15 @@ import {
 } from "@shared/highlights";
 import { calculateAdjustedAge } from "./age-utils";
 import PDFDocument from "pdfkit";
+import multer from "multer";
+import {
+  processVideoAnalysis,
+  getVideoAnalysis,
+  getVideoAnalysesForChild,
+  getMilestoneMatchesForAnalysis,
+  confirmMilestoneMatch,
+} from "./services/videoAnalysisService";
+import { db } from "./db";
 
 // Check if Anthropic API key is configured
 const isAnthropicConfigured = !!process.env.ANTHROPIC_API_KEY;
@@ -2019,6 +2029,184 @@ Focus on real, widely-available products from retailers like Amazon, Target, Wal
     } catch (error) {
       console.error("PDF generation error:", error);
       res.status(500).json({ error: "Failed to generate PDF report" });
+    }
+  });
+
+  // Video Analysis routes
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 50 * 1024 * 1024, // 50MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      const allowedMimes = ["video/mp4", "video/quicktime", "video/webm", "video/x-msvideo"];
+      if (allowedMimes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error("Invalid file type. Only mp4, mov, webm, and avi are allowed."));
+      }
+    },
+  });
+
+  app.post("/api/children/:childId/videos", upload.single("video"), async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+    try {
+      const child = await storage.getChild(req.params.childId);
+      if (!child || !child.parentIds.includes(req.user.id)) {
+        return res.status(404).json({ error: "Child not found" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ error: "No video file provided" });
+      }
+
+      const videoBase64 = req.file.buffer.toString("base64");
+      const mimeType = req.file.mimetype;
+      const originalFilename = req.file.originalname;
+
+      // Create analysis record
+      const [analysis] = await db
+        .insert(videoAnalyses)
+        .values({
+          childId: req.params.childId,
+          originalFilename,
+          status: "processing",
+        })
+        .returning();
+
+      // Process video asynchronously
+      setImmediate(async () => {
+        try {
+          await processVideoAnalysis(analysis.id, videoBase64, mimeType, req.params.childId);
+        } catch (error) {
+          console.error("Background video analysis failed:", error);
+        }
+      });
+
+      res.status(201).json({
+        id: analysis.id,
+        status: "processing",
+        message: "Video uploaded and analysis started. Check back for results.",
+      });
+    } catch (error) {
+      console.error("Video upload error:", error);
+      res.status(500).json({ error: "Failed to upload video" });
+    }
+  });
+
+  app.get("/api/children/:childId/videos", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+    try {
+      const child = await storage.getChild(req.params.childId);
+      if (!child || !child.parentIds.includes(req.user.id)) {
+        return res.status(404).json({ error: "Child not found" });
+      }
+
+      const analyses = await getVideoAnalysesForChild(req.params.childId);
+      res.json({
+        analyses: analyses.map((a) => ({
+          id: a.id,
+          originalFilename: a.originalFilename,
+          status: a.status,
+          uploadedAt: a.uploadedAt,
+          analyzedAt: a.analyzedAt,
+          matchedMilestonesCount: a.matchedMilestones?.length || 0,
+        })),
+      });
+    } catch (error) {
+      console.error("Get video analyses error:", error);
+      res.status(500).json({ error: "Failed to get video analyses" });
+    }
+  });
+
+  app.get("/api/children/:childId/videos/:videoId", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+    try {
+      const child = await storage.getChild(req.params.childId);
+      if (!child || !child.parentIds.includes(req.user.id)) {
+        return res.status(404).json({ error: "Child not found" });
+      }
+
+      const analysis = await getVideoAnalysis(req.params.videoId);
+      if (!analysis || analysis.childId !== req.params.childId) {
+        return res.status(404).json({ error: "Video analysis not found" });
+      }
+
+      const milestoneMatches = await getMilestoneMatchesForAnalysis(req.params.videoId);
+
+      res.json({
+        id: analysis.id,
+        status: analysis.status,
+        originalFilename: analysis.originalFilename,
+        videoDuration: analysis.videoDuration,
+        uploadedAt: analysis.uploadedAt,
+        analyzedAt: analysis.analyzedAt,
+        videoDeletedAt: analysis.videoDeletedAt,
+        errorMessage: analysis.errorMessage,
+        detectedActivities: analysis.detectedActivities || [],
+        matchedMilestones: milestoneMatches.map((m) => ({
+          id: m.match.id,
+          milestoneId: m.milestone.id,
+          milestoneTitle: m.milestone.title,
+          milestoneCategory: m.milestone.category,
+          confidence: m.match.confidence,
+          videoTimestamp: m.match.videoTimestamp,
+          activityDescription: m.match.activityDescription,
+          autoAchieved: m.match.autoAchieved,
+          parentConfirmed: m.match.parentConfirmed,
+        })),
+        recommendations: analysis.recommendations || [],
+      });
+    } catch (error) {
+      console.error("Get video analysis error:", error);
+      res.status(500).json({ error: "Failed to get video analysis" });
+    }
+  });
+
+  app.post("/api/children/:childId/videos/:videoId/confirm", async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+    try {
+      const child = await storage.getChild(req.params.childId);
+      if (!child || !child.parentIds.includes(req.user.id)) {
+        return res.status(404).json({ error: "Child not found" });
+      }
+
+      const analysis = await getVideoAnalysis(req.params.videoId);
+      if (!analysis || analysis.childId !== req.params.childId) {
+        return res.status(404).json({ error: "Video analysis not found" });
+      }
+
+      const { milestoneMatches } = req.body;
+      if (!Array.isArray(milestoneMatches)) {
+        return res.status(400).json({ error: "milestoneMatches must be an array" });
+      }
+
+      let confirmed = 0;
+      let rejected = 0;
+
+      for (const match of milestoneMatches) {
+        if (!match.matchId || typeof match.confirmed !== "boolean") continue;
+
+        await confirmMilestoneMatch(match.matchId, match.confirmed, req.params.childId);
+        if (match.confirmed) {
+          confirmed++;
+        } else {
+          rejected++;
+        }
+      }
+
+      res.json({
+        confirmed,
+        rejected,
+        milestonesUpdated: confirmed,
+      });
+    } catch (error) {
+      console.error("Confirm milestone matches error:", error);
+      res.status(500).json({ error: "Failed to confirm milestone matches" });
     }
   });
 
