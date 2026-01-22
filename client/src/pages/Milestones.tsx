@@ -206,6 +206,13 @@ export default function Milestones() {
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="p-4 space-y-6 max-w-2xl mx-auto">
+        {selectedChild && (
+          <div className="flex items-center gap-2" data-testid="current-child-display">
+            <span className="text-sm text-muted-foreground">Viewing milestones for:</span>
+            <span className="font-medium text-foreground">{selectedChild.name}</span>
+          </div>
+        )}
+
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Button 
