@@ -194,6 +194,10 @@ export function parseComprehensiveMilestones(filePath: string): ParsedMilestone[
         const cleanTitle = title.trim();
         if (!cleanTitle) continue;
         
+        // Skip very short titles (2 chars or less) - these are parsing artifacts
+        // from comma-separated sound lists like "b,p,n,m,d,t,w,h" or "s,z,l,sh,ch,j,th,r"
+        if (cleanTitle.length <= 2) continue;
+        
         // Determine age range
         let ageRangeMin: number;
         let ageRangeMax: number;
