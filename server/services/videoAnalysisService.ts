@@ -394,6 +394,7 @@ export async function confirmMilestoneMatch(
     })
     .where(eq(videoMilestoneMatches.id, matchId));
 
+  // Handle confirming a non-auto-achieved milestone
   if (confirmed && !match.autoAchieved) {
     const existing = await db
       .select()
@@ -423,6 +424,35 @@ export async function confirmMilestoneMatch(
           notes: "Confirmed from video analysis by parent",
         })
         .where(eq(childMilestones.id, existing[0].id));
+    }
+  }
+  
+  // Handle rejecting an auto-achieved milestone (undo the auto-achievement)
+  if (!confirmed && match.autoAchieved) {
+    const existing = await db
+      .select()
+      .from(childMilestones)
+      .where(
+        and(
+          eq(childMilestones.childId, childId),
+          eq(childMilestones.milestoneId, match.milestoneId)
+        )
+      )
+      .limit(1);
+
+    if (existing.length > 0 && existing[0].achieved) {
+      // Only revert if it was auto-detected (check notes)
+      const notes = existing[0].notes || '';
+      if (notes.includes('Auto-detected from video analysis')) {
+        await db
+          .update(childMilestones)
+          .set({
+            achieved: false,
+            achievedAt: null,
+            notes: "Reverted by parent - incorrectly auto-detected",
+          })
+          .where(eq(childMilestones.id, existing[0].id));
+      }
     }
   }
 }

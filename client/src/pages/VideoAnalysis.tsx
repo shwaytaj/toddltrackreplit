@@ -284,10 +284,22 @@ export default function VideoAnalysis() {
                           </p>
                         )}
                         {match.autoAchieved && match.parentConfirmed === null && (
-                          <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            Auto-achieved
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Auto-achieved
+                            </Badge>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-destructive border-destructive/50 hover:bg-destructive/10"
+                              onClick={() => handleConfirm(match.id, false)}
+                              data-testid={`button-not-achieved-${match.id}`}
+                            >
+                              <ThumbsDown className="w-3 h-3 mr-1" />
+                              Not achieved
+                            </Button>
+                          </div>
                         )}
                         {match.parentConfirmed !== null && (
                           <Badge variant={match.parentConfirmed ? "default" : "secondary"}>
