@@ -14,12 +14,38 @@ const EXPECTED_MILESTONE_COUNT = 612; // Total canonical milestones in comprehen
 
 export class MilestoneSeeder {
   /**
+   * Clean up malformed milestone records that were incorrectly parsed
+   * These are single-letter milestones that were split from a comma-separated list
+   */
+  static async cleanupMalformedMilestones(): Promise<void> {
+    const malformedTitles = ['b', 'p', 'n', 'm', 'd', 't', 'w', 'h', 's', 'z', 'l', 'sh', 'ch', 'j', 'th', 'r'];
+    
+    try {
+      const allMilestones = await storage.getAllMilestones();
+      const toDelete = allMilestones.filter(m => malformedTitles.includes(m.title));
+      
+      if (toDelete.length > 0) {
+        console.log(`[MilestoneSeeder] Cleaning up ${toDelete.length} malformed milestone records...`);
+        for (const milestone of toDelete) {
+          await storage.deleteMilestone(milestone.id);
+        }
+        console.log('[MilestoneSeeder] ✓ Cleanup complete');
+      }
+    } catch (error) {
+      console.error('[MilestoneSeeder] Cleanup error (non-blocking):', error);
+    }
+  }
+
+  /**
    * Seed milestones into the database if needed
    * This is idempotent - it only adds missing milestones, never duplicates
    */
   static async run(): Promise<void> {
     try {
       console.log('[MilestoneSeeder] Checking milestone data...');
+      
+      // First, clean up any malformed records from previous parsing bugs
+      await MilestoneSeeder.cleanupMalformedMilestones();
       
       // Check if milestones already exist
       const existingMilestones = await storage.getAllMilestones();

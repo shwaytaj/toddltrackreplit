@@ -72,6 +72,7 @@ export interface IStorage {
   getAllMilestones(): Promise<Milestone[]>;
   getMilestonesByAgeRange(minMonths: number, maxMonths: number, sources?: string[]): Promise<Milestone[]>;
   createMilestone(milestone: InsertMilestone): Promise<Milestone>;
+  deleteMilestone(id: string): Promise<boolean>;
 
   // Child milestone operations
   getChildMilestoneById(id: string): Promise<ChildMilestone | undefined>;
@@ -303,6 +304,11 @@ export class DbStorage implements IStorage {
   async createMilestone(milestone: InsertMilestone): Promise<Milestone> {
     const result = await this.db.insert(milestones).values(milestone).returning();
     return result[0];
+  }
+
+  async deleteMilestone(id: string): Promise<boolean> {
+    const result = await this.db.delete(milestones).where(eq(milestones.id, id)).returning();
+    return result.length > 0;
   }
 
   // Child milestone operations
