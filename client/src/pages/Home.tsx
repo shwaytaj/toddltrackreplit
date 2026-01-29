@@ -38,6 +38,8 @@ interface StreakActivity {
   };
 }
 
+const SHOW_STREAKS_FEATURE = false;
+
 export default function Home() {
   const [, setLocation] = useLocation();
   const [activeNav, setActiveNav] = useState<NavPage>('home');
@@ -275,6 +277,7 @@ export default function Home() {
 
         <h1 className="text-3xl font-bold" data-testid="heading-overview">Overview</h1>
 
+        {SHOW_STREAKS_FEATURE && (
         <Card className="overflow-hidden" data-testid="section-streaks">
           <div className="bg-gradient-to-br from-primary/5 to-primary/10 p-4 border-b border-primary/10">
             <div className="flex items-center gap-3 mb-4">
@@ -497,6 +500,7 @@ export default function Home() {
             )}
           </CardContent>
         </Card>
+        )}
 
         <div>
           <h2 className="text-xl font-bold mb-2" data-testid="heading-milestone-range">
