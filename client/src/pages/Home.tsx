@@ -583,8 +583,11 @@ export default function Home() {
           data-testid="card-video-analysis"
         >
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+            <div className="relative w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
               <Video className="w-6 h-6 text-amber-600" />
+              <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+                <Sparkles className="w-3 h-3 text-white" />
+              </div>
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-foreground">Auto Milestone Detection</h3>
