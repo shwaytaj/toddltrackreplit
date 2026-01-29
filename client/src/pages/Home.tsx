@@ -578,13 +578,13 @@ export default function Home() {
         )}
 
         <Card 
-          className="p-4 cursor-pointer hover-elevate border-primary/20 bg-gradient-to-r from-primary/5 to-violet-500/5"
+          className="p-4 cursor-pointer hover-elevate border-amber-500/20 bg-gradient-to-r from-amber-500/10 to-orange-500/5"
           onClick={() => setLocation('/video-analysis')}
           data-testid="card-video-analysis"
         >
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-              <Video className="w-6 h-6 text-primary" />
+            <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+              <Video className="w-6 h-6 text-amber-600" />
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-foreground">Auto Milestone Detection</h3>
